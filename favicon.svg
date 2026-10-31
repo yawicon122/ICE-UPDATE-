@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Ice Update favicon">
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#4de1ff"/>
+      <stop offset="50%" stop-color="#8b7bff"/>
+      <stop offset="100%" stop-color="#ff6bd6"/>
+    </linearGradient>
+  </defs>
+  <rect width="128" height="128" rx="28" fill="#081121"/>
+  <circle cx="64" cy="64" r="54" fill="url(#bg)" opacity="0.18"/>
+  <g fill="none" stroke="#f4f7ff" stroke-width="8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M64 18v92M18 64h92M34 34l60 60M94 34L34 94" opacity="0.9"/>
+  </g>
+  <path d="M64 28l8 20 20 8-20 8-8 20-8-20-20-8 20-8 8-20z" fill="#f4f7ff" opacity="0.9"/>
+</svg>

@@ -1,8 +1,8 @@
 /* =====================================================================
-   ICE UPDATE — EDIT THIS FILE ONLY.  Everything on the website comes
-   from here. Change text, add videos, PDFs, pictures, brokers, socials.
-   After editing: save/commit on GitHub and the site updates in ~1 minute.
-   ===================================================================== */
+    ICE UPDATE — EDIT THIS FILE ONLY.  Everything on the website comes
+    from here. Change text, add videos, PDFs, pictures, brokers, socials.
+    After editing: save/commit on GitHub and the site updates in ~1 minute.
+    ===================================================================== */
 window.SITE = {
   brand: "Ice Update",
   tagline: "Trading • Online income • Tech updates",
@@ -56,10 +56,10 @@ window.SITE = {
   ],
 
   brokers: [
-    { name: "MH Markets",        logo: "mh-markets.png",        url: "#", note: "Online broker" },
-    { name: "Alchemy Markets",   logo: "alchemy-markets.png",   url: "#", note: "Online broker" },
-    { name: "Ambitious Fincorp", logo: "ambitious-fincorp.png", url: "#", note: "Online broker" },
-    { name: "CPT Markets",       logo: "cpt-markets.png",       url: "#", note: "Online broker" }
+    { name: "MH Markets",        logo: "mh-markets.png",        url: "https://client.mhmarkets-asia.com/signup?partnerCode=A4CFMDIG", note: "IB referral link" },
+    { name: "Alchemy Markets",   logo: "alchemy-markets.png",   url: "https://account.alchemymarkets.com/register?brd=1&sidc=D037F675-FE13-4D23-9264-D6F46D9039B4", note: "IB referral link" },
+    { name: "Ambitious Fincorp", logo: "ambitious-fincorp.png", url: "https://trade.ambitiousfincorp.com/register?refcode=R3142067", note: "IB referral link" },
+    { name: "CPT Markets",       logo: "cpt-markets.png",       url: "https://portal.cptmarkets.com/user/register?inviteid=jTc85GWUB-MT4&inviteType=1", note: "IB referral link" }
   ],
 
   footerNote: "Educational content only. Not financial advice. Trading involves risk — you can lose money. Some broker links may be referral links."

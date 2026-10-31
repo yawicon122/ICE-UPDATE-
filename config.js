@@ -20,12 +20,18 @@ window.SITE = {
 
   /* TRACKING — see README. Fill ONE or BOTH. Leave "" to switch off. */
   analytics: {
-    goatcounter: "",   // e.g. "iceupdate"  (free, from goatcounter.com)
-    ga4: ""            // e.g. "G-XXXXXXXXXX" (from Google Analytics)
+    goatcounter: "",
+    ga4: ""
   },
 
   /* Look. wallpaper = your background image (phone version used on small screens). Set "" for the animated aurora instead. */
-  theme: { accent1: "#4de1ff", accent2: "#8b7bff", accent3: "#ff6bd6", wallpaper: "assets/images/wallpaper.jpg", wallpaperMobile: "assets/images/wallpaper-mobile.jpg" },
+  theme: {
+    accent1: "#4de1ff",
+    accent2: "#8b7bff",
+    accent3: "#ff6bd6",
+    wallpaper: "assets/images/spartan-wallpaper.jpg",
+    wallpaperMobile: "assets/images/spartan-wallpaper-mobile.jpg"
+  },
 
   /* SOCIAL MEDIA — platform = icon name (instagram, tiktok, youtube,
      facebook, x, whatsapp, telegram, snapchat, linkedin, threads) */

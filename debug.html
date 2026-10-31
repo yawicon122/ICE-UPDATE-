@@ -1,0 +1,17 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Ice Update — file check</title>
+<style>body{font:15px/1.5 system-ui,sans-serif;background:#0a1030;color:#eaf2ff;padding:18px;max-width:900px;margin:auto}h1{font-size:1.3rem}table{width:100%;border-collapse:collapse;margin:10px 0 24px}td,th{padding:8px;border-bottom:1px solid #ffffff22;text-align:left;word-break:break-all;vertical-align:top}.ok{color:#3ee6b0}.bad{color:#ff6a7d}img{max-height:46px;border-radius:6px}small{color:#9fb2d8}</style></head><body>
+<h1>Ice Update — file check</h1><p><small>Open this page on your live site (yoursite/debug.html). Green = file found. Red = missing: upload that file to the folder shown, with the exact same name (capital letters matter).</small></p>
+<h3>Website files</h3><table id="core"></table><h3>Pictures from config.js</h3><table id="imgs"></table>
+<script src="config.js"></script>
+<script>
+const S=window.SITE||{};const row=(t,a,b,c)=>{const tr=document.createElement("tr");tr.innerHTML=`<td>${a}</td><td>${b}</td><td>${c}</td>`;t.appendChild(tr)};
+const core=document.getElementById("core"),imgs=document.getElementById("imgs");
+["index.html","style.css","app.js","config.js"].forEach(f=>fetch(f,{cache:"no-store"}).then(r=>row(core,f,r.ok?'<b class="ok">✔ found</b>':'<b class="bad">✘ missing</b>',"")).catch(()=>row(core,f,'<b class="bad">✘ missing</b>',"")));
+const FOLDERS=["","assets/images/","assets/brokers/","assets/avatars/","assets/","images/","img/"];
+function test(label,p){if(!p)return;const base=p.split("/").pop(),c=[p].concat(FOLDERS.map(f=>f+base));
+ (function n(i){if(i>=c.length){row(imgs,label,p,'<b class="bad">✘ not found anywhere</b>');return}
+  const im=new Image();im.onload=()=>row(imgs,label,p,(i?`<b class="ok">✔ found, but at <u>${c[i]}</u> (config says ${p})</b> `:'<b class="ok">✔ found</b> ')+`<br><img src="${encodeURI(c[i])}">`);im.onerror=()=>n(i+1);im.src=encodeURI(c[i])})(0)}
+test("Wallpaper (computer)",S.theme&&S.theme.wallpaper);test("Wallpaper (phone)",S.theme&&S.theme.wallpaperMobile);
+(S.brokers||[]).forEach(b=>test("Broker: "+b.name,b.logo));(S.socials||[]).forEach(x=>test("Avatar: "+x.name,x.avatar));
+(S.gallery||[]).forEach(g=>test("Gallery",g.src));(S.videos||[]).forEach(v=>test("Video thumb: "+v.title,v.thumb));
+</script></body></html>

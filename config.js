@@ -76,7 +76,7 @@ window.SITE = {
 
   /* BROKERS — files are in the repo root, not inside assets/. */
   brokers: [
-    { name: "MH Markets",        logo: "mh-markets.png",        url: "#", note: "Forex & CFD broker" },
+    { name: "MH Markets",        logo: "mh-markets.png",        url: "#", note: "Online broker" },
     { name: "Alchemy Markets",   logo: "alchemy-markets.png",   url: "#", note: "Online broker" },
     { name: "Ambitious Fincorp", logo: "ambitious-fincorp.png", url: "#", note: "Online broker" },
     { name: "CPT Markets",       logo: "cpt-markets.png",       url: "#", note: "Online broker" }

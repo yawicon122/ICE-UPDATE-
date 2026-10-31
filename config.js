@@ -14,24 +14,18 @@ window.SITE = {
 
   /* Your channels (the big Join buttons). Paste your real links. */
   links: {
-    whatsapp: "https://whatsapp.com/channel/0029VbE7s6hDuMRfollXDG0P",
-    telegram: "https://t.me/iceupdate100"
+    whatsapp: "https://whatsapp.com/channel/YOUR_CHANNEL_ID",
+    telegram: "https://t.me/YOUR_TELEGRAM"
   },
 
   /* TRACKING — see README. Fill ONE or BOTH. Leave "" to switch off. */
   analytics: {
-    goatcounter: "",
-    ga4: ""
+    goatcounter: "",   // e.g. "iceupdate"  (free, from goatcounter.com)
+    ga4: ""            // e.g. "G-XXXXXXXXXX" (from Google Analytics)
   },
 
   /* Look. wallpaper = your background image (phone version used on small screens). Set "" for the animated aurora instead. */
-  theme: {
-    accent1: "#4de1ff",
-    accent2: "#8b7bff",
-    accent3: "#ff6bd6",
-    wallpaper: "https://raw.githubusercontent.com/yawicon122/ICE-UPDATE-/main/IceUpdate-Mono-Desktop-2560x1440.jpg",
-    wallpaperMobile: "https://raw.githubusercontent.com/yawicon122/ICE-UPDATE-/main/IceUpdate-Mono-Phone-1080x1920.jpg"
-  },
+  theme: { accent1: "#4de1ff", accent2: "#8b7bff", accent3: "#ff6bd6", wallpaper: "assets/images/wallpaper.jpg", wallpaperMobile: "assets/images/wallpaper-mobile.jpg" },
 
   /* SOCIAL MEDIA — platform = icon name (instagram, tiktok, youtube,
      facebook, x, whatsapp, telegram, snapchat, linkedin, threads) */
@@ -40,8 +34,8 @@ window.SITE = {
     { platform: "tiktok",    name: "TikTok",    handle: "@iceupdate", followers: "Quick lessons",        url: "https://tiktok.com/",    avatar: "" },
     { platform: "youtube",   name: "YouTube",   handle: "Ice Update", followers: "Full classes",         url: "https://youtube.com/",   avatar: "" },
     { platform: "facebook",  name: "Facebook",  handle: "Ice Update", followers: "Community",            url: "https://facebook.com/",  avatar: "" },
-    { platform: "whatsapp",  name: "WhatsApp Channel", handle: "Ice Update", followers: "Instant updates", url: "https://whatsapp.com/channel/0029VbE7s6hDuMRfollXDG0P", avatar: "" },
-    { platform: "telegram",  name: "Telegram",  handle: "Ice Update", followers: "Class group",          url: "https://t.me/iceupdate100", avatar: "" }
+    { platform: "whatsapp",  name: "WhatsApp Channel", handle: "Ice Update", followers: "Instant updates", url: "https://whatsapp.com/channel/YOUR_CHANNEL_ID", avatar: "" },
+    { platform: "telegram",  name: "Telegram",  handle: "Ice Update", followers: "Class group",          url: "https://t.me/YOUR_TELEGRAM", avatar: "" }
   ],
 
   /* VIDEO LESSONS. url can be a link from YouTube, TikTok, Instagram
@@ -77,10 +71,10 @@ window.SITE = {
   /* BROKERS — put each logo in assets/brokers/ (png/svg/webp).
      link = your referral/signup link. */
   brokers: [
-    { name: "Broker 1", logo: "assets/brokers/broker1.png", url: "#", note: "Regulated broker" },
-    { name: "Broker 2", logo: "assets/brokers/broker2.png", url: "#", note: "Low spreads" },
-    { name: "Broker 3", logo: "assets/brokers/broker3.png", url: "#", note: "Beginner friendly" },
-    { name: "Broker 4", logo: "assets/brokers/broker4.png", url: "#", note: "Mobile trading" }
+    { name: "Alchemy Markets",   logo: "assets/brokers/alchemy-markets.png",   url: "#", note: "Online broker" },
+    { name: "Ambitious Fincorp", logo: "assets/brokers/ambitious-fincorp.png", url: "#", note: "Online broker" },
+    { name: "MH Markets",        logo: "assets/brokers/mh-markets.png",        url: "#", note: "Forex & CFD broker" },
+    { name: "CPT Markets",       logo: "assets/brokers/cpt-markets.png",       url: "#", note: "Online broker" }
   ],
 
   footerNote: "Educational content only. Not financial advice. Trading involves risk — you can lose money. Some broker links may be referral links."

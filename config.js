@@ -14,8 +14,8 @@ window.SITE = {
 
   /* Your channels (the big Join buttons). Paste your real links. */
   links: {
-    whatsapp: "https://whatsapp.com/channel/YOUR_CHANNEL_ID",
-    telegram: "https://t.me/YOUR_TELEGRAM"
+    whatsapp: "https://whatsapp.com/channel/0029VbE7s6hDuMRfollXDG0P",
+    telegram: "https://t.me/iceupdate100"
   },
 
   /* TRACKING — see README. Fill ONE or BOTH. Leave "" to switch off. */
@@ -34,8 +34,8 @@ window.SITE = {
     { platform: "tiktok",    name: "TikTok",    handle: "@iceupdate", followers: "Quick lessons",        url: "https://tiktok.com/",    avatar: "" },
     { platform: "youtube",   name: "YouTube",   handle: "Ice Update", followers: "Full classes",         url: "https://youtube.com/",   avatar: "" },
     { platform: "facebook",  name: "Facebook",  handle: "Ice Update", followers: "Community",            url: "https://facebook.com/",  avatar: "" },
-    { platform: "whatsapp",  name: "WhatsApp Channel", handle: "Ice Update", followers: "Instant updates", url: "https://whatsapp.com/channel/YOUR_CHANNEL_ID", avatar: "" },
-    { platform: "telegram",  name: "Telegram",  handle: "Ice Update", followers: "Class group",          url: "https://t.me/YOUR_TELEGRAM", avatar: "" }
+    { platform: "whatsapp",  name: "WhatsApp Channel", handle: "Ice Update", followers: "Instant updates", url: "https://whatsapp.com/channel/0029VbE7s6hDuMRfollXDG0P", avatar: "" },
+    { platform: "telegram",  name: "Telegram",  handle: "Ice Update", followers: "Class group",          url: "https://t.me/iceupdate100", avatar: "" }
   ],
 
   /* VIDEO LESSONS. url can be a link from YouTube, TikTok, Instagram

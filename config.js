@@ -24,8 +24,14 @@ window.SITE = {
     ga4: ""            // e.g. "G-XXXXXXXXXX" (from Google Analytics)
   },
 
-  /* Look. wallpaper = your background image (phone version used on small screens). Set "" for the animated aurora instead. */
-  theme: { accent1: "#4de1ff", accent2: "#8b7bff", accent3: "#ff6bd6", wallpaper: "assets/images/wallpaper.jpg", wallpaperMobile: "assets/images/wallpaper-mobile.jpg" },
+  /* Wallpaper files are in the repo root, not inside assets/. */
+  theme: {
+    accent1: "#4de1ff",
+    accent2: "#8b7bff",
+    accent3: "#ff6bd6",
+    wallpaper: "IceUpdate-Mono-Desktop-2560x1440.jpg",
+    wallpaperMobile: "IceUpdate-Mono-Phone-1080x1920.jpg"
+  },
 
   /* SOCIAL MEDIA — platform = icon name (instagram, tiktok, youtube,
      facebook, x, whatsapp, telegram, snapchat, linkedin, threads) */
@@ -68,13 +74,12 @@ window.SITE = {
     // { src: "assets/images/chart1.jpg", caption: "Hammer at support" },
   ],
 
-  /* BROKERS — put each logo in assets/brokers/ (png/svg/webp).
-     link = your referral/signup link. */
+  /* BROKERS — files are in the repo root, not inside assets/. */
   brokers: [
-    { name: "Alchemy Markets",   logo: "assets/brokers/alchemy-markets.png",   url: "#", note: "Online broker" },
-    { name: "Ambitious Fincorp", logo: "assets/brokers/ambitious-fincorp.png", url: "#", note: "Online broker" },
-    { name: "MH Markets",        logo: "assets/brokers/mh-markets.png",        url: "#", note: "Forex & CFD broker" },
-    { name: "CPT Markets",       logo: "assets/brokers/cpt-markets.png",       url: "#", note: "Online broker" }
+    { name: "MH Markets",        logo: "mh-markets.png",        url: "#", note: "Forex & CFD broker" },
+    { name: "Alchemy Markets",   logo: "alchemy-markets.png",   url: "#", note: "Online broker" },
+    { name: "Ambitious Fincorp", logo: "ambitious-fincorp.png", url: "#", note: "Online broker" },
+    { name: "CPT Markets",       logo: "cpt-markets.png",       url: "#", note: "Online broker" }
   ],
 
   footerNote: "Educational content only. Not financial advice. Trading involves risk — you can lose money. Some broker links may be referral links."

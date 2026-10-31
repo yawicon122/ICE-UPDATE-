@@ -24,7 +24,7 @@ window.SITE = {
     ga4: ""            // e.g. "G-XXXXXXXXXX" (from Google Analytics)
   },
 
-  /* Wallpaper files are in the repo root, not inside assets/. */
+  /* Wallpaper and broker files are uploaded in the repo root. */
   theme: {
     accent1: "#4de1ff",
     accent2: "#8b7bff",
@@ -33,8 +33,6 @@ window.SITE = {
     wallpaperMobile: "IceUpdate-Mono-Phone-1080x1920.jpg"
   },
 
-  /* SOCIAL MEDIA — platform = icon name (instagram, tiktok, youtube,
-     facebook, x, whatsapp, telegram, snapchat, linkedin, threads) */
   socials: [
     { platform: "instagram", name: "Instagram", handle: "@iceupdate", followers: "Daily charts & reels", url: "https://instagram.com/", avatar: "" },
     { platform: "tiktok",    name: "TikTok",    handle: "@iceupdate", followers: "Quick lessons",        url: "https://tiktok.com/",    avatar: "" },
@@ -44,37 +42,19 @@ window.SITE = {
     { platform: "telegram",  name: "Telegram",  handle: "Ice Update", followers: "Class group",          url: "https://t.me/YOUR_TELEGRAM", avatar: "" }
   ],
 
-  /* VIDEO LESSONS. url can be a link from YouTube, TikTok, Instagram
-     (post/reel), Facebook, Vimeo — or your own file like
-     "assets/videos/hammer.mp4". The video plays on your site in a pop-up.
-     thumb is optional (a picture for the card; TikTok/Instagram/Facebook
-     show their logo if you leave it empty). Posts must be PUBLIC.
-     TikTok: use the full link  https://www.tiktok.com/@name/video/123...
-     (short vm.tiktok.com links open TikTok instead of playing here). */
   videos: [
     // { title: "Hammer candlestick", desc: "Lesson 1", category: "Candlesticks",
     //   url: "https://www.youtube.com/watch?v=XXXXXXXXXXX", thumb: "" },
-    // { title: "TikTok lesson", desc: "Doji", category: "Candlesticks",
-    //   url: "https://www.tiktok.com/@iceupdate/video/7300000000000000000", thumb: "" },
-    // { title: "Reel lesson", desc: "Engulfing", category: "Candlesticks",
-    //   url: "https://www.instagram.com/reel/ABCDEFGHIJK/", thumb: "" },
-    // { title: "Facebook lesson", desc: "Harami", category: "Candlesticks",
-    //   url: "https://www.facebook.com/yourpage/videos/123456789/", thumb: "" },
-    // { title: "Support & Resistance", desc: "Lesson 2", category: "Price action",
-    //   url: "assets/videos/support-resistance.mp4", thumb: "assets/images/sr.jpg" },
   ],
 
-  /* PDF DOWNLOADS. file = path inside assets/pdfs/ (or any URL) */
   pdfs: [
     // { title: "15 Candlestick Patterns", desc: "Beginner cheat sheet", file: "assets/pdfs/candlesticks.pdf", size: "2 MB" },
   ],
 
-  /* PICTURE GALLERY */
   gallery: [
     // { src: "assets/images/chart1.jpg", caption: "Hammer at support" },
   ],
 
-  /* BROKERS — files are in the repo root, not inside assets/. */
   brokers: [
     { name: "MH Markets",        logo: "mh-markets.png",        url: "#", note: "Online broker" },
     { name: "Alchemy Markets",   logo: "alchemy-markets.png",   url: "#", note: "Online broker" },

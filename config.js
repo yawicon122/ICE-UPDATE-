@@ -29,8 +29,8 @@ window.SITE = {
     accent1: "#4de1ff",
     accent2: "#8b7bff",
     accent3: "#ff6bd6",
-    wallpaper: "assets/images/spartan-wallpaper.jpg",
-    wallpaperMobile: "assets/images/spartan-wallpaper-mobile.jpg"
+    wallpaper: "spartan-wallpaper.jpg",
+    wallpaperMobile: "spartan-wallpaper-mobile.jpg"
   },
 
   /* SOCIAL MEDIA — platform = icon name (instagram, tiktok, youtube,

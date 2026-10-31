@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Ice Update — Learn Trading, Step by Step</title>
+<meta name="description" content="Free trading classes: video lessons, PDFs and charts. Join the Ice Update WhatsApp and Telegram channels.">
+<meta name="theme-color" content="#060a1c">
+<meta property="og:title" content="Ice Update — Learn Trading, Step by Step">
+<meta property="og:description" content="Free video lessons, PDFs and charts for beginners.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="wallpaper" aria-hidden="true">
+  <div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div><div class="blob b4"></div>
+  <canvas id="stars"></canvas>
+  <div class="grain"></div>
+</div>
+
+<header class="nav glass" id="nav">
+  <a class="logo" href="#top" data-track="nav-logo"><span class="logo-mark">❄</span><b id="brandName">Ice Update</b></a>
+  <nav>
+    <a href="#join">Join</a><a href="#lessons">Lessons</a><a href="#downloads">PDFs</a><a href="#gallery">Gallery</a><a href="#brokers">Brokers</a><a href="#social">Social</a>
+  </nav>
+</header>
+
+<main id="top">
+  <section class="hero">
+    <div class="hero-text">
+      <span class="chip glass" id="heroBadge"></span>
+      <h1 id="heroTitle"></h1>
+      <p id="heroSub"></p>
+      <div class="cta">
+        <a class="btn wa" id="ctaWa" target="_blank" rel="noopener" data-track="join-whatsapp-hero">Join WhatsApp Channel</a>
+        <a class="btn tg" id="ctaTg" target="_blank" rel="noopener" data-track="join-telegram-hero">Join Telegram</a>
+      </div>
+      <div class="stats glass">
+        <div><b id="stVideos">0</b><span>Video lessons</span></div>
+        <div><b id="stPdfs">0</b><span>PDF guides</span></div>
+        <div><b id="stBrokers">0</b><span>Brokers</span></div>
+      </div>
+    </div>
+    <div class="hero-art" aria-hidden="true">
+      <div class="orb-card glass tilt"><div class="mini-chart" id="miniChart"></div><small>Live-style demo chart</small></div>
+      <div class="orb o1"></div><div class="orb o2"></div>
+    </div>
+  </section>
+
+  <section id="join" class="section">
+    <h2>Join the community</h2>
+    <div class="join-grid">
+      <a class="join-card glass tilt wa" id="joinWa" target="_blank" rel="noopener" data-track="join-whatsapp-card">
+        <img src="https://cdn.simpleicons.org/whatsapp/white" alt="" width="54" height="54"><h3>WhatsApp Channel</h3><p>Instant updates, signals-style lessons and announcements.</p><span class="go">Join now →</span>
+      </a>
+      <a class="join-card glass tilt tg" id="joinTg" target="_blank" rel="noopener" data-track="join-telegram-card">
+        <img src="https://cdn.simpleicons.org/telegram/white" alt="" width="54" height="54"><h3>Telegram</h3><p>Class group, Q&amp;A and resources for students.</p><span class="go">Join now →</span>
+      </a>
+    </div>
+  </section>
+
+  <section id="lessons" class="section">
+    <h2>Video lessons</h2>
+    <div class="filters" id="vidFilters"></div>
+    <div class="grid videos" id="videoGrid"></div>
+  </section>
+
+  <section id="downloads" class="section">
+    <h2>PDF downloads</h2>
+    <div class="grid pdfs" id="pdfGrid"></div>
+  </section>
+
+  <section id="gallery" class="section">
+    <h2>Chart gallery</h2>
+    <div class="masonry" id="galGrid"></div>
+  </section>
+
+  <section id="brokers" class="section">
+    <h2>Brokers we use</h2>
+    <p class="sub">Tap a logo to open the broker.</p>
+    <div class="brokers" id="brokerGrid"></div>
+  </section>
+
+  <section id="social" class="section">
+    <h2>Follow Ice Update everywhere</h2>
+    <div class="grid socials" id="socialGrid"></div>
+  </section>
+</main>
+
+<footer class="glass foot">
+  <b id="fBrand"></b>
+  <p id="fNote"></p>
+  <small>© <span id="yr"></span> — All rights reserved.</small>
+</footer>
+
+<div class="modal" id="modal" hidden>
+  <div class="modal-box glass">
+    <button class="x" id="modalX" aria-label="Close">✕</button>
+    <div id="modalBody"></div>
+    <h3 id="modalTitle"></h3><p id="modalDesc"></p>
+  </div>
+</div>
+<div class="lightbox" id="lightbox" hidden><img alt=""><p></p><button class="x" aria-label="Close">✕</button></div>
+
+<script src="config.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

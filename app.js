@@ -1,8 +1,13 @@
 (() => {
 const S = window.SITE || {};
 const $ = (s, r = document) => r.querySelector(s);
-const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
-const safeUrl = u => /^(https?:|assets\/|\.\/|#|\/|mailto:)/i.test(u || "") ? u : "#";
+const esc = s => String(s ?? "").replace(/[&<>\"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;" }[c]));
+const safeUrl = u => {
+  if (!u) return "#";
+  return /^(https?:|assets\/|\.\/|#|\/|mailto:)/i.test(u) || /^(?:[A-Za-z0-9_./\\-]+\.(?:png|jpe?g|gif|svg|webp|mp4|webm|mov|pdf))$/i.test(u)
+    ? u
+    : "#";
+};
 
 const fine = matchMedia("(hover:hover) and (pointer:fine)").matches;
 /* ---------- theme ---------- */
@@ -65,7 +70,7 @@ function embedOf(u){
   const v = vimeoId(u); if (v) return { type: "iframe", src: `https://player.vimeo.com/video/${v}?autoplay=1` };
   const tt = u.match(/tiktok\.com\/.*\/video\/(\d+)/); if (tt) return { type: "iframe", src: `https://www.tiktok.com/embed/v2/${tt[1]}`, vertical: true, platform: "tiktok" };
   const ig = u.match(/instagram\.com\/(?:[\w.]+\/)?(p|reel|reels|tv)\/([\w-]+)/); if (ig) return { type: "iframe", src: `https://www.instagram.com/${ig[1] === "reels" ? "reel" : ig[1]}/${ig[2]}/embed`, vertical: true, platform: "instagram" };
-  if (/facebook\.com|fb\.watch/i.test(u)) return { type: "iframe", src: `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(u)}&show_text=false&autoplay=true`, vertical: /\/reel\//.test(u), platform: "facebook" };
+  if (/facebook\.com|fb\.watch/i.test(u)) return { type: "iframe", src: `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(u)}&show_text=false&autoplay=true`, vertical: /\/reel\//i.test(u) };
   if (/\.(mp4|webm|mov)(\?|$)/i.test(u)) return { type: "video", src: u };
   return { type: "link", src: u };
 }
@@ -77,7 +82,7 @@ function drawVideos(cat = "All") {
   list.forEach(v => {
     const e = embedOf(v.url || ""), th = v.thumb || e.thumb;
     const c = document.createElement("article"); c.className = "vcard glass tilt reveal";
-    c.innerHTML = `<div class="thumb">${th ? `<img loading="lazy" src="${esc(safeUrl(th))}" alt="">` : (e.type === "video" ? `<video preload="metadata" muted src="${esc(safeUrl(e.src))}#t=0.5"></video>` : (e.platform ? `<img class="pi" src="https://cdn.simpleicons.org/${e.platform}/white" alt="" onerror="this.remove()">` : ""))}
+    c.innerHTML = `<div class="thumb">${th ? `<img loading="lazy" src="${esc(safeUrl(th))}" alt="">` : (e.type === "video" ? `<video preload="metadata" muted src="${esc(safeUrl(e.src))}#t=0.5"></video>` : `<div class="play">▶</div>`) }
       ${v.category ? `<span class="tag">${esc(v.category)}</span>` : ""}<div class="play">▶</div></div>
       <h3>${esc(v.title)}</h3><p>${esc(v.desc)}</p>`;
     c.onclick = () => openVideo(v, e); vGrid.appendChild(c);
@@ -86,7 +91,7 @@ function drawVideos(cat = "All") {
 }
 if (vids.length) {
   const cats = ["All", ...new Set(vids.map(v => v.category).filter(Boolean))];
-  if (cats.length > 2) cats.forEach((c, i) => { const b = document.createElement("button"); b.textContent = c; if (!i) b.className = "on"; b.onclick = () => { vF.querySelectorAll("button").forEach(x => x.classList.remove("on")); b.classList.add("on"); drawVideos(c); }; vF.appendChild(b); });
+  if (cats.length > 2) cats.forEach((c, i) => { const b = document.createElement("button"); b.textContent = c; if (!i) b.className = "on"; b.onclick = () => { vF.querySelectorAll("button").forEach(btn => btn.classList.toggle("on", btn === b)); drawVideos(c); }; vF.appendChild(b); });
 }
 drawVideos();
 const modal = $("#modal");
@@ -123,8 +128,8 @@ lb.onclick = () => lb.hidden = true;
 /* ---------- brokers ---------- */
 const bg = $("#brokerGrid");
 (S.brokers || []).forEach((b, i) => {
-  const a = document.createElement("a"); a.className = "broker reveal"; a.href = safeUrl(b.url); a.target = "_blank"; a.rel = "noopener sponsored"; a.style.setProperty("--d", (i * -1.1) + "s"); a.dataset.track = "broker-" + b.name;
-  a.innerHTML = `<div class="tile glass tilt"><img alt="${esc(b.name)}" src="${esc(safeUrl(b.logo))}"><div class="fallback" style="display:none">${esc((b.name || "?").slice(0, 2))}</div></div><span>${esc(b.name)}</span><small>${esc(b.note)}</small>`;
+  const a = document.createElement("a"); a.className = "broker reveal"; a.href = safeUrl(b.url); a.target = "_blank"; a.rel = "noopener sponsored"; a.style.setProperty("--d", (i * -1.1) + "s"); a.dataset.track = "broker-" + (b.name || "");
+  a.innerHTML = `<div class="tile glass tilt"><img alt="${esc(b.name)}" src="${esc(safeUrl(b.logo))}"><div class="fallback" style="display:none">${esc((b.name || "?").slice(0, 2))}</div></div><span>${esc(b.name)}</span><small>${esc(b.note || "")}</small>`;
   const im = $("img", a); im.onerror = () => { im.style.display = "none"; $(".fallback", a).style.display = "block"; };
   bg.appendChild(a);
 });
@@ -149,7 +154,7 @@ function hookFx(root = document) {
   });
   if (fine) root.querySelectorAll(".tilt").forEach(el => {
     if (el._tilt) return; el._tilt = 1;
-    el.addEventListener("pointermove", e => { const b = el.getBoundingClientRect(), x = (e.clientX - b.left) / b.width - .5, y = (e.clientY - b.top) / b.height - .5; el.style.transform = `perspective(800px) rotateY(${x * 10}deg) rotateX(${-y * 10}deg) translateZ(0) scale(1.02)`; });
+    el.addEventListener("pointermove", e => { const b = el.getBoundingClientRect(), x = (e.clientX - b.left) / b.width - .5, y = (e.clientY - b.top) / b.height - .5; el.style.transform = `perspective(900px) rotateX(${(-y * 12).toFixed(2)}deg) rotateY(${(x * 14).toFixed(2)}deg) translateY(-2px)`; });
     el.addEventListener("pointerleave", () => el.style.transform = "");
   });
   const io = new IntersectionObserver(es => es.forEach(en => { if (en.isIntersecting) { en.target.classList.add("in"); io.unobserve(en.target); } }), { threshold: .08 });
@@ -161,11 +166,11 @@ addEventListener("keydown", e => { if (e.key === "Escape") { closeModal(); lb.hi
 
 /* ---------- starfield ---------- */
 const cv = $("#stars"), cx = cv.getContext("2d"); let W, H, pts = [];
-function size(){ W = cv.width = innerWidth; H = cv.height = innerHeight; pts = Array.from({ length: Math.min(110, W / 12) }, () => ({ x: Math.random() * W, y: Math.random() * H, r: Math.random() * 1.6 + .3, s: Math.random() * .25 + .05, a: Math.random() })); }
+function size(){ W = cv.width = innerWidth; H = cv.height = innerHeight; pts = Array.from({ length: Math.min(110, W / 12) }, () => ({ x: Math.random() * W, y: Math.random() * H, r: Math.random() * 1.8 + 1, s: Math.random() * 1.2 + .3, a: Math.random() * Math.PI * 2 })); }
 size(); addEventListener("resize", size);
 if (!matchMedia("(prefers-reduced-motion:reduce)").matches) (function loop(t){
   cx.clearRect(0, 0, W, H);
-  for (const q of pts) { q.y -= q.s; if (q.y < -5) { q.y = H + 5; q.x = Math.random() * W; } cx.globalAlpha = .35 + .5 * Math.abs(Math.sin(t / 1400 + q.a * 6)); cx.fillStyle = "#fff"; cx.beginPath(); cx.arc(q.x, q.y, q.r, 0, 6.3); cx.fill(); }
+  for (const q of pts) { q.y -= q.s; if (q.y < -5) { q.y = H + 5; q.x = Math.random() * W; } cx.globalAlpha = .35 + .5 * Math.abs(Math.sin(t / 1400 + q.a * 6)); cx.fillStyle = "#fff"; cx.beginPath(); cx.arc(q.x, q.y, q.r, 0, Math.PI * 2); cx.fill(); }
   requestAnimationFrame(loop);
 })(0);
 })();

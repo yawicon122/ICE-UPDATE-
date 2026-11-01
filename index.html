@@ -59,7 +59,7 @@
           <p>Free classes for everyone with simple, practical trading lessons.</p>
         </div>
       </article>
-      <article class="resource-card glass">
+      <article class="resource-card glass forex-signals-card" tabindex="0" role="button" aria-label="Open Forex Signals video" data-track="forex-signals-card">
         <span class="resource-icon">📈</span>
         <div>
           <h3>Forex Signals</h3>
@@ -130,6 +130,21 @@
   </div>
 </div>
 <div class="lightbox" id="lightbox" hidden><img alt=""><p></p><button class="x" aria-label="Close">✕</button></div>
+
+<div class="signal-popup" id="signalPopup" hidden aria-hidden="true">
+  <div class="signal-popup__backdrop" aria-hidden="true"></div>
+  <div class="signal-popup__panel" role="dialog" aria-modal="true" aria-labelledby="signalPopupTitle">
+    <button class="signal-popup__close" type="button" aria-label="Close video popup">✕</button>
+    <div class="signal-popup__video-shell">
+      <video id="signalVideo" playsinline preload="metadata" controls controlsList="nodownload noplaybackrate" aria-label="Forex Signals video"></video>
+      <button class="signal-popup__skip" id="signalSkip" type="button" hidden>Skip</button>
+      <div class="signal-popup__action-bar" id="signalActionBar" aria-live="polite">
+        <a id="signalJoin" class="signal-popup__action signal-popup__join" href="#" target="_blank" rel="noopener">Join the Group</a>
+        <a id="signalBroker" class="signal-popup__action signal-popup__broker" href="#" target="_blank" rel="noopener">Register for a Broker &amp; Begin</a>
+      </div>
+    </div>
+  </div>
+</div>
 
 <script src="app.js"></script>
 </body>

@@ -37,7 +37,7 @@ window.SITE = {
     { platform: "instagram", name: "Instagram", handle: "@nanayawasmahannan", followers: "Daily reels & lifestyle", url: "https://www.instagram.com/nanayawasmahannan/", avatar: "" },
     { platform: "tiktok",    name: "TikTok",    handle: "@nana.yaw.asmah.an", followers: "Short-form videos", url: "https://www.tiktok.com/@nana.yaw.asmah.an", avatar: "" },
     { platform: "youtube",   name: "YouTube",   handle: "@nanayawasmahannan", followers: "Videos & tutorials", url: "https://www.youtube.com/@nanayawasmahannan", avatar: "" },
-    { platform: "facebook",  name: "Facebook",  handle: "Nana Yaw Asmahannan", followers: "Community updates", url: "https://www.facebook.com/share/1eyhVAFT64/", avatar: "" },
+    { platform: "facebook",  name: "Facebook",  handle: "Nana Yaw Asmahannan", followers: "Community updates", url: "https://www.facebook.com/profile.php?id=61595902044097", avatar: "" },
     { platform: "whatsapp",  name: "WhatsApp Channel", handle: "Ice Update", followers: "Instant updates", url: "https://whatsapp.com/channel/0029VbE7s6hDuMRfollXDG0P", avatar: "" },
     { platform: "telegram",  name: "Telegram",  handle: "@iceupdate100", followers: "Class group", url: "https://t.me/iceupdate100", avatar: "" }
   ],

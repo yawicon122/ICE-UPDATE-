@@ -52,7 +52,7 @@ window.SITE = {
   ],
 
   gallery: [
-    { src: "a39e0c2cf1b85e1c798876f4526ac48f.jpg", caption: "Gold (XAUUSD) M1 – price falling, sell entries" },
+    { src: "https://raw.githubusercontent.com/yawicon122/ICE-UPDATE-/main/a39e0c2cf1b85e1c798876f4526ac48f.jpg", caption: "Gold (XAUUSD) M1 – price falling, sell entries" },
     // { src: "assets/images/chart1.jpg", caption: "Hammer at support" },
   ],
 

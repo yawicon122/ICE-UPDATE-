@@ -7,7 +7,7 @@ window.SITE = {
   brand: "Ice Update",
   tagline: "Trading • Online income • Tech updates",
   hero: {
-    badge: "Free classes for beginners",
+    badge: "Free classes for everyone",
     title: "Learn to read the market.",
     subtitle: "Simple video lessons, PDFs and charts that teach you candlesticks, support & resistance and smart risk — step by step."
   },
@@ -63,5 +63,5 @@ window.SITE = {
     { name: "CPT Markets",       logo: "cpt-markets.png",       url: "https://portal.cptmarkets.com/user/register?inviteid=jTc85GWUB-MT4&inviteType=1", note: "IB referral link" }
   ],
 
-  footerNote: "Empowering your trading journey. We provide high-probability trading signals and comprehensive educational content designed to help you navigate the markets with confidence. To ensure your peace of mind, the brokers featured here are fully trusted and properly licensed to protect your funds. While trading carries inherent risk, our focus is on giving you the right strategy and tools to manage it effectively."
+  footerNote: "Empowering your trading journey. We provide high-probability trading signals and comprehensive educational content designed to help you navigate the markets with confidence. To ensure a positive experience, we prioritize clear learning, disciplined risk management, and practical strategies for every trader.",
 };

@@ -39,6 +39,13 @@ h2{font-size:clamp(2rem,4vw,2.9rem);font-weight:800;margin-bottom:18px;letter-sp
 .reveal{opacity:0;transform:translateY(28px);transition:opacity .8s,transform .8s cubic-bezier(.2,.7,.2,1)}
 .reveal.in{opacity:1;transform:none}
 
+.resource-rail{padding-top:8px;padding-bottom:0}
+.resource-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-top:12px}
+.resource-card{display:flex;align-items:flex-start;gap:14px;padding:20px 18px;border:1px solid rgba(255,255,255,.12);border-radius:22px;min-height:150px}
+.resource-icon{display:grid;place-items:center;width:52px;height:52px;border-radius:16px;background:linear-gradient(135deg,var(--a1),var(--a2));font-size:1.5rem;box-shadow:0 12px 24px rgba(88,160,255,.25)}
+.resource-card h3{font-size:1.08rem;margin-bottom:8px}
+.resource-card p{font-size:.9rem;color:rgba(244,247,255,.82);line-height:1.6}
+
 .hero{min-height:100vh;display:grid;grid-template-columns:1.1fr .9fr;gap:30px;align-items:center;padding:120px 0 40px}
 .chip{display:inline-block;padding:8px 16px;border-radius:999px;font-size:.85rem;margin-bottom:18px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);color:#eaf7ff;font-weight:700}
 .hero h1{font-size:clamp(2.5rem,6.5vw,4.8rem);line-height:1.02;font-weight:800;letter-spacing:-.04em;margin-bottom:16px;background:linear-gradient(120deg,#fff 18%,var(--a1) 55%,var(--a3));-webkit-background-clip:text;background-clip:text;color:transparent}
@@ -133,6 +140,7 @@ h2{font-size:clamp(2rem,4vw,2.9rem);font-weight:800;margin-bottom:18px;letter-sp
 
 @media(max-width:760px){
   .section{padding-top:30px}
+  .resource-grid{grid-template-columns:1fr}
   .join-card{padding:20px 18px}
   .videos,.pdfs,.socials{grid-template-columns:1fr}
   .scard{padding:18px}

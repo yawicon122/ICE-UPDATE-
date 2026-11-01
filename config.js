@@ -52,6 +52,7 @@ window.SITE = {
   ],
 
   gallery: [
+    { src: "gold-sell-chart.jpg", caption: "Gold (XAUUSD) M1 – price falling, sell entries" },
     // { src: "assets/images/chart1.jpg", caption: "Hammer at support" },
   ],
 

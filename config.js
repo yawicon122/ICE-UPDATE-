@@ -63,5 +63,5 @@ window.SITE = {
     { name: "CPT Markets",       logo: "cpt-markets.png",       url: "https://portal.cptmarkets.com/user/register?inviteid=jTc85GWUB-MT4&inviteType=1", note: "IB referral link" }
   ],
 
-  footerNote: "Educational content only. Not financial advice. Trading involves risk — you can lose money. Some broker links may be referral links."
+  footerNote: "Empowering your trading journey. We provide high-probability trading signals and comprehensive educational content designed to help you navigate the markets with confidence. To ensure your peace of mind, the brokers featured here are fully trusted and properly licensed to protect your funds. While trading carries inherent risk, our focus is on giving you the right strategy and tools to manage it effectively."
 };

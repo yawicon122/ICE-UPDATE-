@@ -4,9 +4,9 @@ const $ = (s, r = document) => r.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>\"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;" }[c]));
 const safeUrl = u => (!u || /^\s*(javascript|vbscript|data):/i.test(u)) ? "#" : u;
 
-const VIDEO_URL = "assets/videos/forex-signals.mp4";
-const JOIN_URL = S.links?.whatsapp || "https://whatsapp.com/channel/0029VbE7s6hDuMRfollXDG0P";
-const BROKER_URL = (S.brokers && S.brokers[0] && S.brokers[0].url) || "https://client.mhmarkets-asia.com/signup?partnerCode=A4CFMDIG";
+const VIDEO_URL = "ICE_UPDATES_ad_v2.mp4";
+const BROKER_URL = "https://REPLACE-WITH-MY-BROKER-LINK";
+const SKIP_AFTER = 5;
 
 /* Image finder: if a picture is not at the exact path written in config.js,
    look for the same file name in the usual folders (forgives upload mistakes). */
@@ -88,7 +88,7 @@ function embedOf(u){
   const y = ytId(u); if (y) return { type: "iframe", src: `https://www.youtube-nocookie.com/embed/${y}?autoplay=1&rel=0`, thumb: `https://img.youtube.com/vi/${y}/hqdefault.jpg` };
   const v = vimeoId(u); if (v) return { type: "iframe", src: `https://player.vimeo.com/video/${v}?autoplay=1` };
   const tt = u.match(/tiktok\.com\/.*\/video\/(\d+)/); if (tt) return { type: "iframe", src: `https://www.tiktok.com/embed/v2/${tt[1]}`, vertical: true, platform: "tiktok" };
-  const ig = u.match(/instagram\.com\/(?:[\w.]+\/)?(p|reel|reels|tv)\/([\w-]+)/); if (ig) return { type: "iframe", src: `https://www.instagram.com/${ig[1] === "reels" ? "reel" : ig[1]}/${ig[2]}/embed`, vertical: true };
+  const ig = u.match(/instagram\.com\/(?:[\w.]+\/)?(p|reel|reels|tv)\/([\w-]+)/); if (ig) return { type: "iframe", src: `https://www.instagram.com/${ig[1] === "reels" ? "reel" : ig[1]}/${ig[2]}/embed` };
   if (/facebook\.com|fb\.watch/i.test(u)) return { type: "iframe", src: `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(u)}&show_text=false&autoplay=true`, vertical: /\/reel\//i.test(u) };
   if (/\.(mp4|webm|mov)(\?|$)/i.test(u)) return { type: "video", src: u };
   return { type: "link", src: u };
@@ -101,19 +101,19 @@ function drawVideos(cat = "All") {
   list.forEach(v => {
     const e = embedOf(v.url || ""), th = v.thumb || e.thumb;
     const c = document.createElement("article"); c.className = "vcard glass tilt reveal";
-    c.innerHTML = `<div class="thumb">${th ? `<img loading="lazy" src="${esc(safeUrl(th))}" alt="">` : (e.type === "video" ? `<video preload="metadata" muted src="${esc(safeUrl(e.src))}#t=0.5"></video>` : `<div class="play">▶</div>`) }${v.category ? `<span class="tag">${esc(v.category)}</span>` : ""}${e.type !== "video" && !th ? "" : ""}<div class="play">▶</div></div><h3>${esc(v.title)}</h3><p>${esc(v.desc)}</p>`;
+    c.innerHTML = `<div class="thumb">${th ? `<img loading="lazy" src="${esc(safeUrl(th))}" alt="">` : (e.type === "video" ? `<video preload="metadata" muted src="${esc(safeUrl(e.src))}#t=0.5"></video>` : "<div class='play'>▶</div>")}${v.category ? `<span class="tag">${esc(v.category)}</span>` : ""}</div><h3>${esc(v.title || "Video")}</h3><p>${esc(v.desc || "")}</p>`;
     c.onclick = () => openVideo(v, e); vGrid.appendChild(c);
   });
   hookFx(vGrid);
 }
 if (vids.length) {
   const cats = ["All", ...new Set(vids.map(v => v.category).filter(Boolean))];
-  if (cats.length > 2) cats.forEach((c, i) => { const b = document.createElement("button"); b.textContent = c; if (!i) b.className = "on"; b.onclick = () => { vF.querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b)); drawVideos(c); }; vF.appendChild(b); });
+  if (cats.length > 2) cats.forEach((c, i) => { const b = document.createElement("button"); b.textContent = c; if (!i) b.className = "on"; b.onclick = () => { vF.querySelectorAll("button").forEach(el => el.classList.toggle("on", el === b)); drawVideos(c); }; vF.appendChild(b); });
 }
 drawVideos();
 const modal = $("#modal");
 function openVideo(v, e) {
-  track("video-" + (v.title || "")); 
+  track("video-" + (v.title || ""));
   if (e.type === "link") { window.open(safeUrl(e.src), "_blank", "noopener"); return; }
   $("#modalBody").innerHTML = e.type === "iframe"
     ? `<iframe src="${esc(e.src)}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>`
@@ -128,7 +128,7 @@ $("#modalX").onclick = closeModal; modal.addEventListener("click", e => { if (e.
 const pg = $("#pdfGrid");
 if (!(S.pdfs || []).length) pg.innerHTML = `<div class="glass empty">📄 PDF guides are coming soon.</div>`;
 (S.pdfs || []).forEach(f => {
-  const a = document.createElement("a"); a.className = "pcard glass tilt reveal"; a.href = safeUrl(f.file); a.setAttribute("download", ""); a.target = "_blank"; a.rel = "noopener"; a.dataset.track = "pdf-" + (f.title || "download");
+  const a = document.createElement("a"); a.className = "pcard glass tilt reveal"; a.href = safeUrl(f.file); a.setAttribute("download", ""); a.target = "_blank"; a.rel = "noopener"; a.dataset.track = "pdf-" + (f.title || "");
   a.innerHTML = `<div class="pico">PDF</div><div><h3>${esc(f.title)}</h3><p>${esc(f.desc)}</p><div class="dl">⬇ Download ${f.size ? "· " + esc(f.size) : ""}</div></div>`; pg.appendChild(a);
 });
 
@@ -146,7 +146,7 @@ lb.onclick = () => lb.hidden = true;
 const bg = $("#brokerGrid");
 (S.brokers || []).forEach((b, i) => {
   const a = document.createElement("a"); a.className = "broker reveal"; a.href = safeUrl(b.url); a.target = "_blank"; a.rel = "noopener sponsored"; a.style.setProperty("--d", (i * -1.1) + "s"); a.dataset.track = "broker-" + (b.name || "");
-  a.innerHTML = `<div class="tile glass tilt"><img alt="${esc(b.name)}" style="display:none"><div class="fallback">${esc((b.name || "?").slice(0, 2))}</div></div><span>${esc(b.name)}</span><small>${esc(b.note || "")}</small>`;
+  a.innerHTML = `<div class="tile glass tilt"><img alt="${esc(b.name)}" style="display:none"><div class="fallback">${esc((b.name || "?").slice(0, 2))}</div></div><span>${esc(b.name)}</span><small>${esc(b.desc || "")}</small>`;
   const im = $("img", a), fb = $(".fallback", a);
   loadImg(b.logo, url => { im.src = url; im.style.display = "block"; fb.style.display = "none"; });
   bg.appendChild(a);
@@ -156,7 +156,7 @@ const bg = $("#brokerGrid");
 const sg = $("#socialGrid");
 (S.socials || []).forEach(s => {
   const a = document.createElement("a"); a.className = "scard glass tilt reveal"; a.href = safeUrl(s.url); a.target = "_blank"; a.rel = "noopener"; a.dataset.track = "social-" + s.platform;
-  a.innerHTML = `<div class="av"><div>${s.avatar ? `<img class="pic" src="${esc(safeUrl(s.avatar))}" alt="">` : `<img class="ph" src="https://cdn.simpleicons.org/${esc(s.platform)}/white" alt="">`}</div></div><div><h3>${esc(s.name)}</h3><p>${esc(s.handle)}${s.followers ? " · " + esc(s.followers) : ""}</p></div><span class="follow">Follow</span>`;
+  a.innerHTML = `<div class="av"><div>${s.avatar ? `<img class="pic" src="${esc(safeUrl(s.avatar))}" alt="">` : `<img class="ph" src="https://cdn.simpleicons.org/${esc(s.platform)}/white" alt="">`}</div></div><div><h3>${esc(s.name || "")}</h3><p>${esc(s.handle || "")}</p><div class="follow">${esc(s.followers || "Follow")}</div></div>`;
   const pic = a.querySelector("img.pic"); if (pic) { const orig = s.avatar; pic.removeAttribute("src"); loadImg(orig, u => pic.src = u, () => { pic.style.display = "none"; }); }
   const ph = a.querySelector("img.ph");
   if (ph) ph.onerror = () => { ph.replaceWith(Object.assign(document.createElement("b"), { textContent: (s.name || "?").slice(0, 1), style: "font:800 1.5rem Sora" })); };
@@ -165,75 +165,58 @@ const sg = $("#socialGrid");
 document.querySelectorAll(".join-card img").forEach(i => i.onerror = () => { i.style.display = "none"; });
 
 /* ---------- signals popup ---------- */
-const signalCard = document.querySelector(".forex-signals-card");
-const signalPopup = document.getElementById("signalPopup");
-const signalVideo = document.getElementById("signalVideo");
-const signalSkip = document.getElementById("signalSkip");
-const signalActionBar = document.getElementById("signalActionBar");
-const signalJoin = document.getElementById("signalJoin");
-const signalBroker = document.getElementById("signalBroker");
-const signalClose = document.querySelector(".signal-popup__close");
+const card = document.getElementById("forex-card");
+const popup = document.getElementById("ice-popup");
+const video = document.getElementById("ice-video");
+const skip = document.getElementById("ice-skip");
+const cta = document.getElementById("ice-cta");
+const close = document.getElementById("ice-close");
+if (card && popup && video) {
+  document.getElementById("ice-broker").href = BROKER_URL;
 
-function openSignalPopup() {
-  if (!signalPopup || !signalVideo) return;
-  signalJoin.href = JOIN_URL;
-  signalBroker.href = BROKER_URL;
-  signalVideo.src = VIDEO_URL;
-  signalVideo.currentTime = 0;
-  signalVideo.controls = true;
-  signalSkip.hidden = true;
-  signalActionBar.classList.remove("is-visible");
-  signalPopup.hidden = false;
-  signalPopup.setAttribute("aria-hidden", "false");
-  document.body.style.overflow = "hidden";
-  signalVideo.play().catch(() => {});
-}
-function closeSignalPopup() {
-  if (!signalPopup || !signalVideo) return;
-  signalVideo.pause();
-  signalVideo.removeAttribute("src");
-  signalVideo.load();
-  signalSkip.hidden = true;
-  signalActionBar.classList.remove("is-visible");
-  signalPopup.hidden = true;
-  signalPopup.setAttribute("aria-hidden", "true");
-  document.body.style.overflow = "";
-}
-function showSignalActions() {
-  if (!signalVideo || !signalActionBar) return;
-  signalVideo.pause();
-  signalVideo.controls = false;
-  signalActionBar.classList.add("is-visible");
-}
-if (signalCard) {
-  signalCard.addEventListener("click", () => {
-    track("forex-signals-video");
-    openSignalPopup();
+  function openPopup() {
+    cta.hidden = true;
+    skip.hidden = true;
+    if (!video.getAttribute("src")) video.src = VIDEO_URL;
+    video.currentTime = 0;
+    popup.classList.add("open");
+    popup.setAttribute("aria-hidden", "false");
+    document.body.style.overflow = "hidden";
+    video.play().catch(function () {});
+  }
+
+  function closePopup() {
+    video.pause();
+    video.currentTime = 0;
+    popup.classList.remove("open");
+    popup.setAttribute("aria-hidden", "true");
+    document.body.style.overflow = "";
+  }
+
+  function showButton() {
+    video.pause();
+    skip.hidden = true;
+    cta.hidden = false;
+  }
+
+  card.addEventListener("click", openPopup);
+  card.addEventListener("keydown", function (e) {
+    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openPopup(); }
   });
-  signalCard.addEventListener("keydown", event => {
-    if (event.key === "Enter" || event.key === " ") {
-      event.preventDefault();
-      track("forex-signals-video");
-      openSignalPopup();
-    }
+  video.addEventListener("timeupdate", function () {
+    if (video.currentTime >= SKIP_AFTER && cta.hidden) skip.hidden = false;
+  });
+  video.addEventListener("ended", showButton);
+  video.addEventListener("click", function () {
+    if (!cta.hidden) return;
+    video.paused ? video.play() : video.pause();
+  });
+  skip.addEventListener("click", showButton);
+  close.addEventListener("click", closePopup);
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape" && popup.classList.contains("open")) closePopup();
   });
 }
-if (signalVideo) {
-  signalVideo.addEventListener("timeupdate", () => {
-    if (signalVideo.currentTime >= 5 && signalActionBar && !signalActionBar.classList.contains("is-visible") && !signalVideo.paused) {
-      signalSkip.hidden = false;
-    }
-  });
-  signalVideo.addEventListener("ended", showSignalActions);
-}
-if (signalSkip) signalSkip.addEventListener("click", () => {
-  signalSkip.hidden = true;
-  showSignalActions();
-});
-if (signalClose) signalClose.addEventListener("click", closeSignalPopup);
-if (signalPopup) signalPopup.addEventListener("click", event => {
-  if (event.target === signalPopup || event.target.classList.contains("signal-popup__backdrop")) closeSignalPopup();
-});
 
 /* ---------- effects: glass light + 3D tilt + reveal ---------- */
 function hookFx(root = document) {
@@ -244,7 +227,7 @@ function hookFx(root = document) {
   });
   if (fine) root.querySelectorAll(".tilt").forEach(el => {
     if (el._tilt) return; el._tilt = 1;
-    el.addEventListener("pointermove", e => { const b = el.getBoundingClientRect(), x = (e.clientX - b.left) / b.width - .5, y = (e.clientY - b.top) / b.height - .5; el.style.transform = `perspective(960px) rotateX(${(-y * 10).toFixed(2)}deg) rotateY(${(x * 14).toFixed(2)}deg) translateY(-2px)`; });
+    el.addEventListener("pointermove", e => { const b = el.getBoundingClientRect(), x = (e.clientX - b.left) / b.width - .5, y = (e.clientY - b.top) / b.height - .5; el.style.transform = `perspective(1000px) rotateX(${(-y * 8).toFixed(2)}deg) rotateY(${(x * 10).toFixed(2)}deg) translateY(-2px)`; });
     el.addEventListener("pointerleave", () => el.style.transform = "");
   });
   const io = new IntersectionObserver(es => es.forEach(en => { if (en.isIntersecting) { en.target.classList.add("in"); io.unobserve(en.target); } }), { threshold: .08 });
@@ -252,11 +235,11 @@ function hookFx(root = document) {
 }
 document.querySelectorAll("h2,.join-card,.hero-text").forEach(el => el.classList.add("reveal"));
 hookFx();
-addEventListener("keydown", e => { if (e.key === "Escape") { closeModal(); lb.hidden = true; if (!signalPopup.hidden) closeSignalPopup(); } });
+addEventListener("keydown", e => { if (e.key === "Escape") { closeModal(); lb.hidden = true; if (popup && popup.classList.contains("open")) { video.pause(); video.currentTime = 0; popup.classList.remove("open"); popup.setAttribute("aria-hidden", "true"); document.body.style.overflow = ""; } } });
 
 /* ---------- starfield ---------- */
 const cv = $("#stars"), cx = cv.getContext("2d"); let W, H, pts = [];
-function size(){ W = cv.width = innerWidth; H = cv.height = innerHeight; pts = Array.from({ length: Math.min(110, W / 12) }, () => ({ x: Math.random() * W, y: Math.random() * H, r: Math.random() * 2.1 + .8, s: Math.random() * 1.6 + .6, a: Math.random() * Math.PI * 2 })); }
+function size(){ W = cv.width = innerWidth; H = cv.height = innerHeight; pts = Array.from({ length: Math.min(110, W / 12) }, () => ({ x: Math.random() * W, y: Math.random() * H, r: Math.random() * 2 + 1, s: Math.random() * 1.2 + .3, a: Math.random() * Math.PI })); }
 size(); addEventListener("resize", size);
 if (!matchMedia("(prefers-reduced-motion:reduce)").matches) (function loop(t){
   cx.clearRect(0, 0, W, H);
@@ -264,4 +247,3 @@ if (!matchMedia("(prefers-reduced-motion:reduce)").matches) (function loop(t){
   requestAnimationFrame(loop);
 })(0);
 })();
-

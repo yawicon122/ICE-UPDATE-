@@ -5,7 +5,6 @@ const esc = s => String(s ?? "").replace(/[&<>\"']/g, c => ({ "&":"&amp;","<":"&
 const safeUrl = u => (!u || /^\s*(javascript|vbscript|data):/i.test(u)) ? "#" : u;
 
 const VIDEO_URL = "ICE_UPDATES_ad_v2.mp4";
-const BROKER_URL = "https://client.mhmarkets-asia.com/signup?partnerCode=A4CFMDIG";
 const SKIP_AFTER = 5;
 
 const fine = matchMedia("(hover:hover) and (pointer:fine)").matches;
@@ -93,7 +92,6 @@ document.querySelectorAll(".join-card img").forEach(i => i.onerror = () => { i.s
     if (!popup || !video) { console.error("ice popup: #ice-popup or #ice-video not found in the page"); return; }
     $("ice-cta").hidden = true;
     $("ice-skip").hidden = true;
-    $("ice-broker").href = BROKER_URL;
     if (!video.getAttribute("src")) video.src = VIDEO_URL;
     video.currentTime = 0;
     popup.classList.add("open");
@@ -122,6 +120,14 @@ document.querySelectorAll(".join-card img").forEach(i => i.onerror = () => { i.s
     if (findCard(e.target)) { e.preventDefault(); e.stopPropagation(); openPopup(); return; }
     if (e.target.closest && e.target.closest("#ice-close")) closePopup();
     else if (e.target.closest && e.target.closest("#ice-skip")) showButton();
+    else if (e.target.closest && e.target.closest("#ice-broker")) {
+      e.preventDefault();
+      closePopup();
+      setTimeout(function () {
+        var s = document.getElementById("brokers");
+        if (s) s.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 60);
+    }
     else if (e.target.id === "ice-video" && $("ice-cta").hidden) {
       var v = $("ice-video"); v.paused ? v.play() : v.pause();
     }

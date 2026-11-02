@@ -47,8 +47,17 @@ window.SITE = {
     //   url: "https://www.youtube.com/watch?v=XXXXXXXXXXX", thumb: "" },
   ],
 
+  /* PDF LIST — shown top to bottom, in the order written here.
+     TO ADD A NEW PDF:
+       1) Upload the .pdf file to the main folder of the repository.
+       2) (Optional) Upload a picture of its first page and put its file name in thumb.
+          No thumb = a clean PDF icon is shown instead.
+       3) Copy ONE line below, paste it under the last one, and change the words.
+     Clicking a PDF plays the short stick-man loading animation, then opens the PDF. */
   pdfs: [
-    // { title: "15 Candlestick Patterns", desc: "Beginner cheat sheet", file: "assets/pdfs/candlesticks.pdf", size: "2 MB" },
+    { title: "15 Candlestick Patterns", desc: "Visual guide: 15 patterns, one picture per page", file: "candlestick-patterns.pdf", thumb: "candlestick-patterns-thumb.jpg", pages: 16 },
+    { title: "Candlestick Charts Explained", desc: "A beginner's guide to reading bullish and bearish candles", file: "candlestick-guide.pdf", thumb: "candlestick-guide-thumb.jpg", pages: 4 },
+    { title: "Support & Resistance: A Practical Field Guide", desc: "How to find the levels that matter and build trades around them", file: "support-and-resistance.pdf", thumb: "support-and-resistance-thumb.jpg", pages: 20 },
   ],
 
   gallery: [

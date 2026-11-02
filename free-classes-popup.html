@@ -1,91 +1,13 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Free Classes</title>
-<style>
-  *{box-sizing:border-box}
-  body{margin:0;min-height:100vh;background:#070b1a;color:#fff;font-family:Inter,system-ui,sans-serif;padding:20px}
-  .card{background:linear-gradient(135deg,#4a5a78,#2d3750);border:1px solid #ffffff22;border-radius:28px;padding:24px;margin-bottom:16px;display:flex;gap:16px;cursor:pointer}
-  .icon{width:52px;height:80px;border-radius:26px;background:linear-gradient(#5fd0ff,#8a7bff);display:flex;align-items:center;justify-content:center;font-size:26px;flex:none}
-  .card h2{margin:0 0 8px;font-size:22px}
-  .card p{margin:0;color:#cfd6e6;line-height:1.5}
-
-  /* popup */
-  #overlay{position:fixed;inset:0;background:#000d;display:none;align-items:center;justify-content:center;z-index:99;padding:12px}
-  #overlay.open{display:flex}
-  #player{position:relative;width:100%;max-width:720px;background:#000;border-radius:16px;overflow:hidden}
-  video{width:100%;display:block;max-height:80vh}
-  #skip{position:absolute;top:10px;right:10px;background:#000a;color:#fff;border:1px solid #fff6;border-radius:20px;padding:6px 14px;font-size:14px;cursor:pointer;display:none;z-index:3}
-  #close{position:absolute;top:10px;left:10px;background:#000a;color:#fff;border:0;border-radius:50%;width:32px;height:32px;cursor:pointer;z-index:3}
-  #cta{position:absolute;left:0;right:0;bottom:0;padding:16px;display:none;flex-direction:column;gap:10px;background:linear-gradient(transparent,#000e 40%);z-index:3}
-  #cta.show{display:flex}
-  #cta a{text-align:center;text-decoration:none;font-weight:700;padding:14px;border-radius:12px}
-  .join{background:#25d366;color:#04230f}
-  .reg{background:#fff;color:#0a1030}
-</style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Legacy popup removed</title>
+  <style>body{font-family:system-ui,sans-serif;background:#070b1a;color:#fff;padding:32px}</style>
 </head>
 <body>
-
-<div class="card">
-  <div class="icon">🎓</div>
-  <div><h2>Free Classes</h2><p>Free classes for everyone with simple, practical trading lessons.</p></div>
-</div>
-<div class="card" id="openLesson"><div class="icon">📈</div><div><h2>Forex Signals</h2><p>Daily forex signals and market updates to keep you informed.</p></div></div>
-<div class="card"><div class="icon">📄</div><div><h2>PDF Guides</h2><p>Download cheat sheets, market notes, and easy-to-follow strategy PDFs.</p></div></div>
-
-<div id="overlay">
-  <div id="player">
-    <button id="close" aria-label="Close">✕</button>
-    <button id="skip">Skip ›</button>
-    <video id="vid" playsinline controls controlsList="nodownload noplaybackrate"></video>
-    <div id="cta">
-      <a class="join" id="joinBtn" target="_blank" rel="noopener">Join the Group</a>
-      <a class="reg" id="regBtn" target="_blank" rel="noopener">Register for a Broker &amp; Begin</a>
-    </div>
-  </div>
-</div>
-
-<script>
-  // ====== EDIT THESE 3 LINES ======
-  const VIDEO_URL = "lesson.mp4";                      // your lesson video
-  const JOIN_URL  = "https://chat.whatsapp.com/YOUR_LINK"; // group invite link
-  const BROKER_URL= "https://YOUR-BROKER-REGISTER-LINK";   // broker sign-up link
-  // ================================
-
-  const $ = id => document.getElementById(id);
-  const vid = $("vid"), skip = $("skip"), cta = $("cta");
-  $("joinBtn").href = JOIN_URL;
-  $("regBtn").href = BROKER_URL;
-
-  function showButtons(){
-    skip.style.display = "none";
-    vid.pause();
-    cta.classList.add("show");
-  }
-
-  $("openLesson").onclick = () => {
-    cta.classList.remove("show");
-    skip.style.display = "none";
-    vid.src = VIDEO_URL;
-    vid.currentTime = 0;
-    $("overlay").classList.add("open");
-    vid.play().catch(()=>{});
-  };
-
-  // skip button appears 5 seconds into the video
-  vid.addEventListener("timeupdate", () => {
-    if (vid.currentTime >= 5 && !cta.classList.contains("show")) skip.style.display = "block";
-  });
-
-  skip.onclick = showButtons;
-  vid.addEventListener("ended", showButtons);
-
-  $("close").onclick = () => {
-    vid.pause();
-    $("overlay").classList.remove("open");
-  };
-</script>
+  <h1>Legacy popup removed</h1>
+  <p>This file is no longer used. The live site uses the single <code>ice-popup</code> implementation in the main page.</p>
 </body>
 </html>

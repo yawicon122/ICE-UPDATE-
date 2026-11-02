@@ -88,7 +88,7 @@ function embedOf(u){
   const y = ytId(u); if (y) return { type: "iframe", src: `https://www.youtube-nocookie.com/embed/${y}?autoplay=1&rel=0`, thumb: `https://img.youtube.com/vi/${y}/hqdefault.jpg` };
   const v = vimeoId(u); if (v) return { type: "iframe", src: `https://player.vimeo.com/video/${v}?autoplay=1` };
   const tt = u.match(/tiktok\.com\/.*\/video\/(\d+)/); if (tt) return { type: "iframe", src: `https://www.tiktok.com/embed/v2/${tt[1]}`, vertical: true, platform: "tiktok" };
-  const ig = u.match(/instagram\.com\/(?:[\w.]+\/)?(p|reel|reels|tv)\/([\w-]+)/); if (ig) return { type: "iframe", src: `https://www.instagram.com/${ig[1] === "reels" ? "reel" : ig[1]}/${ig[2]}/embed` };
+  const ig = u.match(/instagram\.com\/(?:[\w.]+\/)?(p|reel|reels|tv)\/([\w-]+)/); if (ig) return { type: "iframe", src: `https://www.instagram.com/${ig[1] === "reels" ? "reel" : ig[1]}/${ig[2]}/embed`, vertical: true, platform: "instagram" };
   if (/facebook\.com|fb\.watch/i.test(u)) return { type: "iframe", src: `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(u)}&show_text=false&autoplay=true`, vertical: /\/reel\//i.test(u) };
   if (/\.(mp4|webm|mov)(\?|$)/i.test(u)) return { type: "video", src: u };
   return { type: "link", src: u };
@@ -101,14 +101,14 @@ function drawVideos(cat = "All") {
   list.forEach(v => {
     const e = embedOf(v.url || ""), th = v.thumb || e.thumb;
     const c = document.createElement("article"); c.className = "vcard glass tilt reveal";
-    c.innerHTML = `<div class="thumb">${th ? `<img loading="lazy" src="${esc(safeUrl(th))}" alt="">` : (e.type === "video" ? `<video preload="metadata" muted src="${esc(safeUrl(e.src))}#t=0.5"></video>` : "<div class='play'>▶</div>")}${v.category ? `<span class="tag">${esc(v.category)}</span>` : ""}</div><h3>${esc(v.title || "Video")}</h3><p>${esc(v.desc || "")}</p>`;
+    c.innerHTML = `<div class="thumb">${th ? `<img loading="lazy" src="${esc(safeUrl(th))}" alt="">` : (e.type === "video" ? `<video preload="metadata" muted src="${esc(safeUrl(e.src))}#t=0.5"></video>` : `<span class="play">▶</span>`) }<span class="tag">${esc(v.category || "Lesson")}</span>${e.type !== "video" && !th ? "" : ""}</div><h3>${esc(v.title || "Lesson")}</h3><p>${esc(v.desc || "")}</p>`;
     c.onclick = () => openVideo(v, e); vGrid.appendChild(c);
   });
   hookFx(vGrid);
 }
 if (vids.length) {
   const cats = ["All", ...new Set(vids.map(v => v.category).filter(Boolean))];
-  if (cats.length > 2) cats.forEach((c, i) => { const b = document.createElement("button"); b.textContent = c; if (!i) b.className = "on"; b.onclick = () => { vF.querySelectorAll("button").forEach(el => el.classList.toggle("on", el === b)); drawVideos(c); }; vF.appendChild(b); });
+  if (cats.length > 2) cats.forEach((c, i) => { const b = document.createElement("button"); b.textContent = c; if (!i) b.className = "on"; b.onclick = () => { vF.querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b)); drawVideos(c); }; vF.appendChild(b); });
 }
 drawVideos();
 const modal = $("#modal");
@@ -128,7 +128,7 @@ $("#modalX").onclick = closeModal; modal.addEventListener("click", e => { if (e.
 const pg = $("#pdfGrid");
 if (!(S.pdfs || []).length) pg.innerHTML = `<div class="glass empty">📄 PDF guides are coming soon.</div>`;
 (S.pdfs || []).forEach(f => {
-  const a = document.createElement("a"); a.className = "pcard glass tilt reveal"; a.href = safeUrl(f.file); a.setAttribute("download", ""); a.target = "_blank"; a.rel = "noopener"; a.dataset.track = "pdf-" + (f.title || "");
+  const a = document.createElement("a"); a.className = "pcard glass tilt reveal"; a.href = safeUrl(f.file); a.setAttribute("download", ""); a.target = "_blank"; a.rel = "noopener"; a.dataset.track = "pdf-" + f.title;
   a.innerHTML = `<div class="pico">PDF</div><div><h3>${esc(f.title)}</h3><p>${esc(f.desc)}</p><div class="dl">⬇ Download ${f.size ? "· " + esc(f.size) : ""}</div></div>`; pg.appendChild(a);
 });
 
@@ -145,8 +145,8 @@ lb.onclick = () => lb.hidden = true;
 /* ---------- brokers ---------- */
 const bg = $("#brokerGrid");
 (S.brokers || []).forEach((b, i) => {
-  const a = document.createElement("a"); a.className = "broker reveal"; a.href = safeUrl(b.url); a.target = "_blank"; a.rel = "noopener sponsored"; a.style.setProperty("--d", (i * -1.1) + "s"); a.dataset.track = "broker-" + (b.name || "");
-  a.innerHTML = `<div class="tile glass tilt"><img alt="${esc(b.name)}" style="display:none"><div class="fallback">${esc((b.name || "?").slice(0, 2))}</div></div><span>${esc(b.name)}</span><small>${esc(b.desc || "")}</small>`;
+  const a = document.createElement("a"); a.className = "broker reveal"; a.href = safeUrl(b.url); a.target = "_blank"; a.rel = "noopener sponsored"; a.style.setProperty("--d", (i * -1.1) + "s"); a.dataset.track = "broker-" + b.name;
+  a.innerHTML = `<div class="tile glass tilt"><img alt="${esc(b.name)}" style="display:none"><div class="fallback">${esc((b.name || "?").slice(0, 2))}</div></div><span>${esc(b.name)}</span><small>${esc(b.tag || "Broker")}</small>`;
   const im = $("img", a), fb = $(".fallback", a);
   loadImg(b.logo, url => { im.src = url; im.style.display = "block"; fb.style.display = "none"; });
   bg.appendChild(a);
@@ -156,7 +156,7 @@ const bg = $("#brokerGrid");
 const sg = $("#socialGrid");
 (S.socials || []).forEach(s => {
   const a = document.createElement("a"); a.className = "scard glass tilt reveal"; a.href = safeUrl(s.url); a.target = "_blank"; a.rel = "noopener"; a.dataset.track = "social-" + s.platform;
-  a.innerHTML = `<div class="av"><div>${s.avatar ? `<img class="pic" src="${esc(safeUrl(s.avatar))}" alt="">` : `<img class="ph" src="https://cdn.simpleicons.org/${esc(s.platform)}/white" alt="">`}</div></div><div><h3>${esc(s.name || "")}</h3><p>${esc(s.handle || "")}</p><div class="follow">${esc(s.followers || "Follow")}</div></div>`;
+  a.innerHTML = `<div class="av"><div>${s.avatar ? `<img class="pic" src="${esc(safeUrl(s.avatar))}" alt="">` : `<img class="ph" src="https://cdn.simpleicons.org/${esc(s.platform)}/white" alt="">`}</div></div><div><h3>${esc(s.name || s.platform || "Follow")}</h3><p>${esc(s.desc || "Follow along")}</p></div><span class="follow">Follow</span>`;
   const pic = a.querySelector("img.pic"); if (pic) { const orig = s.avatar; pic.removeAttribute("src"); loadImg(orig, u => pic.src = u, () => { pic.style.display = "none"; }); }
   const ph = a.querySelector("img.ph");
   if (ph) ph.onerror = () => { ph.replaceWith(Object.assign(document.createElement("b"), { textContent: (s.name || "?").slice(0, 1), style: "font:800 1.5rem Sora" })); };
@@ -171,7 +171,8 @@ const video = document.getElementById("ice-video");
 const skip = document.getElementById("ice-skip");
 const cta = document.getElementById("ice-cta");
 const close = document.getElementById("ice-close");
-if (card && popup && video) {
+
+if (card && popup && video && skip && cta && close) {
   document.getElementById("ice-broker").href = BROKER_URL;
 
   function openPopup() {
@@ -227,7 +228,7 @@ function hookFx(root = document) {
   });
   if (fine) root.querySelectorAll(".tilt").forEach(el => {
     if (el._tilt) return; el._tilt = 1;
-    el.addEventListener("pointermove", e => { const b = el.getBoundingClientRect(), x = (e.clientX - b.left) / b.width - .5, y = (e.clientY - b.top) / b.height - .5; el.style.transform = `perspective(1000px) rotateX(${(-y * 8).toFixed(2)}deg) rotateY(${(x * 10).toFixed(2)}deg) translateY(-2px)`; });
+    el.addEventListener("pointermove", e => { const b = el.getBoundingClientRect(), x = (e.clientX - b.left) / b.width - .5, y = (e.clientY - b.top) / b.height - .5; el.style.transform = `perspective(800px) rotateX(${(-y * 10).toFixed(2)}deg) rotateY(${(x * 12).toFixed(2)}deg) translateY(-2px)`; });
     el.addEventListener("pointerleave", () => el.style.transform = "");
   });
   const io = new IntersectionObserver(es => es.forEach(en => { if (en.isIntersecting) { en.target.classList.add("in"); io.unobserve(en.target); } }), { threshold: .08 });
@@ -239,11 +240,90 @@ addEventListener("keydown", e => { if (e.key === "Escape") { closeModal(); lb.hi
 
 /* ---------- starfield ---------- */
 const cv = $("#stars"), cx = cv.getContext("2d"); let W, H, pts = [];
-function size(){ W = cv.width = innerWidth; H = cv.height = innerHeight; pts = Array.from({ length: Math.min(110, W / 12) }, () => ({ x: Math.random() * W, y: Math.random() * H, r: Math.random() * 2 + 1, s: Math.random() * 1.2 + .3, a: Math.random() * Math.PI })); }
+function size(){ W = cv.width = innerWidth; H = cv.height = innerHeight; pts = Array.from({ length: Math.min(110, W / 12) }, () => ({ x: Math.random() * W, y: Math.random() * H, r: Math.random() * 2.3 + .8, s: Math.random() * 1.4 + .7, a: Math.random() * Math.PI * 2 })); }
 size(); addEventListener("resize", size);
 if (!matchMedia("(prefers-reduced-motion:reduce)").matches) (function loop(t){
   cx.clearRect(0, 0, W, H);
   for (const q of pts) { q.y -= q.s; if (q.y < -5) { q.y = H + 5; q.x = Math.random() * W; } cx.globalAlpha = .35 + .5 * Math.abs(Math.sin(t / 1400 + q.a * 6)); cx.fillStyle = "#fff"; cx.beginPath(); cx.arc(q.x, q.y, q.r, 0, Math.PI * 2); cx.fill(); }
   requestAnimationFrame(loop);
 })(0);
+})();
+
+
+
+// Exact replacement requested for the popup logic.
+// It listens across the whole document and never exits silently.
+(function () {
+  const $ = function (id) { return document.getElementById(id); };
+  console.log("ice popup script loaded");
+
+  function findCard(t) {
+    var el = t.closest && t.closest("#forex-card");
+    if (el) return el;
+    el = t;
+    for (var i = 0; i < 6 && el && el !== document.body; i++, el = el.parentElement) {
+      var txt = (el.textContent || "").trim();
+      if (/^Forex Signals/i.test(txt) && txt.length < 200) return el;
+    }
+    return null;
+  }
+
+  function openPopup() {
+    var popup = $("ice-popup"), video = $("ice-video");
+    if (!popup || !video) { console.error("ice popup: #ice-popup or #ice-video not found in the page"); return; }
+    $("ice-cta").hidden = true;
+    $("ice-skip").hidden = true;
+    $("ice-broker").href = BROKER_URL;
+    if (!video.getAttribute("src")) video.src = VIDEO_URL;
+    video.currentTime = 0;
+    popup.classList.add("open");
+    popup.setAttribute("aria-hidden", "false");
+    document.body.style.overflow = "hidden";
+    video.play().catch(function (err) { console.warn("ice popup: play blocked", err); });
+  }
+
+  function closePopup() {
+    var popup = $("ice-popup"), video = $("ice-video");
+    if (!popup || !video) { console.error("ice popup: #ice-popup or #ice-video not found in the page"); return; }
+    video.pause();
+    video.currentTime = 0;
+    popup.classList.remove("open");
+    popup.setAttribute("aria-hidden", "true");
+    document.body.style.overflow = "";
+  }
+
+  function showButton() {
+    $("ice-video").pause();
+    $("ice-skip").hidden = true;
+    $("ice-cta").hidden = false;
+  }
+
+  document.addEventListener("click", function (e) {
+    if (findCard(e.target)) { e.preventDefault(); e.stopPropagation(); openPopup(); return; }
+    if (e.target.closest && e.target.closest("#ice-close")) closePopup();
+    else if (e.target.closest && e.target.closest("#ice-skip")) showButton();
+    else if (e.target.id === "ice-video" && $("ice-cta").hidden) {
+      var v = $("ice-video"); v.paused ? v.play() : v.pause();
+    }
+  }, true);
+
+  document.addEventListener("keydown", function (e) {
+    var popup = $("ice-popup");
+    if (e.key === "Escape" && popup && popup.classList.contains("open")) closePopup();
+  });
+
+  function wireVideo() {
+    var video = $("ice-video");
+    if (!video || video.dataset.wired) return;
+    video.dataset.wired = "1";
+    video.addEventListener("timeupdate", function () {
+      if (video.currentTime >= SKIP_AFTER && $("ice-cta").hidden) $("ice-skip").hidden = false;
+    });
+    video.addEventListener("ended", showButton);
+    video.addEventListener("error", function () {
+      console.error("ice popup: video failed to load. Check the path:", VIDEO_URL);
+    });
+  }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", wireVideo);
+  else wireVideo();
 })();

@@ -1,7 +1,7 @@
 (() => {
 const S = window.SITE || {};
 const $ = (s, r = document) => r.querySelector(s);
-const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+const esc = s => String(s ?? "").replace(/[&<>\"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
 const safeUrl = u => (!u || /^\s*(javascript|vbscript|data):/i.test(u)) ? "#" : u;
 /* Image finder: if a picture is not at the exact path written in config.js,
    look for the same file name in the usual folders (forgives upload mistakes). */
@@ -83,8 +83,8 @@ function embedOf(u){
   const y = ytId(u); if (y) return { type: "iframe", src: `https://www.youtube-nocookie.com/embed/${y}?autoplay=1&rel=0`, thumb: `https://img.youtube.com/vi/${y}/hqdefault.jpg` };
   const v = vimeoId(u); if (v) return { type: "iframe", src: `https://player.vimeo.com/video/${v}?autoplay=1` };
   const tt = u.match(/tiktok\.com\/.*\/video\/(\d+)/); if (tt) return { type: "iframe", src: `https://www.tiktok.com/embed/v2/${tt[1]}`, vertical: true, platform: "tiktok" };
-  const ig = u.match(/instagram\.com\/(?:[\w.]+\/)?(p|reel|reels|tv)\/([\w-]+)/); if (ig) return { type: "iframe", src: `https://www.instagram.com/${ig[1] === "reels" ? "reel" : ig[1]}/${ig[2]}/embed`, vertical: true, platform: "instagram" };
-  if (/facebook\.com|fb\.watch/i.test(u)) return { type: "iframe", src: `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(u)}&show_text=false&autoplay=true`, vertical: /\/reel\//.test(u), platform: "facebook" };
+  const ig = u.match(/instagram\.com\/(?:[\w.]+\/)?(p|reel|reels|tv)\/([\w-]+)/); if (ig) return { type: "iframe", src: `https://www.instagram.com/${ig[1] === "reels" ? "reel" : ig[1]}/${ig[2]}/embed`, vertical: /reel|tv/.test(ig[1]) };
+  if (/facebook\.com|fb\.watch/i.test(u)) return { type: "iframe", src: `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(u)}&show_text=false&autoplay=true`, vertical: /\/reel|\/videos\//i.test(u) };
   if (/\.(mp4|webm|mov)(\?|$)/i.test(u)) return { type: "video", src: u };
   return { type: "link", src: u };
 }
@@ -96,16 +96,14 @@ function drawVideos(cat = "All") {
   list.forEach(v => {
     const e = embedOf(v.url || ""), th = v.thumb || e.thumb;
     const c = document.createElement("article"); c.className = "vcard glass tilt reveal";
-    c.innerHTML = `<div class="thumb">${th ? `<img loading="lazy" src="${esc(safeUrl(th))}" alt="">` : (e.type === "video" ? `<video preload="metadata" muted src="${esc(safeUrl(e.src))}#t=0.5"></video>` : (e.platform ? `<img class="pi" src="https://cdn.simpleicons.org/${e.platform}/white" alt="" onerror="this.remove()">` : ""))}
-      ${v.category ? `<span class="tag">${esc(v.category)}</span>` : ""}<div class="play">▶</div></div>
-      <h3>${esc(v.title)}</h3><p>${esc(v.desc)}</p>`;
+    c.innerHTML = `<div class="thumb">${th ? `<img loading="lazy" src="${esc(safeUrl(th))}" alt="">` : (e.type === "video" ? `<video preload="metadata" muted src="${esc(safeUrl(e.src))}#t=0.5"></video>` : `<div class="play">▶</div>`) }${v.category ? `<span class="tag">${esc(v.category)}</span>` : ""}<div class="play">▶</div></div><h3>${esc(v.title)}</h3><p>${esc(v.desc)}</p>`;
     c.onclick = () => openVideo(v, e); vGrid.appendChild(c);
   });
   hookFx(vGrid);
 }
 if (vids.length) {
   const cats = ["All", ...new Set(vids.map(v => v.category).filter(Boolean))];
-  if (cats.length > 2) cats.forEach((c, i) => { const b = document.createElement("button"); b.textContent = c; if (!i) b.className = "on"; b.onclick = () => { vF.querySelectorAll("button").forEach(x => x.classList.remove("on")); b.classList.add("on"); drawVideos(c); }; vF.appendChild(b); });
+  if (cats.length > 2) cats.forEach((c, i) => { const b = document.createElement("button"); b.textContent = c; if (!i) b.className = "on"; b.onclick = () => { vF.querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b)); drawVideos(c); }; vF.appendChild(b); });
 }
 drawVideos();
 const modal = $("#modal");
@@ -143,7 +141,7 @@ lb.onclick = () => lb.hidden = true;
 const bg = $("#brokerGrid");
 (S.brokers || []).forEach((b, i) => {
   const a = document.createElement("a"); a.className = "broker reveal"; a.href = safeUrl(b.url); a.target = "_blank"; a.rel = "noopener sponsored"; a.style.setProperty("--d", (i * -1.1) + "s"); a.dataset.track = "broker-" + (b.name || "");
-  a.innerHTML = `<div class="tile glass tilt"><img alt="${esc(b.name)}" style="display:none"><div class="fallback">${esc((b.name || "?").slice(0, 2))}</div></div><span>${esc(b.name)}</span><small>${esc(b.note || "")}</small>`;
+  a.innerHTML = `<div class="tile glass tilt"><img alt="${esc(b.name)}" style="display:none"><div class="fallback">${esc((b.name || "?").slice(0, 2))}</div></div><span>${esc(b.name)}</span><small>${esc(b.region || "")}</small>`;
   const im = $("img", a), fb = $(".fallback", a);
   loadImg(b.logo, url => { im.src = url; im.style.display = "block"; fb.style.display = "none"; });
   bg.appendChild(a);
@@ -153,8 +151,7 @@ const bg = $("#brokerGrid");
 const sg = $("#socialGrid");
 (S.socials || []).forEach(s => {
   const a = document.createElement("a"); a.className = "scard glass tilt reveal"; a.href = safeUrl(s.url); a.target = "_blank"; a.rel = "noopener"; a.dataset.track = "social-" + s.platform;
-  a.innerHTML = `<div class="av"><div>${s.avatar ? `<img class="pic" src="${esc(safeUrl(s.avatar))}" alt="">` : `<img class="ph" src="https://cdn.simpleicons.org/${esc(s.platform)}/white" alt="">`}</div></div>
-   <div><h3>${esc(s.name)}</h3><p>${esc(s.handle)}${s.followers ? " · " + esc(s.followers) : ""}</p></div><span class="follow">Follow</span>`;
+  a.innerHTML = `<div class="av"><div>${s.avatar ? `<img class="pic" src="${esc(safeUrl(s.avatar))}" alt="">` : `<img class="ph" src="https://cdn.simpleicons.org/${esc(s.platform)}/white" alt="">`}</div></div><div><h3>${esc(s.name)}</h3><p>${esc(s.handle)}${s.followers ? " · " + esc(s.followers) : ""}</p></div><span class="follow">Follow</span>`;
   const pic = a.querySelector("img.pic"); if (pic) { const orig = s.avatar; pic.removeAttribute("src"); loadImg(orig, u => pic.src = u, () => { pic.style.display = "none"; }); }
   const ph = a.querySelector("img.ph");
   if (ph) ph.onerror = () => { ph.replaceWith(Object.assign(document.createElement("b"), { textContent: (s.name || "?").slice(0, 1), style: "font:800 1.5rem Sora" })); };
@@ -167,10 +164,11 @@ function hookFx(root = document) {
   root.querySelectorAll(".glass").forEach(el => {
     if (el._fx) return; el._fx = 1;
     el.addEventListener("pointermove", e => { const b = el.getBoundingClientRect(); el.style.setProperty("--mx", (e.clientX - b.left) + "px"); el.style.setProperty("--my", (e.clientY - b.top) + "px"); });
+    el.addEventListener("pointerleave", () => { el.style.setProperty("--mx", "30%"); el.style.setProperty("--my", "0%"); });
   });
   if (fine) root.querySelectorAll(".tilt").forEach(el => {
     if (el._tilt) return; el._tilt = 1;
-    el.addEventListener("pointermove", e => { const b = el.getBoundingClientRect(), x = (e.clientX - b.left) / b.width - .5, y = (e.clientY - b.top) / b.height - .5; el.style.transform = `perspective(800px) rotateY(${x * 10}deg) rotateX(${-y * 10}deg) translateZ(0) scale(1.02)`; });
+    el.addEventListener("pointermove", e => { const b = el.getBoundingClientRect(), x = (e.clientX - b.left) / b.width - .5, y = (e.clientY - b.top) / b.height - .5; el.style.transform = `perspective(1000px) rotateX(${(-y * 12).toFixed(2)}deg) rotateY(${(x * 14).toFixed(2)}deg) translateY(-2px)`; });
     el.addEventListener("pointerleave", () => el.style.transform = "");
   });
   const io = new IntersectionObserver(es => es.forEach(en => { if (en.isIntersecting) { en.target.classList.add("in"); io.unobserve(en.target); } }), { threshold: .08 });
@@ -182,13 +180,14 @@ addEventListener("keydown", e => { if (e.key === "Escape") { closeModal(); lb.hi
 
 /* ---------- starfield ---------- */
 const cv = $("#stars"), cx = cv.getContext("2d"); let W, H, pts = [];
-function size(){ W = cv.width = innerWidth; H = cv.height = innerHeight; pts = Array.from({ length: Math.min(110, W / 12) }, () => ({ x: Math.random() * W, y: Math.random() * H, r: Math.random() * 1.6 + .3, s: Math.random() * .25 + .05, a: Math.random() })); }
+function size(){ W = cv.width = innerWidth; H = cv.height = innerHeight; pts = Array.from({ length: Math.min(110, W / 12) }, () => ({ x: Math.random() * W, y: Math.random() * H, r: Math.random() * 2.2 + 1, a: Math.random() * Math.PI * 2, s: (Math.random() * 1.2 + .4) })); }
 size(); addEventListener("resize", size);
 if (!matchMedia("(prefers-reduced-motion:reduce)").matches) (function loop(t){
   cx.clearRect(0, 0, W, H);
-  for (const q of pts) { q.y -= q.s; if (q.y < -5) { q.y = H + 5; q.x = Math.random() * W; } cx.globalAlpha = .35 + .5 * Math.abs(Math.sin(t / 1400 + q.a * 6)); cx.fillStyle = "#fff"; cx.beginPath(); cx.arc(q.x, q.y, q.r, 0, 6.3); cx.fill(); }
+  for (const q of pts) { q.y -= q.s; if (q.y < -5) { q.y = H + 5; q.x = Math.random() * W; } cx.globalAlpha = .35 + .5 * Math.abs(Math.sin(t / 1400 + q.a * 6)); cx.fillStyle = "#fff"; cx.beginPath(); cx.arc(q.x, q.y, q.r, 0, Math.PI * 2); cx.fill(); }
   requestAnimationFrame(loop);
 })(0);
+})();
 
 /* ---------- Forex Signals video popup ---------- */
 (function () {
@@ -265,4 +264,4 @@ if (!matchMedia("(prefers-reduced-motion:reduce)").matches) (function loop(t){
     });
   }
 })();
-})();
+

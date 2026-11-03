@@ -1,0 +1,472 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Gold / USD chart — preview</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>:root{--a1:#4de1ff;--a2:#8b7bff;--a3:#ff6bd6;--ink:#f4f7ff;--mut:rgba(244,247,255,.82);--r:28px}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;scroll-padding-top:90px}
+body{font-family:Inter,system-ui,sans-serif;color:var(--ink);background:#060a1c;line-height:1.55;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+h1,h2,h3,.logo{font-family:Sora,Inter,sans-serif}
+a{color:inherit;text-decoration:none}
+img{max-width:100%;display:block}
+
+#wallpaper{position:fixed;inset:0;z-index:-1;overflow:hidden;background:radial-gradient(120% 90% at 20% 0%,#10224f 0%,#080d27 55%,#04061a 100%)}
+#wallpaper.img{background-size:cover;background-position:center bottom}
+#wallpaper.img::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(3,7,22,.78) 0%,rgba(3,7,22,.45) 55%,rgba(3,7,22,.2) 100%),linear-gradient(180deg,rgba(3,7,22,.35),rgba(3,7,22,.2))}
+.blob{position:absolute;border-radius:50%;filter:blur(80px);opacity:.55;will-change:transform;animation:drift 24s ease-in-out infinite alternate}
+#wallpaper.img .blob{opacity:.1}
+.b1{width:60vmax;height:60vmax;left:-15vmax;top:-20vmax;background:var(--a2)}
+.b2{width:50vmax;height:50vmax;right:-15vmax;top:5vmax;background:var(--a1);animation-duration:30s;animation-delay:-6s}
+.b3{width:45vmax;height:45vmax;left:20vmax;bottom:-25vmax;background:var(--a3);opacity:.4;animation-duration:36s;animation-delay:-12s}
+.b4{width:30vmax;height:30vmax;right:10vmax;bottom:5vmax;background:#2a6bff;opacity:.35;animation-duration:28s}
+@keyframes drift{to{transform:translate3d(8vmax,6vmax,0) scale(1.15) rotate(25deg)}}
+#stars{position:absolute;inset:0;width:100%;height:100%}
+.grain{position:absolute;inset:0;opacity:.07;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='.75' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeComponentTransfer%3E%3CfeFuncA type='table' tableValues='0 0.1'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E")}
+
+.glass{position:relative;border-radius:var(--r);background:linear-gradient(145deg,rgba(255,255,255,.17),rgba(255,255,255,.07) 55%,rgba(255,255,255,.12));-webkit-backdrop-filter:blur(26px) saturate(130%);backdrop-filter:blur(26px) saturate(130%);border:1px solid rgba(255,255,255,.08);box-shadow:0 18px 40px rgba(10,13,29,.22)}
+.glass::before{content:"";position:absolute;inset:0;pointer-events:none;border-radius:inherit;background:radial-gradient(420px circle at var(--mx,30%) var(--my,0%),rgba(255,255,255,.24),transparent 55%)}
+.glass::after{content:"";position:absolute;left:8%;right:8%;top:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.9),transparent);pointer-events:none}
+
+.nav{position:fixed;z-index:50;top:14px;left:50%;transform:translateX(-50%);width:min(1100px,calc(100% - 24px));display:flex;align-items:center;justify-content:space-between;padding:10px 14px 10px 12px;border:1px solid rgba(255,255,255,.12);box-shadow:0 14px 30px rgba(2,6,19,.18)}
+.logo{display:flex;align-items:center;gap:10px;font-size:1.05rem;letter-spacing:.01em}
+.logo-mark{display:grid;place-items:center;width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--a1),var(--a2));box-shadow:0 0 18px var(--a1)}
+.nav nav{display:flex;gap:4px;flex-wrap:wrap}
+.nav nav a{padding:8px 14px;border-radius:999px;font-size:.92rem;color:var(--mut);transition:.25s;font-weight:600}
+.nav nav a:hover{background:rgba(255,255,255,.14);color:#fff}
+@media(max-width:760px){.nav nav a:not(:nth-child(1)):not(:nth-child(2)):not(:nth-child(3)){display:none}.nav nav a{padding:8px 10px}}
+
+main{width:min(1100px,calc(100% - 32px));margin:0 auto}
+.section{padding:40px 0 8px}
+h2{font-size:clamp(2rem,4vw,2.9rem);font-weight:800;margin-bottom:18px;letter-spacing:-.03em;line-height:1.08;background:linear-gradient(90deg,#fff 12%,var(--a1) 58%,#d0d6ff);-webkit-background-clip:text;background-clip:text;color:transparent}
+.sub{color:rgba(244,247,255,.88);margin:-8px 0 18px;font-size:1.02rem;font-weight:500}
+.grid{display:grid;gap:18px}
+.reveal{opacity:0;transform:translateY(28px);transition:opacity .8s,transform .8s cubic-bezier(.2,.7,.2,1)}
+.reveal.in{opacity:1;transform:none}
+
+.resource-rail{padding-top:8px;padding-bottom:0}
+.resource-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-top:12px}
+.resource-card{display:flex;align-items:flex-start;gap:14px;padding:20px 18px;border:1px solid rgba(255,255,255,.12);border-radius:22px;min-height:150px}
+.resource-icon{display:grid;place-items:center;width:52px;height:52px;border-radius:16px;background:linear-gradient(135deg,var(--a1),var(--a2));font-size:1.5rem;box-shadow:0 12px 24px rgba(88,160,255,.25)}
+.resource-card h3{font-size:1.08rem;margin-bottom:8px}
+.resource-card p{font-size:.9rem;color:rgba(244,247,255,.82);line-height:1.6}
+
+.hero{min-height:auto;display:grid;grid-template-columns:1fr;gap:30px;align-items:center;padding:130px 0 24px}
+.chip{display:inline-block;padding:8px 16px;border-radius:999px;font-size:.85rem;margin-bottom:18px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);color:#eaf7ff;font-weight:700}
+.hero h1{font-size:clamp(2.5rem,6.5vw,4.8rem);line-height:1.02;font-weight:800;letter-spacing:-.04em;margin-bottom:16px;background:linear-gradient(120deg,#fff 18%,var(--a1) 55%,var(--a3));-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero p{text-shadow:0 2px 14px rgba(0,0,0,.6);color:rgba(244,247,255,.82);font-size:1.18rem;max-width:560px;font-weight:500}
+.cta{display:flex;flex-wrap:wrap;gap:12px;margin:26px 0}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:15px 26px;border-radius:999px;font-weight:700;border:1px solid rgba(255,255,255,.32);box-shadow:inset 0 1px 0 rgba(255,255,255,.5),0 12px 28px rgba(2,8,24,.2);position:relative;overflow:hidden;transition:transform .2s ease,box-shadow .2s ease}
+.btn::after{content:"";position:absolute;inset:0;background:linear-gradient(110deg,transparent 30%,rgba(255,255,255,.35) 50%,transparent 70%);transform:translateX(-120%);transition:transform .7s}
+.btn:hover{transform:translateY(-3px) scale(1.03);box-shadow:0 16px 36px rgba(2,6,19,.38)}.btn:hover::after{transform:translateX(120%)}
+.btn.wa{background:linear-gradient(135deg,rgba(37,211,102,.9),rgba(18,140,126,.8))}
+.btn.tg{background:linear-gradient(135deg,rgba(42,171,238,.9),rgba(34,120,200,.8))}
+.stats{display:inline-flex;gap:0;border-radius:22px;overflow:hidden;border:1px solid rgba(255,255,255,.14)}
+.stats div{padding:14px 24px;text-align:center;border-right:1px solid rgba(255,255,255,.14);background:rgba(10,16,34,.28)}.stats div:last-child{border:0}
+.stats b{display:block;font:800 1.6rem Sora;color:#fff}.stats span{font-size:.8rem;color:var(--mut);font-weight:600}
+@keyframes floaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-16px)}}
+@media(max-width:860px){.hero{padding-top:110px}}
+
+.join-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+.join-card{padding:24px 22px;display:block;transition:transform .2s ease-out;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.06);box-shadow:0 16px 40px rgba(8,12,26,.22);min-height:100%}
+.join-card img{margin-bottom:14px;filter:drop-shadow(0 6px 14px rgba(0,0,0,.4));width:54px;height:54px}
+.join-card h3{font-size:1.4rem;margin-bottom:8px}.join-card p{color:rgba(244,247,255,.82);margin-bottom:16px;font-size:1rem;line-height:1.6}
+.join-card .go{font-weight:700;color:#fff}
+.join-card.wa{background:linear-gradient(145deg,rgba(37,211,102,.32),rgba(255,255,255,.06))}
+.join-card.tg{background:linear-gradient(145deg,rgba(42,171,238,.32),rgba(255,255,255,.06))}
+
+.filters{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+.filters button{font:inherit;color:var(--ink);padding:9px 18px;border-radius:999px;cursor:pointer;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.22);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+.filters button.on,.filters button:hover{background:rgba(255,255,255,.22);box-shadow:0 0 20px rgba(77,225,255,.35)}
+.videos{grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px}
+.vcard{cursor:pointer;transition:transform .2s ease-out;padding:10px;border-radius:24px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04)}
+.thumb{position:relative;aspect-ratio:16/9;border-radius:16px;overflow:hidden;background:linear-gradient(135deg,#1b2a66,#4a2a88);display:grid;place-items:center;box-shadow:inset 0 0 0 1px rgba(255,255,255,.1)}
+.thumb img,.thumb video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.play{position:relative;width:62px;height:62px;border-radius:50%;display:grid;place-items:center;font-size:1.3rem;background:rgba(255,255,255,.25);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);box-shadow:0 8px 20px rgba(0,0,0,.25);transition:transform .2s ease,background .2s ease}
+.vcard:hover .play{transform:scale(1.12);background:rgba(255,255,255,.4)}
+.vcard h3{font-size:1.04rem;margin:12px 6px 2px}.vcard p{font-size:.9rem;color:rgba(244,247,255,.8);margin:0 6px 8px;line-height:1.5}
+.tag{position:absolute;left:10px;top:10px;z-index:2;padding:4px 12px;border-radius:999px;font-size:.72rem;background:rgba(0,0,0,.45);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+.empty{padding:34px;text-align:center;color:var(--mut);grid-column:1/-1}
+
+/* PDF list: one PDF per row, stacked on top of each other, with a first-page picture */
+.pdfs{grid-template-columns:1fr;gap:14px;max-width:820px}
+.pcard{padding:14px 18px 14px 14px;display:flex;gap:16px;align-items:center;transition:transform .2s ease-out;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04);border-radius:22px}
+.pico{flex:none;width:58px;height:70px;border-radius:12px;display:grid;place-items:center;font:800 .9rem Sora;background:linear-gradient(160deg,#ff5d7a,#c2185b);box-shadow:0 10px 24px rgba(194,24,90,.35)}
+.pthumb{position:relative;flex:none;width:74px;height:96px;border-radius:10px;overflow:hidden;display:grid;place-items:center;box-shadow:0 10px 24px rgba(0,0,0,.35)}
+.pthumb .pico{width:100%;height:100%;border-radius:0;box-shadow:none}
+.pthumb img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:top;background:#fff;opacity:0;transition:opacity .25s}
+.pthumb img.ok{opacity:1}
+.pinfo{min-width:0}
+.pcard h3{font-size:1.05rem}.pcard p{font-size:.9rem;color:rgba(244,247,255,.8)}.pcard .dl{margin-top:6px;font-weight:700;font-size:.88rem;color:var(--a1)}
+.pmeta{display:block;margin-top:4px;font-size:.8rem;color:rgba(244,247,255,.6)}
+
+.masonry{columns:3 240px;column-gap:16px}
+.gitem{break-inside:avoid;margin-bottom:16px;padding:8px;border-radius:22px;cursor:zoom-in;transition:transform .2s ease-out;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.02)}
+.gitem img{border-radius:15px;width:100%}
+.gitem p{padding:8px 6px 2px;font-size:.88rem;color:rgba(244,247,255,.78)}
+
+.brokers{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:30px 22px;padding-bottom:70px}
+.broker{display:block;text-align:center;animation:floaty 6s ease-in-out infinite;animation-delay:var(--d,0s);-webkit-box-reflect:below 10px linear-gradient(transparent 62%,rgba(255,255,255,.3));box-reflect:below 10px linear-gradient(transparent 62%,rgba(255,255,255,.3))}
+.broker:hover{filter:drop-shadow(0 0 26px rgba(77,225,255,.6))}
+.broker .tile{display:grid;place-items:center;padding:9px;border-radius:30px;min-height:150px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.12)}
+.broker .tile img{width:100%;max-width:190px;max-height:110px;object-fit:contain;border-radius:22px;display:block;box-shadow:0 8px 22px rgba(0,0,0,.12)}
+.broker .tile .fallback{min-height:110px;display:grid;place-items:center}
+.broker .fallback{font:800 2.4rem Sora;position:relative;background:linear-gradient(135deg,#fff,var(--a1));-webkit-background-clip:text;background-clip:text;color:transparent}
+.broker span{display:block;margin-top:10px;font-weight:700;color:#fff}
+.broker small{color:rgba(244,247,255,.78)}
+
+.socials{grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
+.scard{padding:22px;display:flex;align-items:center;gap:16px;transition:transform .2s ease-out;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04);border-radius:22px}
+.av{position:relative;flex:none;width:68px;height:68px;border-radius:50%;padding:3px;background:conic-gradient(var(--a1),var(--a2),var(--a3),var(--a1));animation:spin 8s linear infinite}
+.av>div{width:100%;height:100%;border-radius:50%;background:#0b1233;display:grid;place-items:center;overflow:hidden;animation:spin 8s linear infinite reverse}
+.av img.ph{width:34px;height:34px}.av img.pic{width:100%;height:100%;object-fit:cover}
+@keyframes spin{to{transform:rotate(360deg)}}
+.scard h3{font-size:1.06rem}.scard p{font-size:.9rem;color:rgba(244,247,255,.8)}
+.follow{margin-left:auto;padding:9px 18px;border-radius:999px;font-size:.85rem;font-weight:700;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.35);box-shadow:inset 0 1px 0 rgba(255,255,255,.2)}
+.scard:hover .follow{background:rgba(255,255,255,.34)}
+
+.foot{width:min(1100px,calc(100% - 32px));margin:40px auto 24px;padding:28px;text-align:center;border-radius:24px}
+.foot p{color:rgba(244,247,255,.82);font-size:.9rem;max-width:640px;margin:8px auto 10px}.foot small{color:rgba(244,247,255,.72)}
+.modal,.lightbox{position:fixed;inset:0;z-index:100;display:grid;place-items:center;padding:16px;background:rgba(2,4,15,.72);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+.modal[hidden],.lightbox[hidden]{display:none}
+.modal-box{width:min(900px,100%);padding:16px 16px 20px;animation:pop .35s cubic-bezier(.2,.9,.3,1.2);border:1px solid rgba(255,255,255,.12)}
+@keyframes pop{from{opacity:0;transform:scale(.9)}}
+#modalBody{aspect-ratio:16/9;border-radius:18px;overflow:hidden;background:#000}
+#modalBody.tall{aspect-ratio:9/16;height:min(78vh,720px);margin:0 auto}
+.thumb img.pi{width:56px;height:56px;inset:auto;position:relative;object-fit:contain;opacity:.9;filter:drop-shadow(0 6px 14px #0008)}
+#modalBody iframe,#modalBody video{width:100%;height:100%;border:0}
+.modal h3{margin:14px 6px 2px}.modal p{margin:0 6px;color:rgba(244,247,255,.82)}
+.x{position:absolute;right:14px;top:12px;z-index:5;width:38px;height:38px;border-radius:50%;border:1px solid rgba(255,255,255,.35);background:rgba(0,0,0,.45);color:#fff;font-size:1rem;cursor:pointer}
+.lightbox{flex-direction:column;cursor:zoom-out}.lightbox img{max-height:80vh;border-radius:18px;box-shadow:0 30px 80px #000a}.lightbox p{margin-top:12px;color:var(--mut)}
+/* Forex Signals card is clickable */
+.resource-card[role="button"]{cursor:pointer;transition:transform .2s ease-out}
+.resource-card[role="button"]:focus-visible{outline:2px solid rgba(77,225,255,.9);outline-offset:3px}
+.resource-card[role="button"]:hover{transform:translateY(-2px)}
+
+/* Gold / USD market chart (TradingView widget, real market data) */
+.gold-section{padding-top:20px}
+.gold-head{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:10px 20px;margin-bottom:6px}
+.gold-head h2{margin-bottom:6px}
+.gold-sub{color:var(--mut);max-width:560px;font-size:1rem}
+.gold-status{display:inline-flex;align-items:center;gap:8px;padding:8px 14px;border-radius:999px;font-size:.84rem;font-weight:700;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.16);color:#dfe8ff;max-width:100%}
+.gold-status i{flex:none;width:9px;height:9px;border-radius:50%;background:#8a94b8}
+.gold-status.live i{background:#2ee59d;box-shadow:0 0 0 0 rgba(46,229,157,.6);animation:goldPulse 2s infinite}
+.gold-status.delayed i{background:#f2aa14}
+.gold-status.closed i{background:#ff7a8a}
+.gold-status.err i{background:#ff7a8a}
+@keyframes goldPulse{70%{box-shadow:0 0 0 8px rgba(46,229,157,0)}100%{box-shadow:0 0 0 0 rgba(46,229,157,0)}}
+.gold-card{padding:14px;border-radius:26px;border:1px solid rgba(255,255,255,.12);background:rgba(8,13,39,.62);box-shadow:0 18px 50px rgba(2,6,19,.45),0 0 40px rgba(77,225,255,.08)}
+.gold-bar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px 16px;padding:4px 4px 12px}
+.gold-inst{display:flex;flex-direction:column;min-width:0}
+.gold-inst b{font:800 1.15rem Sora,Inter,sans-serif;color:#fff;letter-spacing:.01em}
+.gold-inst span{font-size:.8rem;color:var(--mut)}
+.gold-tf{display:flex;gap:4px;padding:4px;border-radius:14px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12)}
+.gold-tf button{min-width:46px;padding:8px 12px;border:0;border-radius:10px;background:transparent;color:#cdd8f5;font:700 .88rem Inter,sans-serif;cursor:pointer;transition:background .15s,color .15s}
+.gold-tf button:hover{background:rgba(255,255,255,.1)}
+.gold-tf button.on{background:linear-gradient(135deg,var(--a1),var(--a2));color:#04102a;box-shadow:0 4px 14px rgba(77,225,255,.3)}
+.gold-tf button:focus-visible{outline:2px solid #fff;outline-offset:2px}
+.gold-frame{position:relative;height:clamp(380px,62vh,620px);border-radius:18px;overflow:hidden;background:#0a1030;border:1px solid rgba(255,255,255,.1)}
+.gold-widget,.gold-widget .tradingview-widget-container__widget,.gold-widget iframe{position:absolute;inset:0;width:100%;height:100%;border:0;display:block}
+.gold-loading,.gold-error{position:absolute;inset:0;z-index:2;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;text-align:center;padding:24px;background:#0a1030;color:#dfe8ff;font-weight:600}
+.gold-loading[hidden],.gold-error[hidden],.gold-guard[hidden],.gold-lock[hidden]{display:none!important}
+.gold-loading i{width:34px;height:34px;border-radius:50%;border:3px solid rgba(255,255,255,.18);border-top-color:var(--a1);animation:spin .9s linear infinite}
+.gold-error b{font-size:1.05rem;color:#fff}
+.gold-error span{font-weight:500;color:var(--mut);max-width:420px;font-size:.92rem}
+.gold-error button,.gold-error a{display:inline-block;margin:4px 4px 0;padding:10px 18px;border-radius:999px;font:700 .88rem Inter,sans-serif;cursor:pointer;border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.1);color:#fff}
+.gold-guard{position:absolute;inset:0;z-index:3;display:flex;align-items:flex-end;justify-content:center;padding:16px;background:transparent;cursor:pointer}
+.gold-guard span{padding:9px 16px;border-radius:999px;background:rgba(0,0,0,.6);border:1px solid rgba(255,255,255,.3);font-size:.85rem;font-weight:700;color:#fff}
+.gold-lock{position:absolute;top:10px;right:10px;z-index:4;padding:8px 14px;border-radius:999px;border:1px solid rgba(255,255,255,.4);background:rgba(0,0,0,.65);color:#fff;font:700 .85rem Inter,sans-serif;cursor:pointer}
+.gold-foot{display:flex;flex-wrap:wrap;gap:4px 16px;padding:12px 4px 2px;font-size:.78rem;color:var(--mut)}
+.gold-foot a{color:var(--a1);font-weight:700}
+.gold-risk{padding:4px 4px 2px;font-size:.74rem;color:rgba(244,247,255,.55);line-height:1.5}
+@media(max-width:640px){
+  .gold-card{padding:10px;border-radius:22px}
+  .gold-tf{width:100%}.gold-tf button{flex:1;min-width:0;padding:10px 4px}
+  .gold-frame{height:clamp(360px,58vh,480px)}
+}
+
+/* Forex Signals video popup */
+.ice-popup{position:fixed;inset:0;background:rgba(0,0,0,.88);display:none;align-items:center;justify-content:center;z-index:9999}
+.ice-popup.open{display:flex}
+.ice-popup [hidden]{display:none!important}
+.ice-player{--h:min(100vh,900px);position:relative;height:var(--h);width:min(100vw,calc(var(--h)*9/16));background:#000;overflow:hidden}
+@supports (height:100dvh){.ice-player{--h:min(100dvh,900px)}}
+.ice-player video{width:100%;height:100%;object-fit:contain;display:block}
+.ice-close,.ice-skip{position:absolute;top:12px;z-index:3;background:rgba(0,0,0,.6);color:#fff;border:1px solid rgba(255,255,255,.4);cursor:pointer;font-size:15px}
+.ice-close{left:12px;width:40px;height:40px;border-radius:50%}
+.ice-skip{right:12px;padding:10px 18px;border-radius:22px}
+.ice-cta{position:absolute;left:0;right:0;bottom:0;z-index:3;padding:18px 16px calc(18px + env(safe-area-inset-bottom));background:linear-gradient(transparent,rgba(0,0,0,.92) 45%)}
+.ice-btn{display:block;text-align:center;text-decoration:none;font-weight:800;font-size:18px;padding:18px;border-radius:14px;background:#25d366;color:#04230f}
+
+/* PDF Guides window: animation first, then the list */
+.pdf-modal{position:fixed;inset:0;background:rgba(2,4,14,.88);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center;z-index:9998}
+.pdf-modal.open{display:flex}
+.pdf-modal [hidden]{display:none!important}
+.pdf-panel{--h:min(100vh,820px);position:relative;width:min(900px,100%);height:var(--h);overflow:hidden;background:radial-gradient(120% 90% at 20% 0%,#10224f 0%,#080d27 55%,#04061a 100%);border:1px solid rgba(255,255,255,.12);border-radius:24px;box-shadow:0 30px 80px rgba(0,0,0,.6)}
+@supports (height:100dvh){.pdf-panel{--h:min(100dvh,820px)}}
+.pdf-anim{position:absolute;inset:0;width:100%;height:100%;border:0;display:block;background:transparent}
+.pdf-list{position:absolute;inset:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:64px 18px calc(28px + env(safe-area-inset-bottom));animation:pdfFade .35s ease-out both}
+.pdf-list h2{font-size:clamp(1.8rem,5vw,2.4rem);margin-bottom:4px;text-align:center}
+.pdf-sub{text-align:center;color:var(--mut);margin-bottom:18px;font-size:.95rem}
+.pdf-list .pdfs{margin:0 auto;max-width:none}
+.pdf-list .pcard{animation:pdfIn .5s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0)*.09s + .1s)}
+@keyframes pdfFade{from{opacity:0}to{opacity:1}}
+@keyframes pdfIn{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+@media(max-width:640px){.pdf-panel{border-radius:0;border:0}}
+
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.reveal{opacity:1;transform:none}}
+
+@media(max-width:760px){
+  .section{padding-top:30px}
+  .resource-grid{grid-template-columns:1fr}
+  .join-card{padding:20px 18px}
+  .videos,.pdfs,.socials{grid-template-columns:1fr}
+  .scard{padding:18px}
+}
+</style></head><body>
+<div id="wallpaper"><div class="blob b1"></div><div class="blob b2"></div></div>
+<main id="top" style="padding-top:30px">
+<p style="width:min(1100px,calc(100% - 32px));margin:0 auto 10px;color:#9fb;font-weight:600">PREVIEW ONLY &mdash; this is just the new chart section from your site. Open it with internet on to see the real gold chart.</p>
+<section id="gold-chart" class="section gold-section" aria-labelledby="goldTitle">
+    <div class="gold-head">
+      <div>
+        <h2 id="goldTitle">Gold / USD Market Chart</h2>
+        <p class="gold-sub">Explore the XAUUSD chart and switch timeframes to follow market price action.</p>
+      </div>
+      <div class="gold-status" id="goldStatus" role="status" aria-live="polite"></div>
+    </div>
+    <div class="gold-card glass">
+      <div class="gold-bar">
+        <div class="gold-inst"><b>XAU/USD</b><span>Gold vs US Dollar &middot; Candlesticks</span></div>
+        <div class="gold-tf" role="group" aria-label="Chart timeframe">
+          <button type="button" data-tf="5" aria-pressed="false">5m</button>
+          <button type="button" data-tf="15" aria-pressed="true" class="on">15m</button>
+          <button type="button" data-tf="60" aria-pressed="false">1H</button>
+          <button type="button" data-tf="240" aria-pressed="false">4H</button>
+          <button type="button" data-tf="D" aria-pressed="false">1D</button>
+        </div>
+      </div>
+      <div class="gold-frame" id="goldFrame" aria-busy="true">
+        <div class="gold-loading" id="goldLoading"><i></i><span>Loading gold chart&hellip;</span></div>
+        <div class="gold-error" id="goldError" hidden>
+          <b>The chart couldn&rsquo;t load.</b>
+          <span>Check your internet connection, or turn off any ad/tracker blocker for this page, then try again.</span>
+          <div><button type="button" id="goldRetry">Try again</button> <a id="goldOpen" href="https://www.tradingview.com/symbols/XAUUSD/" target="_blank" rel="noopener nofollow">Open on TradingView</a></div>
+        </div>
+        <div class="tradingview-widget-container gold-widget" id="goldWidget"></div>
+        <div class="gold-guard" id="goldGuard" hidden><span>Tap to explore the chart</span></div>
+        <button type="button" class="gold-lock" id="goldLock" hidden>Done &#10003;</button>
+      </div>
+      <div class="gold-foot">
+        <span id="goldSrc">Data: OANDA via TradingView</span>
+        <span id="goldTz">Times shown in UTC</span>
+        <span class="tradingview-widget-copyright"><a href="https://www.tradingview.com/symbols/XAUUSD/" rel="noopener nofollow" target="_blank">XAUUSD chart</a> by TradingView</span>
+      </div>
+      <p class="gold-risk">For education only. Prices move fast and trading carries risk of loss. This chart is not financial advice and does not guarantee any result.</p>
+    </div>
+  </section>
+</main>
+<script>/* =====================================================================
+    ICE UPDATE — EDIT THIS FILE ONLY.  Everything on the website comes
+    from here. Change text, add videos, PDFs, pictures, brokers, socials.
+    After editing: save/commit on GitHub and the site updates in ~1 minute.
+    ===================================================================== */
+window.SITE = {
+  brand: "Ice Update",
+  tagline: "Trading • Online income • Tech updates",
+  hero: {
+    badge: "Free classes and forex signals for everyone",
+    title: "Learn to read the market.",
+    subtitle: "Simple video lessons, PDFs and charts that teach you candlesticks, support & resistance and smart risk — step by step."
+  },
+
+  /* Your channels (the big Join buttons). Paste your real links. */
+  links: {
+    whatsapp: "https://whatsapp.com/channel/0029VbE7s6hDuMRfollXDG0P",
+    telegram: "https://t.me/iceupdate100"
+  },
+
+  /* TRACKING — see README. Fill ONE or BOTH. Leave "" to switch off. */
+  analytics: {
+    goatcounter: "",   // e.g. "iceupdate"  (free, from goatcounter.com)
+    ga4: ""            // e.g. "G-XXXXXXXXXX" (from Google Analytics)
+  },
+
+  /* Wallpaper and broker files are uploaded in the repo root. */
+  theme: {
+    accent1: "#4de1ff",
+    accent2: "#8b7bff",
+    accent3: "#ff6bd6",
+    wallpaper: "IceUpdate-Mono-Desktop-2560x1440.jpg",
+    wallpaperMobile: "IceUpdate-Mono-Phone-1080x1920.jpg"
+  },
+
+  socials: [
+    { platform: "instagram", name: "Instagram", handle: "@nanayawasmahannan", followers: "Daily reels & lifestyle", url: "https://www.instagram.com/nanayawasmahannan/", avatar: "" },
+    { platform: "tiktok",    name: "TikTok",    handle: "@nana.yaw.asmah.an", followers: "Short-form videos", url: "https://www.tiktok.com/@nana.yaw.asmah.an", avatar: "" },
+    { platform: "youtube",   name: "YouTube",   handle: "@nanayawasmahannan", followers: "Videos & tutorials", url: "https://www.youtube.com/@nanayawasmahannan", avatar: "" },
+    { platform: "facebook",  name: "Facebook",  handle: "Nana Yaw Asmahannan", followers: "Community updates", url: "https://www.facebook.com/profile.php?id=61595902044097", avatar: "" },
+    { platform: "whatsapp",  name: "WhatsApp Channel", handle: "Ice Update", followers: "Instant updates", url: "https://whatsapp.com/channel/0029VbE7s6hDuMRfollXDG0P", avatar: "" },
+    { platform: "telegram",  name: "Telegram",  handle: "@iceupdate100", followers: "Class group", url: "https://t.me/iceupdate100", avatar: "" }
+  ],
+
+  videos: [
+    // { title: "Hammer candlestick", desc: "Lesson 1", category: "Candlesticks",
+    //   url: "https://www.youtube.com/watch?v=XXXXXXXXXXX", thumb: "" },
+  ],
+
+  /* PDF LIST — shown top to bottom, in the order written here.
+     TO ADD A NEW PDF:
+       1) Upload the .pdf file to the main folder of the repository.
+       2) (Optional) Upload a picture of its first page and put its file name in thumb.
+          No thumb = a clean PDF icon is shown instead.
+       3) Copy ONE line below, paste it under the last one, and change the words.
+     Clicking a PDF plays the short stick-man loading animation, then opens the PDF. */
+  pdfs: [
+    { title: "15 Candlestick Patterns", desc: "Visual guide: 15 patterns, one picture per page", file: "candlestick-patterns.pdf", thumb: "candlestick-patterns-thumb.jpg", pages: 16 },
+    { title: "Candlestick Charts Explained", desc: "A beginner's guide to reading bullish and bearish candles", file: "candlestick-guide.pdf", thumb: "candlestick-guide-thumb.jpg", pages: 4 },
+    { title: "Support & Resistance: A Practical Field Guide", desc: "How to find the levels that matter and build trades around them", file: "support-and-resistance.pdf", thumb: "support-and-resistance-thumb.jpg", pages: 20 },
+  ],
+
+  /* GOLD / USD CHART — real market data from the free TradingView widget.
+     symbol:  which feed to show (OANDA:XAUUSD is the default gold spot price).
+     source:  the name shown under the chart.
+     feed:    "live" shows a Live badge while the market is open.
+              If you ever find the price is behind the real market, change it to "delayed"
+              and the badge will say Delayed instead. Never leave "live" if it is not live.
+     interval: starting timeframe: "5", "15", "60", "240" or "D". */
+  goldChart: { symbol: "OANDA:XAUUSD", source: "OANDA", feed: "live", interval: "15" },
+
+  gallery: [
+    { src: "https://raw.githubusercontent.com/yawicon122/ICE-UPDATE-/main/a39e0c2cf1b85e1c798876f4526ac48f.jpg", caption: "Gold (XAUUSD) M1 – price falling, sell entries" },
+    // { src: "assets/images/chart1.jpg", caption: "Hammer at support" },
+  ],
+
+  brokers: [
+    { name: "MH Markets",        logo: "mh-markets.png",        url: "https://client.mhmarkets-asia.com/signup?partnerCode=A4CFMDIG", note: "Official broker" },
+    { name: "Alchemy Markets",   logo: "alchemy-markets.png",   url: "https://account.alchemymarkets.com/register?brd=1&sidc=D037F675-FE13-4D23-9264-D6F46D9039B4", note: "Official broker" },
+    { name: "Ambitious Fincorp", logo: "ambitious-fincorp.png", url: "https://trade.ambitiousfincorp.com/register?refcode=R3142067", note: "Official broker" },
+    { name: "CPT Markets",       logo: "cpt-markets.png",       url: "https://portal.cptmarkets.com/user/register?inviteid=jTc85GWUB-MT4&inviteType=1", note: "Official broker" }
+  ],
+
+  footerNote: "Empowering your trading journey. We provide high-probability trading signals and comprehensive educational content designed to help you navigate the markets with confidence. To ensure the highest quality, we focus on sound risk management, disciplined execution, and practical market education."
+};
+</script>
+<script>/* =====================================================================
+   ICE UPDATE — Gold / USD market chart.
+   Shows the free TradingView "Advanced Chart" widget with real XAUUSD data.
+   No simulated candles. Loads only when the section is near the screen,
+   so it never slows down the rest of the page.
+   Settings live in config.js -> goldChart.
+   ===================================================================== */
+(function () {
+  "use strict";
+  var $ = function (id) { return document.getElementById(id); };
+  var S = window.SITE || {};
+  var C = {};
+  var base = { symbol: "OANDA:XAUUSD", source: "OANDA", feed: "live", interval: "15" }, user = S.goldChart || {};
+  Object.keys(base).forEach(function (k) { C[k] = user[k] || base[k]; });
+  if (!/^[A-Z0-9_]+:[A-Z0-9._-]+$/i.test(C.symbol)) C.symbol = base.symbol;
+  var TF = { "5": 1, "15": 1, "60": 1, "240": 1, "D": 1 };
+  if (!TF[C.interval]) C.interval = base.interval;
+
+  var frame = $("goldFrame"), host = $("goldWidget"), loading = $("goldLoading"), err = $("goldError"),
+      statusEl = $("goldStatus"), guard = $("goldGuard"), lock = $("goldLock");
+  if (!frame || !host) return;
+
+  var current = C.interval, started = false, broken = false, timer = 0, token = 0;
+  var coarse = window.matchMedia && matchMedia("(pointer:coarse)").matches;
+
+  $("goldSrc").textContent = "Data: " + C.source + " via TradingView";
+  var sym = C.symbol.split(":")[1] || "XAUUSD";
+  $("goldOpen").href = "https://www.tradingview.com/symbols/" + encodeURIComponent(sym) + "/";
+
+  /* ---------- market status: only honest labels ---------- */
+  function ny() {                                   // current New York weekday + hour (forex week runs Sun 5pm -> Fri 5pm NY time)
+    try {
+      var p = new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", weekday: "short", hour: "numeric", hourCycle: "h23" }).formatToParts(new Date()), o = {};
+      p.forEach(function (x) { o[x.type] = x.value; });
+      return { d: o.weekday, h: parseInt(o.hour, 10) };
+    } catch (e) { return null; }
+  }
+  function marketOpen() {
+    var t = ny(); if (!t) return null;
+    if (t.d === "Sat") return false;
+    if (t.d === "Fri" && t.h >= 17) return false;
+    if (t.d === "Sun" && t.h < 17) return false;
+    return true;
+  }
+  function setStatus(kind, text) { statusEl.className = "gold-status " + kind; statusEl.innerHTML = "<i></i><span></span>"; statusEl.lastChild.textContent = text; }
+  function refreshStatus() {
+    if (broken) { setStatus("err", "Chart unavailable"); return; }
+    var open = marketOpen();
+    if (open === false) setStatus("closed", "Market closed · showing the last session · reopens Sunday 5 pm New York time");
+    else if (C.feed === "delayed") setStatus("delayed", "Delayed data · prices are not real-time");
+    else if (open === true) setStatus("live", "Live · real-time " + C.source + " feed");
+    else setStatus("", "Gold / USD");
+  }
+
+  /* ---------- the widget ---------- */
+  function showError() {
+    broken = true; clearTimeout(timer);
+    host.innerHTML = ""; loading.hidden = true; err.hidden = false; frame.setAttribute("aria-busy", "false");
+    if (guard) guard.hidden = true; if (lock) lock.hidden = true;
+    refreshStatus();
+  }
+  function build(tf) {
+    var my = ++token; broken = false; clearTimeout(timer);
+    current = tf; err.hidden = true; loading.hidden = false; frame.setAttribute("aria-busy", "true");
+    host.innerHTML = ""; refreshStatus();
+    if (navigator.onLine === false) { showError(); return; }
+    var inner = document.createElement("div"); inner.className = "tradingview-widget-container__widget"; host.appendChild(inner);
+    var cfg = {
+      autosize: true, symbol: C.symbol, interval: tf, timezone: "Etc/UTC", theme: "dark", style: "1", locale: "en",
+      backgroundColor: "#0a1030", gridColor: "rgba(255,255,255,0.06)",
+      allow_symbol_change: false, hide_top_toolbar: true, hide_side_toolbar: true, hide_legend: false,
+      withdateranges: false, save_image: false, calendar: false, details: false, hotlist: false, studies: [],
+      support_host: "https://www.tradingview.com"
+    };
+    var sc = document.createElement("script");
+    sc.async = true; sc.src = "https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js";
+    sc.text = JSON.stringify(cfg);
+    sc.onerror = function () { if (my === token) showError(); };
+    host.appendChild(sc);
+    /* hide the loading cover once the chart frame has loaded; if it never does, say so */
+    var mo = new MutationObserver(function () {
+      var f = host.querySelector("iframe");
+      if (!f || my !== token) return;
+      mo.disconnect();
+      var done = function () { if (my !== token) return; clearTimeout(timer); loading.hidden = true; frame.setAttribute("aria-busy", "false"); if (coarse) lock_on(); };
+      f.addEventListener("load", function () { setTimeout(done, 400); }, { once: true });
+    });
+    mo.observe(host, { childList: true, subtree: true });
+    timer = setTimeout(function () { if (my === token && !loading.hidden) { mo.disconnect(); showError(); } }, 20000);
+  }
+
+  /* ---------- phones: the chart must not trap page scrolling ---------- */
+  function lock_on() { if (!coarse || broken) return; guard.hidden = false; lock.hidden = true; }
+  if (coarse) {
+    guard.addEventListener("click", function () { guard.hidden = true; lock.hidden = false; });
+    lock.addEventListener("click", function () { lock.hidden = true; guard.hidden = false; });
+  }
+
+  /* ---------- timeframe buttons ---------- */
+  var btns = Array.prototype.slice.call(document.querySelectorAll(".gold-tf button"));
+  function markBtns() { btns.forEach(function (b) { var on = b.getAttribute("data-tf") === current; b.classList.toggle("on", on); b.setAttribute("aria-pressed", on ? "true" : "false"); }); }
+  btns.forEach(function (b) {
+    b.addEventListener("click", function () {
+      var tf = b.getAttribute("data-tf"); if (!TF[tf] || (tf === current && !broken)) return;
+      current = tf; markBtns(); if (started) build(tf);
+    });
+  });
+  $("goldRetry").addEventListener("click", function () { build(current); });
+  window.addEventListener("online", function () { if (broken && started) build(current); });
+  markBtns(); refreshStatus(); setInterval(refreshStatus, 60000);
+
+  /* ---------- start only when the section is close to the screen ---------- */
+  function start() { if (started) return; started = true; build(current); }
+  if ("IntersectionObserver" in window) {
+    var io = new IntersectionObserver(function (es) { if (es.some(function (e) { return e.isIntersecting; })) { io.disconnect(); start(); } }, { rootMargin: "500px 0px" });
+    io.observe(frame);
+  } else { window.addEventListener("load", function () { setTimeout(start, 600); }); }
+})();
+</script>
+</body></html>

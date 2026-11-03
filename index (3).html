@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Ice Update — Learn Trading, Step by Step</title>
+<meta name="description" content="Free trading classes: video lessons, PDFs and charts. Join the Ice Update WhatsApp and Telegram channels.">
+<meta name="theme-color" content="#060a1c">
+<meta property="og:title" content="Ice Update — Learn Trading, Step by Step">
+<meta property="og:description" content="Free video lessons, PDFs and charts for beginners.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<script src="config.js"></script>
+<script src="intro.js"></script>
+<div id="wallpaper" aria-hidden="true">
+  <div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div><div class="blob b4"></div>
+  <canvas id="stars"></canvas>
+  <div class="grain"></div>
+</div>
+
+<header class="nav glass" id="nav">
+  <a class="logo" href="#top" data-track="nav-logo"><span class="logo-mark">❄</span><b id="brandName">Ice Update</b></a>
+  <nav>
+    <a href="#join">Join</a><a href="#lessons">Lessons</a><a href="#pdf-card" id="navPdfs">PDFs</a><a href="#gallery">Gallery</a><a href="#brokers">Brokers</a><a href="#social">Social</a>
+  </nav>
+</header>
+
+<main id="top">
+  <section class="hero">
+    <div class="hero-text">
+      <span class="chip glass" id="heroBadge"></span>
+      <h1 id="heroTitle"></h1>
+      <p id="heroSub"></p>
+      <div class="cta">
+        <a class="btn wa" id="ctaWa" target="_blank" rel="noopener" data-track="join-whatsapp-hero">Join WhatsApp Channel</a>
+        <a class="btn tg" id="ctaTg" target="_blank" rel="noopener" data-track="join-telegram-hero">Join Telegram</a>
+      </div>
+      <div class="stats glass">
+        <div><b id="stVideos">0</b><span>Video lessons</span></div>
+        <div><b id="stPdfs">0</b><span>PDF guides</span></div>
+        <div><b id="stBrokers">0</b><span>Brokers</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="gold-chart" class="section gold-section" aria-labelledby="goldTitle">
+    <div class="gold-head">
+      <div>
+        <h2 id="goldTitle">Gold / USD Market Chart</h2>
+        <p class="gold-sub">Explore the XAUUSD chart and switch timeframes to follow market price action.</p>
+      </div>
+      <div class="gold-status" id="goldStatus" role="status" aria-live="polite"></div>
+    </div>
+    <div class="gold-card glass">
+      <div class="gold-bar">
+        <div class="gold-inst"><b>XAU/USD</b><span>Gold vs US Dollar &middot; Candlesticks</span></div>
+        <div class="gold-tf" role="group" aria-label="Chart timeframe">
+          <button type="button" data-tf="5" aria-pressed="false">5m</button>
+          <button type="button" data-tf="15" aria-pressed="true" class="on">15m</button>
+          <button type="button" data-tf="60" aria-pressed="false">1H</button>
+          <button type="button" data-tf="240" aria-pressed="false">4H</button>
+          <button type="button" data-tf="D" aria-pressed="false">1D</button>
+        </div>
+      </div>
+      <div class="gold-frame" id="goldFrame" aria-busy="true">
+        <div class="gold-loading" id="goldLoading"><i></i><span>Loading gold chart&hellip;</span></div>
+        <div class="gold-error" id="goldError" hidden>
+          <b>The chart couldn&rsquo;t load.</b>
+          <span>Check your internet connection, or turn off any ad/tracker blocker for this page, then try again.</span>
+          <div><button type="button" id="goldRetry">Try again</button> <a id="goldOpen" href="https://www.tradingview.com/symbols/XAUUSD/" target="_blank" rel="noopener nofollow">Open on TradingView</a></div>
+        </div>
+        <div class="tradingview-widget-container gold-widget" id="goldWidget"></div>
+        <div class="gold-guard" id="goldGuard" hidden><span>Tap to explore the chart</span></div>
+        <button type="button" class="gold-lock" id="goldLock" hidden>Done &#10003;</button>
+      </div>
+      <div class="gold-foot">
+        <span id="goldSrc">Data: OANDA via TradingView</span>
+        <span id="goldTz">Times shown in UTC</span>
+        <span class="tradingview-widget-copyright"><a href="https://www.tradingview.com/symbols/XAUUSD/" rel="noopener nofollow" target="_blank">XAUUSD chart</a> by TradingView</span>
+      </div>
+      <p class="gold-risk">For education only. Prices move fast and trading carries risk of loss. This chart is not financial advice and does not guarantee any result.</p>
+    </div>
+  </section>
+
+  <section class="resource-rail section">
+    <div class="resource-grid">
+      <article class="resource-card glass">
+        <span class="resource-icon">🎓</span>
+        <div>
+          <h3>Free Classes</h3>
+          <p>Free classes for everyone with simple, practical trading lessons.</p>
+        </div>
+      </article>
+      <article id="forex-card" class="resource-card glass forex-signals-card" tabindex="0" role="button" aria-label="Open Forex Signals video" data-track="forex-signals-card">
+        <span class="resource-icon">📈</span>
+        <div>
+          <h3>Forex Signals</h3>
+          <p>Daily forex signals and market updates to keep you informed.</p>
+        </div>
+      </article>
+      <article id="pdf-card" class="resource-card glass pdf-guides-card" tabindex="0" role="button" aria-label="Open PDF Guides" data-track="pdf-guides-card">
+        <span class="resource-icon">📄</span>
+        <div>
+          <h3>PDF Guides</h3>
+          <p>Download cheat sheets, market notes, and easy-to-follow strategy PDFs.</p>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <section id="join" class="section">
+    <h2>Join the community</h2>
+    <div class="join-grid">
+      <a class="join-card glass tilt wa" id="joinWa" target="_blank" rel="noopener" data-track="join-whatsapp-card">
+        <img src="https://cdn.simpleicons.org/whatsapp/white" alt="" width="54" height="54"><h3>WhatsApp Channel</h3><p>Instant updates, signals-style lessons and announcements.</p><span class="go">Join now →</span>
+      </a>
+      <a class="join-card glass tilt tg" id="joinTg" target="_blank" rel="noopener" data-track="join-telegram-card">
+        <img src="https://cdn.simpleicons.org/telegram/white" alt="" width="54" height="54"><h3>Telegram</h3><p>Class group, Q&amp;A and resources for students.</p><span class="go">Join now →</span>
+      </a>
+    </div>
+  </section>
+
+  <section id="lessons" class="section">
+    <h2>Video lessons</h2>
+    <div class="filters" id="vidFilters"></div>
+    <div class="grid videos" id="videoGrid"></div>
+  </section>
+
+  <section id="gallery" class="section">
+    <h2>Chart gallery</h2>
+    <div class="masonry" id="galGrid"></div>
+  </section>
+
+  <section id="brokers" class="section">
+    <h2>Brokers we use</h2>
+    <p class="sub">Tap a logo to open the broker.</p>
+    <div class="brokers" id="brokerGrid"></div>
+  </section>
+
+  <section id="social" class="section">
+    <h2>Follow Ice Update everywhere</h2>
+    <div class="grid socials" id="socialGrid"></div>
+  </section>
+</main>
+
+<footer class="glass foot">
+  <b id="fBrand"></b>
+  <p id="fNote"></p>
+  <small>© <span id="yr"></span> — All rights reserved.</small>
+</footer>
+
+<div class="modal" id="modal" hidden>
+  <div class="modal-box glass">
+    <button class="x" id="modalX" aria-label="Close">✕</button>
+    <div id="modalBody"></div>
+    <h3 id="modalTitle"></h3><p id="modalDesc"></p>
+  </div>
+</div>
+<div class="lightbox" id="lightbox" hidden><img alt=""><p></p><button class="x" aria-label="Close">✕</button></div>
+
+<div id="ice-popup" class="ice-popup" aria-hidden="true">
+  <div class="ice-player" role="dialog" aria-modal="true" aria-label="Forex Signals video popup">
+    <button id="ice-close" class="ice-close" type="button" aria-label="Close video popup">&#10005;</button>
+    <video id="ice-video" playsinline preload="metadata" aria-label="Forex Signals video"></video>
+    <button id="ice-skip" class="ice-skip" type="button" hidden>Skip &rsaquo;</button>
+    <div id="ice-cta" class="ice-cta" hidden>
+      <a id="ice-broker" class="ice-btn" href="#brokers">Register for a Broker &amp; Begin</a>
+    </div>
+  </div>
+</div>
+
+<div id="pdf-modal" class="pdf-modal" aria-hidden="true">
+  <div class="pdf-panel" role="dialog" aria-modal="true" aria-label="PDF Guides">
+    <button id="pdf-close" class="ice-close" type="button" aria-label="Close PDF Guides">&#10005;</button>
+    <iframe id="pdf-anim" class="pdf-anim" title="Loading PDF Guides" hidden></iframe>
+    <div id="pdf-list" class="pdf-list" hidden>
+      <h2>PDF Guides</h2>
+      <p class="pdf-sub">Tap a guide to open it.</p>
+      <div class="grid pdfs" id="pdfGrid"></div>
+    </div>
+  </div>
+</div>
+
+<a href="#gold-chart" id="scrollHint" class="scroll-hint" aria-label="Scroll down to know more">
+  <span>Scroll down to know more</span>
+  <svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><path d="M5 8l7 7 7-7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+</a>
+
+<script src="app.js"></script>
+<script src="gold-chart.js" defer></script>
+</body>
+</html>

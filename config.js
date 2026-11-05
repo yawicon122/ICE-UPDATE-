@@ -33,14 +33,21 @@ window.SITE = {
     wallpaperMobile: "IceUpdate-Mono-Phone-1080x1920.jpg"
   },
 
+  /* SOCIAL MEDIA — shown as the row of round icons at the bottom of the page (in this order)
+     and as the tiny pop-up icons in the bottom-right corner (see dockSocials below).
+     An icon with an empty url "" is hidden. To show X, paste your X (Twitter) link into its url. */
   socials: [
-    { platform: "instagram", name: "Instagram", handle: "@nanayawasmahannan", followers: "Daily reels & lifestyle", url: "https://www.instagram.com/nanayawasmahannan/", avatar: "" },
-    { platform: "tiktok",    name: "TikTok",    handle: "@nana.yaw.asmah.an", followers: "Short-form videos", url: "https://www.tiktok.com/@nana.yaw.asmah.an", avatar: "" },
+    { platform: "x",         name: "X",         handle: "", followers: "", url: "", avatar: "" },
     { platform: "youtube",   name: "YouTube",   handle: "@nanayawasmahannan", followers: "Videos & tutorials", url: "https://www.youtube.com/@nanayawasmahannan", avatar: "" },
+    { platform: "instagram", name: "Instagram", handle: "@nanayawasmahannan", followers: "Daily reels & lifestyle", url: "https://www.instagram.com/nanayawasmahannan/", avatar: "" },
     { platform: "facebook",  name: "Facebook",  handle: "Nana Yaw Asmahannan", followers: "Community updates", url: "https://www.facebook.com/profile.php?id=61595902044097", avatar: "" },
-    { platform: "whatsapp",  name: "WhatsApp Channel", handle: "Ice Update", followers: "Instant updates", url: "https://whatsapp.com/channel/0029VbE7s6hDuMRfollXDG0P", avatar: "" },
+    { platform: "tiktok",    name: "TikTok",    handle: "@nana.yaw.asmah.an", followers: "Short-form videos", url: "https://www.tiktok.com/@nana.yaw.asmah.an", avatar: "" },
+    { platform: "whatsapp",  name: "WhatsApp",  handle: "Ice Update", followers: "Instant updates", url: "https://whatsapp.com/channel/0029VbE7s6hDuMRfollXDG0P", avatar: "" },
     { platform: "telegram",  name: "Telegram",  handle: "@iceupdate100", followers: "Class group", url: "https://t.me/iceupdate100", avatar: "" }
   ],
+
+  /* The tiny icon in the bottom-right corner pops these out, top to bottom. */
+  dockSocials: ["tiktok", "instagram", "youtube", "facebook", "x"],
 
   videos: [
     // { title: "Hammer candlestick", desc: "Lesson 1", category: "Candlesticks",

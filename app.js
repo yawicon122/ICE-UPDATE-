@@ -147,15 +147,14 @@ const bg = $("#brokerGrid");
   bg.appendChild(a);
 });
 
-/* ---------- socials ---------- */
+/* ---------- socials: a neat row of round icons with their names (bottom of the page) ---------- */
 const sg = $("#socialGrid");
-(S.socials || []).forEach(s => {
-  const a = document.createElement("a"); a.className = "scard glass tilt reveal"; a.href = safeUrl(s.url); a.target = "_blank"; a.rel = "noopener"; a.dataset.track = "social-" + s.platform;
-  a.innerHTML = `<div class="av"><div>${s.avatar ? `<img class="pic" src="${esc(safeUrl(s.avatar))}" alt="">` : `<img class="ph" src="https://cdn.simpleicons.org/${esc(s.platform)}/white" alt="">`}</div></div>
-   <div><h3>${esc(s.name)}</h3><p>${esc(s.handle)}${s.followers ? " · " + esc(s.followers) : ""}</p></div><span class="follow">Follow</span>`;
-  const pic = a.querySelector("img.pic"); if (pic) { const orig = s.avatar; pic.removeAttribute("src"); loadImg(orig, u => pic.src = u, () => { pic.style.display = "none"; }); }
-  const ph = a.querySelector("img.ph");
-  if (ph) ph.onerror = () => { ph.replaceWith(Object.assign(document.createElement("b"), { textContent: (s.name || "?").slice(0, 1), style: "font:800 1.5rem Sora" })); };
+(S.socials || []).filter(s => s && safeUrl(s.url) !== "#").forEach((s, i) => {
+  const key = String(s.platform || "").toLowerCase(), meta = (window.IU_SOCIAL && window.IU_SOCIAL.icons[key]) || {};
+  const a = document.createElement("a"); a.className = "sr"; a.href = safeUrl(s.url); a.target = "_blank"; a.rel = "noopener"; a.dataset.track = "social-" + key;
+  a.style.setProperty("--i", i); a.style.setProperty("--c", meta.color || "#4de1ff");
+  a.title = (s.name || key) + (s.handle ? " — " + s.handle : ""); a.setAttribute("aria-label", "Open " + (s.name || key));
+  a.innerHTML = `<span class="sr-ico">${window.IU_SOCIAL ? window.IU_SOCIAL.icon(key) : ""}</span><span class="sr-name">${esc(s.name || key)}</span>`;
   sg.appendChild(a);
 });
 document.querySelectorAll(".join-card img").forEach(i => i.onerror = () => { i.style.display = "none"; });

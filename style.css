@@ -341,8 +341,6 @@ html.iu-pdfopen #wallpaper,html.iu-pdfopen main,html.iu-pdfopen .nav,html.iu-pdf
 @keyframes hcFloat{0%,100%{transform:translate3d(0,-6px,0)}50%{transform:translate3d(0,8px,0)}}
 @keyframes hcPulse{0%,100%{box-shadow:0 0 24px 6px rgba(232,184,74,.38),0 0 60px 14px rgba(232,184,74,.14)}50%{box-shadow:0 0 34px 11px rgba(232,184,74,.55),0 0 84px 24px rgba(232,184,74,.22)}}
 @media(min-width:900px){
-  .hero{grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);gap:40px}
-  .hero-crystal{height:420px;--s:190px}
 }
 /* glass panels: icy border, gentle lift, gold accent for the main action */
 .glass{border-color:rgba(160,225,255,.20)}
@@ -372,14 +370,13 @@ html.iu-pdfopen #wallpaper,html.iu-pdfopen main,html.iu-pdfopen .nav,html.iu-pdf
 
 /* ===== v2 — cube logo, corner social icons, bottom social row ===== */
 /* 1) the little cube next to "Ice Update" in the top bar (same crystal as the hero) */
-.logo-mark.cube{background:radial-gradient(circle at 50% 38%,rgba(77,225,255,.28),rgba(8,13,39,.92) 72%);border:1px solid rgba(191,238,255,.5);box-shadow:0 0 16px rgba(77,225,255,.55)}
-.mini-cube,.mini-cube .hc-float,.mini-cube .hc-tilt,.sd-cube,.sd-cube .hc-float,.sd-cube .hc-tilt{display:block}
-.mini-cube{--s:18px;perspective:240px}
-.sd-cube{--s:17px;perspective:240px}
-.mini-cube .hc-float,.sd-cube .hc-float{animation:none}
-.mini-cube .hc-cube,.sd-cube .hc-cube{animation-duration:9s}
-.mini-cube .hc-cube2,.sd-cube .hc-cube2{animation-duration:6s}
-.mini-cube .hc-core,.sd-cube .hc-core{animation:none;box-shadow:0 0 7px 2px rgba(232,184,74,.65)}
+.logo-mark.cube{width:46px;height:46px;background:radial-gradient(circle at 50% 38%,rgba(77,225,255,.28),rgba(8,13,39,.92) 72%);border:1px solid rgba(191,238,255,.5);box-shadow:0 0 16px rgba(77,225,255,.55)}
+.mini-cube,.mini-cube .hc-float,.mini-cube .hc-tilt{display:block}
+.mini-cube{--s:26px;perspective:340px}
+.mini-cube .hc-float{animation:none}
+.mini-cube .hc-cube{animation-duration:9s}
+.mini-cube .hc-cube2{animation-duration:6s}
+.mini-cube .hc-core{animation:none;box-shadow:0 0 9px 3px rgba(232,184,74,.65)}
 
 /* 2) tiny corner icon: pops out the social icons like the reference animation */
 .sd{position:fixed;right:max(12px,env(safe-area-inset-right));bottom:calc(16px + env(safe-area-inset-bottom));z-index:9990;display:flex;flex-direction:column;align-items:flex-end;gap:10px;opacity:0;transition:opacity .5s;pointer-events:none}
@@ -441,3 +438,12 @@ html.iu-intro-on .sd,html.iu-intro-hold .sd,html.iu-pdfopen .sd{visibility:hidde
 @keyframes srIn{0%{opacity:0;transform:scale(.2)}40%{opacity:1}100%{opacity:1;transform:scale(1)}}
 @media(prefers-reduced-motion:reduce){.social-row .sr{opacity:1}.social-row.in .sr{animation:none}}
 @media(max-width:420px){.social-row{gap:20px 14px}.sr{min-width:78px}.sr-ico{width:60px;height:60px}}
+
+/* v3 — one merged hero heading; corner button cycles through the social icons */
+.hero-h1{display:block}
+.hero-h1 .h1-top{display:block;font-size:clamp(1.05rem,4.4vw,1.55rem);font-weight:700;letter-spacing:-.01em;line-height:1.25;margin-bottom:10px}
+.hero-h1 .h1-main{display:block}
+.sd-face{position:absolute;inset:3px;border-radius:50%;overflow:hidden;opacity:0;transform:scale(.3) rotate(-90deg);transition:opacity .3s,transform .5s cubic-bezier(.2,1.3,.3,1);pointer-events:none}
+.sd-face.on{opacity:1;transform:none}
+.sd-face .si{display:grid;place-items:center;width:100%;height:100%;border-radius:50%}
+@media(prefers-reduced-motion:reduce){.sd-face{transition:none}}

@@ -21,6 +21,11 @@
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
   var reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
+  /* the tiny circle shows the social icons one after another: Facebook, Instagram, TikTok ... */
+  var faceOrder = ["facebook", "instagram", "tiktok", "youtube", "x"];
+  var faces = faceOrder.filter(function (k) { return items.some(function (s) { return String(s.platform).toLowerCase() === k; }); });
+  if (!faces.length) faces = [String(items[0].platform).toLowerCase()];
+
   var el = document.createElement("div");
   el.id = "iu-social"; el.className = "sd";
   el.innerHTML =
@@ -35,9 +40,7 @@
       }).join("") +
     "</div>" +
     '<button type="button" class="sd-btn" aria-expanded="false" aria-label="Show social media links">' +
-      '<i class="sd-spin"></i><span class="sd-cube hc-scene"><span class="hc-float"><span class="hc-tilt"><span class="hc-core"></span>' +
-        '<span class="hc-cube"><i class="f1"></i><i class="f2"></i><i class="f3"></i><i class="f4"></i><i class="f5"></i><i class="f6"></i></span>' +
-      "</span></span></span>" +
+      '<i class="sd-spin"></i>' + faces.map(function (k, n) { return '<span class="sd-face' + (n ? "" : " on") + '">' + I.icon(k) + "</span>"; }).join("") +
     "</button>";
   document.body.appendChild(el);
 
@@ -73,6 +76,12 @@
   document.addEventListener("keydown", function (e) { if (e.key === "Escape" && isOpen) { close(); btn.focus(); } });
   el.addEventListener("pointerenter", function () { clearTimeout(closeTimer); });
   el.addEventListener("pointerleave", function () { if (isOpen && !touched) closeTimer = setTimeout(close, 1800); });
+
+  var fEls = el.querySelectorAll(".sd-face"), fi = 0;
+  if (fEls.length > 1 && !reduce) setInterval(function () {
+    if (document.hidden) return;
+    fEls[fi].classList.remove("on"); fi = (fi + 1) % fEls.length; fEls[fi].classList.add("on");
+  }, 1500);
 
   /* first pop-out: wait until the opening intro (if any) is finished */
   var waited = 0, boot = setInterval(function () {

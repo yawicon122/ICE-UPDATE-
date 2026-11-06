@@ -223,7 +223,7 @@
      ------------------------------------------------------------------ */
   var modal = $("#learn-modal"), curView = "home", lastFocus = null;
   var ITEMS = [
-    { v: "predict", ico: "📈", t: "Predict the Market", d: "Paper trading game. A random chart appears, you press Buy or Sell and watch the candles play out. 10 rounds.", tag: "New" },
+    { v: "predict", ico: "📈", t: "Predict the Market", d: "15 random charts. Spot the pattern, draw your line, then place a Buy or Sell trade. Scored at the end.", tag: "New" },
     { v: "quiz", ico: "🎮", t: "Candle Quiz", d: "12 questions on candles, patterns and support & resistance. Get a score at the end.", tag: "Play" },
     { v: "route", ico: "🧭", t: "Start here", d: "A five-step route from your first candle to your first review." },
     { v: "explorer", ico: "🕯️", t: "Build a candle", d: "Move the sliders and see what the body and wicks mean." },
@@ -363,91 +363,111 @@
   }
 
   /* ------------------------------------------------------------------
-     6) PREDICT THE MARKET — paper-trading game with random charts
-     Every round makes a NEW random chart. Some end in a candlestick pattern
-     or chart pattern; some are plain noise. The pattern only tilts the odds
-     (about 70/30): the market never moves one way every time.
+     6) PREDICT THE MARKET — 15 random charts, trading-platform style
+     Each question: watch the market move, pause, then
+       1) say what you see (candle pattern, trend, range, support/resistance, breakout...)
+       2) draw your line on the chart (trend line or flat level)
+       3) place a Buy or Sell trade and watch what happens.
+     Every chart is randomly generated. Setups only tilt the odds (about 62/38),
+     so the market never moves one way every time.
      ------------------------------------------------------------------ */
-  var PM_ROUNDS = 10, PM_START = 10000, PM_RISK = 200, PM_KEY = "iu_predict_best_v1", PM_BASE = 4960, PM_SCALE = 3;
-  var pm = { r: 0, bal: PM_START, wins: 0, log: [], round: null, timers: [] };
+  var PM_N = 15, PM_START = 10000, PM_RISK = 200, PM_KEY = "iu_predict_best_v2", PM_BASE = 4040, PM_SCALE = 5, PM_HIST = 62, PM_FUT = 14;
+  var pm = { r: 0, bal: PM_START, pts: 0, wins: 0, log: [], S: null, timers: [], sc: null, rng: null };
   function rnd(a, b) { return a + Math.random() * (b - a); }
-  function gauss() { return (Math.random() + Math.random() + Math.random() - 1.5) / 0.75; }   // roughly -2..2
+  function gauss() { return (Math.random() + Math.random() + Math.random() - 1.5) / 0.75; }
   function pick(a) { return a[Math.floor(Math.random() * a.length)]; }
-  function mk(o, c, up, dn) { return [o, Math.max(o, c) + Math.max(.05, up), Math.min(o, c) - Math.max(.05, dn), c]; }
-  function noisy(o, c) { return mk(o, c, rnd(.1, .5), rnd(.1, .5)); }
-  function walk(from, to, n, startPrice) {          // n noisy candles drifting from one price to another
-    var out = [], p = startPrice, step = (to - from) / n, i, c;
-    for (i = 0; i < n; i++) { c = from + step * (i + 1) + gauss() * .45; out.push(noisy(p, c)); p = c; }
-    return out;
-  }
-  function through(pts, startPrice) {               // pts = [[index, price],...] -> candles that pass through the waypoints
-    var out = [], p = startPrice, i, k, c;
-    for (i = 0; i < pts.length; i++) {
-      var n = i ? pts[i][0] - pts[i - 1][0] : pts[i][0];
-      var from = i ? pts[i - 1][1] : startPrice;
-      for (k = 1; k <= n; k++) { c = from + (pts[i][1] - from) * k / n + gauss() * .35; out.push(noisy(p, c)); p = c; }
+  function shuffle2(a) { for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)), t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
+  function cndl(o, c, vol) { return [o, Math.max(o, c) + rnd(.05, .6) * vol, Math.min(o, c) - rnd(.05, .6) * vol, c]; }
+  function last(a) { return a[a.length - 1]; }
+  function run(p, steps) {                          // steps: [[n, delta, vol], ...] relative moves with noise
+    var out = [], i, k, from, to, c, o;
+    for (i = 0; i < steps.length; i++) {
+      from = p; to = p + steps[i][1];
+      for (k = 1; k <= steps[i][0]; k++) { c = from + (to - from) * k / steps[i][0] + gauss() * steps[i][2] * .7; o = p; out.push(cndl(o, c, steps[i][2])); p = c; }
     }
     return out;
   }
-  function last(a) { return a[a.length - 1]; }
-  var PATTERNS = [
-    { name: "Hammer", kind: "Candlestick", bias: 1, why: "A small body near the top with a long lower wick after a fall: sellers pushed down, buyers pulled it back. Usually a bullish reversal.", build: function () {
-      var h = walk(14, 6, 18, 14), p = last(h)[3]; h.push(mk(p - .1, p + .15, .15, 2.6)); return { h: h }; } },
-    { name: "Shooting Star", kind: "Candlestick", bias: -1, why: "A small body near the bottom with a long upper wick after a rise: the rally failed. Usually a bearish reversal.", build: function () {
-      var h = walk(6, 14, 18, 6), p = last(h)[3]; h.push(mk(p + .1, p - .15, 2.6, .15)); return { h: h }; } },
-    { name: "Bullish Engulfing", kind: "Candlestick", bias: 1, why: "A small red candle is covered by a big green one: buyers overwhelmed sellers in one session. Usually a bullish reversal.", build: function () {
-      var h = walk(15, 6, 18, 15), p = last(h)[3]; h.push(mk(p, p - .7, .15, .15)); h.push(mk(p - .9, p + 1.6, .2, .15)); return { h: h }; } },
-    { name: "Bearish Engulfing", kind: "Candlestick", bias: -1, why: "A small green candle is covered by a big red one: sellers took full control. Usually a bearish reversal.", build: function () {
-      var h = walk(5, 14, 18, 5), p = last(h)[3]; h.push(mk(p, p + .7, .15, .15)); h.push(mk(p + .9, p - 1.6, .15, .2)); return { h: h }; } },
-    { name: "Morning Star", kind: "Candlestick", bias: 1, why: "Big red candle, a small indecisive star, then a big green candle: selling fades and buyers take over. Usually bullish.", build: function () {
-      var h = walk(16, 7, 17, 16), p = last(h)[3]; h.push(mk(p, p - 1.9, .2, .2)); var q = p - 1.9; h.push(mk(q - .5, q - .7, .25, .25)); h.push(mk(q - .6, q + 1.7, .2, .2)); return { h: h }; } },
-    { name: "Evening Star", kind: "Candlestick", bias: -1, why: "Big green candle, a small star, then a big red candle: buying fades and sellers take over. Usually bearish.", build: function () {
-      var h = walk(4, 13, 17, 4), p = last(h)[3]; h.push(mk(p, p + 1.9, .2, .2)); var q = p + 1.9; h.push(mk(q + .5, q + .7, .25, .25)); h.push(mk(q + .6, q - 1.7, .2, .2)); return { h: h }; } },
-    { name: "Double Bottom", kind: "Chart pattern", bias: 1, why: "Price fell to the same low twice and bounced both times (a \"W\"). Buyers defended that floor. Usually bullish once it breaks the middle peak.", build: function () {
-      var h = through([[6, 8], [9, 0], [14, 7], [19, .2], [24, 4.8]], 8.5); return { h: h, lv: [{ y: 0, t: "Support", c: "#4de1ff" }, { y: 7, t: "Neckline", c: "#ff6bd6" }] }; } },
-    { name: "Double Top", kind: "Chart pattern", bias: -1, why: "Price rose to the same high twice and was rejected both times (an \"M\"). Sellers defended that ceiling. Usually bearish once it breaks the middle dip.", build: function () {
-      var h = through([[6, 2], [9, 10], [14, 3], [19, 9.8], [24, 5.2]], 1.5); return { h: h, lv: [{ y: 10, t: "Resistance", c: "#ff6bd6" }, { y: 3, t: "Neckline", c: "#4de1ff" }] }; } },
-    { name: "Support Bounce", kind: "Chart pattern", bias: 1, why: "Price keeps turning up from the same floor. A third touch of support often bounces again, but a break below would fail the idea.", build: function () {
-      var h = through([[5, 7], [9, 0.2], [14, 7], [18, .1], [23, 7], [27, .6]], 5); return { h: h, lv: [{ y: 0, t: "Support", c: "#4de1ff" }, { y: 7.2, t: "Resistance", c: "#ff6bd6" }] }; } },
-    { name: "Resistance Rejection", kind: "Chart pattern", bias: -1, why: "Price keeps turning down from the same ceiling. A third touch of resistance often rejects again, but a close above would fail the idea.", build: function () {
-      var h = through([[5, 1], [9, 7.8], [14, 1], [18, 7.9], [23, 1.2], [27, 7.2]], 3); return { h: h, lv: [{ y: 8, t: "Resistance", c: "#ff6bd6" }, { y: 1, t: "Support", c: "#4de1ff" }] }; } },
-    { name: "Ascending Triangle", kind: "Chart pattern", bias: 1, why: "A flat ceiling with higher and higher lows: buyers keep pressing. Often breaks upward through the flat top.", build: function () {
-      var h = through([[4, 5], [7, 9], [11, 3.5], [14, 9], [17, 5.5], [20, 9], [23, 7], [26, 8.6]], 3); return { h: h, lv: [{ y: 9.2, t: "Flat top", c: "#ff6bd6" }] }; } },
-    { name: "Descending Triangle", kind: "Chart pattern", bias: -1, why: "A flat floor with lower and lower highs: sellers keep pressing. Often breaks downward through the flat bottom.", build: function () {
-      var h = through([[4, 5], [7, 1], [11, 6.5], [14, 1], [17, 4.5], [20, 1], [23, 3], [26, 1.4]], 7); return { h: h, lv: [{ y: .8, t: "Flat bottom", c: "#4de1ff" }] }; } },
-    { name: "No clear pattern", kind: "Market noise", bias: 0, why: "Not every chart has a setup. Here the candles are just noise, so the honest answer is a coin flip. Good traders often skip charts like this.", build: function () {
-      var h = walk(8, 8 + rnd(-3, 3), 26, 8); return { h: h }; } }
-  ];
-  function genRound() {
-    var P = Math.random() < .12 ? PATTERNS[PATTERNS.length - 1] : pick(PATTERNS.slice(0, -1)), b = P.build(), hist = b.h, dir;
-    if (P.bias) dir = Math.random() < .7 ? P.bias : -P.bias; else dir = Math.random() < .5 ? 1 : -1;
-    var ai = 0, i; for (i = Math.max(0, hist.length - 14); i < hist.length; i++) ai += hist[i][1] - hist[i][2]; var atr = ai / Math.min(14, hist.length);
-    var fut = [], p = last(hist)[3], drift = rnd(.42, .7) * atr * .9 * dir;
-    for (i = 0; i < 10; i++) { var c = p + drift + gauss() * atr * .35; fut.push(mk(p, c, rnd(.1, .45) * atr, rnd(.1, .45) * atr)); p = c; }
-    return { P: P, hist: hist, fut: fut, atr: atr, lv: b.lv || [], dir: dir };
+  function toward(p, target, n, vol) { return run(p, [[n, target - p, vol]]); }
+  function chop(p, n, amp) { var st = [], left = n, s = Math.random() < .5 ? 1 : -1; while (left > 0) { var a = Math.min(left, Math.round(rnd(4, 8))); st.push([a, s * rnd(.6, 1) * amp, .85]); s = -s; left -= a; } return run(p, st); }
+  function trend(p, dir, n) {
+    var st = [], left = n;
+    while (left > 0) { var a = Math.min(left, Math.round(rnd(7, 12))); st.push([a, dir * rnd(3.5, 6), .85]); left -= a; if (left > 4) { var b = Math.min(left, Math.round(rnd(4, 6))); st.push([b, -dir * rnd(1.4, 2.6), .8]); left -= b; } }
+    return run(p, st);
   }
-  function fmtP(x) { return (PM_BASE + x * PM_SCALE).toFixed(2); }
+  function swings(p, lo, hi, n, startUp) {         // bounce between two levels
+    var st = [], left = n, up = startUp, cur = p;
+    while (left > 0) { var a = Math.min(left, Math.round(rnd(6, 9))); var tgt = (up ? hi : lo) + rnd(-.5, .5); st.push([a, tgt - cur, .8]); cur = tgt; up = !up; left -= a; }
+    return run(p, st);
+  }
+  function lc(a) { return last(a)[3]; }
+  function cat(/* arrays */) { return Array.prototype.concat.apply([], arguments); }
+  /* every scenario: label, group, bias (+1 up, -1 down, 0 coin flip), line = what a good line looks like, why = how traders use it */
+  var SCN = [
+    { k: "up", label: "Uptrend", g: "Trend", bias: 1, line: "trend", why: "Higher highs and higher lows. Trend traders buy pullbacks to a rising trend line and put the stop under the last low. Trends can end, so size the risk.", b: function () { var a = chop(100, 14, 2.5), t = trend(lc(a), 1, PM_HIST - 14); return { h: cat(a, t) }; } },
+    { k: "down", label: "Downtrend", g: "Trend", bias: -1, line: "trend", why: "Lower highs and lower lows. Trend traders sell rallies to a falling trend line and put the stop above the last high.", b: function () { var a = chop(120, 14, 2.5), t = trend(lc(a), -1, PM_HIST - 14); return { h: cat(a, t) }; } },
+    { k: "pbu", label: "Pullback in an uptrend", g: "Trend", bias: 1, line: "trend", why: "Price rose, then dipped back toward the rising trend line. The classic trend-following entry is the end of the pullback, not the top of the move.", b: function () { var a = chop(100, 12, 2.5), t = trend(lc(a), 1, PM_HIST - 18), d = run(lc(t), [[6, -rnd(3, 4.5), .8]]); return { h: cat(a, t, d) }; } },
+    { k: "pbd", label: "Rally in a downtrend", g: "Trend", bias: -1, line: "trend", why: "Price fell, then bounced up toward the falling trend line. Trend sellers wait for the bounce to fail near the line.", b: function () { var a = chop(120, 12, 2.5), t = trend(lc(a), -1, PM_HIST - 18), d = run(lc(t), [[6, rnd(3, 4.5), .8]]); return { h: cat(a, t, d) }; } },
+    { k: "rng", label: "Consolidation (sideways range)", g: "Range", bias: 0, line: "flat", why: "Price is boxed between a floor and a ceiling. Range traders buy near support and sell near resistance. A close outside the box means the range is over.", b: function () { var lo = 100, hi = 109, a = swings(104, lo, hi, PM_HIST, Math.random() < .5); return { h: a, lv: [{ y: hi, t: "Resistance", c: "#ff6bd6" }, { y: lo, t: "Support", c: "#4de1ff" }] }; } },
+    { k: "sup", label: "Bounce off support", g: "Support & resistance", bias: 1, line: "flat", why: "Price keeps turning up from the same floor. A third touch often bounces again. If price closes below the floor, the idea is wrong: that is your stop.", b: function () { var lo = 100, hi = 109, a = swings(104, lo, hi, PM_HIST - 8, false), t = toward(lc(a), lo + .6, 8, .8); return { h: cat(a, t), lv: [{ y: hi, t: "Resistance", c: "#ff6bd6" }, { y: lo, t: "Support", c: "#4de1ff" }] }; } },
+    { k: "res", label: "Rejection at resistance", g: "Support & resistance", bias: -1, line: "flat", why: "Price keeps turning down from the same ceiling. A third touch often rejects again. A close above the ceiling means the idea failed.", b: function () { var lo = 100, hi = 109, a = swings(104, lo, hi, PM_HIST - 8, true), t = toward(lc(a), hi - .6, 8, .8); return { h: cat(a, t), lv: [{ y: hi, t: "Resistance", c: "#ff6bd6" }, { y: lo, t: "Support", c: "#4de1ff" }] }; } },
+    { k: "bou", label: "Breakout above resistance", g: "Breakout", bias: 1, line: "flat", why: "Price closed above a ceiling it failed at before. Breakout traders join the move, but fakeouts are common: wait for a close, not a wick, and keep the stop behind the level.", b: function () { var lo = 100, hi = 109, a = swings(104, lo, hi, PM_HIST - 6, false), t = run(lc(a), [[3, hi - lc(a) + 1, .7], [3, 1.6, .7]]); return { h: cat(a, t), lv: [{ y: hi, t: "Broken resistance", c: "#ff6bd6" }, { y: lo, t: "Support", c: "#4de1ff" }] }; } },
+    { k: "bod", label: "Breakdown below support", g: "Breakout", bias: -1, line: "flat", why: "Price closed below a floor that held before. Breakdown traders sell the break, but watch for a fakeout that snaps back inside the range.", b: function () { var lo = 100, hi = 109, a = swings(105, lo, hi, PM_HIST - 6, true), t = run(lc(a), [[3, lo - lc(a) - 1, .7], [3, -1.6, .7]]); return { h: cat(a, t), lv: [{ y: hi, t: "Resistance", c: "#ff6bd6" }, { y: lo, t: "Broken support", c: "#4de1ff" }] }; } },
+    { k: "rtu", label: "Retest of broken resistance", g: "Breakout", bias: 1, line: "flat", why: "Role reversal: old resistance becomes new support. Waiting for the retest gives a closer stop than chasing the breakout. If price closes back below the level, stand aside.", b: function () { var lo = 100, hi = 109, a = swings(104, lo, hi, PM_HIST - 14, false), t = run(lc(a), [[4, hi - lc(a) + 3, .7], [5, 1.5, .8], [5, -(3.8), .7]]); return { h: cat(a, t), lv: [{ y: hi, t: "Old resistance = new support", c: "#ff6bd6", zone: true }] }; } },
+    { k: "rtd", label: "Retest of broken support", g: "Breakout", bias: -1, line: "flat", why: "Role reversal: old support becomes new resistance. Sellers often wait for price to come back up to the broken floor and fail.", b: function () { var lo = 100, hi = 109, a = swings(105, lo, hi, PM_HIST - 14, true), t = run(lc(a), [[4, lo - lc(a) - 3, .7], [5, -1.5, .8], [5, 3.8, .7]]); return { h: cat(a, t), lv: [{ y: lo, t: "Old support = new resistance", c: "#4de1ff", zone: true }] }; } },
+    { k: "dt", label: "Double top", g: "Chart pattern", bias: -1, line: "flat", why: "Price failed at the same high twice (an M). Sellers defend that ceiling. It is confirmed when price breaks the dip between the peaks.", b: function () { var a = chop(100, 12, 2), s = lc(a), t = run(s, [[8, 9, .8], [7, -6, .8], [8, 6.2, .8], [8, -5.5, .8], [4, 2.5, .8]]); return { h: cat(a, t, chop(lc(t), PM_HIST - 12 - 35, 1.5)).slice(0, PM_HIST), lv: [{ y: s + 9, t: "Resistance (two peaks)", c: "#ff6bd6" }, { y: s + 3, t: "Neckline", c: "#4de1ff" }] }; } },
+    { k: "db", label: "Double bottom", g: "Chart pattern", bias: 1, line: "flat", why: "Price held the same low twice (a W). Buyers defend that floor. It is confirmed when price breaks the peak between the lows.", b: function () { var a = chop(110, 12, 2), s = lc(a), t = run(s, [[8, -9, .8], [7, 6, .8], [8, -6.2, .8], [8, 5.5, .8], [4, -2.5, .8]]); return { h: cat(a, t, chop(lc(t), PM_HIST - 12 - 35, 1.5)).slice(0, PM_HIST), lv: [{ y: s - 9, t: "Support (two lows)", c: "#4de1ff" }, { y: s - 3, t: "Neckline", c: "#ff6bd6" }] }; } },
+    { k: "at", label: "Ascending triangle", g: "Chart pattern", bias: 1, line: "flat", why: "A flat ceiling with rising lows: buyers keep pressing. Breakouts through the flat top are common but not guaranteed.", b: function () { var a = chop(100, 14, 2), s = lc(a), top = s + 8, t = run(s, [[6, top - s, .8], [6, -7, .8], [6, 7, .8], [6, -4.5, .8], [6, 4.2, .8], [6, -2, .8], [5, 2, .7]]); return { h: cat(a, t, chop(lc(t), PM_HIST - 14 - 41, 1)).slice(0, PM_HIST), lv: [{ y: top, t: "Flat top", c: "#ff6bd6" }] }; } },
+    { k: "dtri", label: "Descending triangle", g: "Chart pattern", bias: -1, line: "flat", why: "A flat floor with falling highs: sellers keep pressing. Breakdowns through the flat bottom are common but not guaranteed.", b: function () { var a = chop(110, 14, 2), s = lc(a), bot = s - 8, t = run(s, [[6, bot - s, .8], [6, 7, .8], [6, -7, .8], [6, 4.5, .8], [6, -4.2, .8], [6, 2, .8], [5, -2, .7]]); return { h: cat(a, t, chop(lc(t), PM_HIST - 14 - 41, 1)).slice(0, PM_HIST), lv: [{ y: bot, t: "Flat bottom", c: "#4de1ff" }] }; } },
+    { k: "ham", label: "Hammer", g: "Candlestick", bias: 1, line: "trend", why: "Small body at the top, long lower wick, after a fall: sellers pushed down, buyers pulled it back. Wait for the next candle to close higher before trusting it.", b: function () { var a = chop(120, 14, 2), t = trend(lc(a), -1, PM_HIST - 15), p = lc(t); return { h: cat(a, t, [[p, p + .4, p - 3.6, p + .25]]), hl: 1 }; } },
+    { k: "ss", label: "Shooting Star", g: "Candlestick", bias: -1, line: "trend", why: "Small body at the bottom, long upper wick, after a rise: the rally failed. Wait for the next candle to close lower before acting.", b: function () { var a = chop(100, 14, 2), t = trend(lc(a), 1, PM_HIST - 15), p = lc(t); return { h: cat(a, t, [[p, p + 3.6, p - .4, p - .25]]), hl: 1 }; } },
+    { k: "bue", label: "Bullish Engulfing", g: "Candlestick", bias: 1, line: "trend", why: "A small red candle is covered by a big green one: buyers overwhelmed sellers. A strong reversal sign, best with a green follow-up candle.", b: function () { var a = chop(120, 14, 2), t = trend(lc(a), -1, PM_HIST - 16), p = lc(t); return { h: cat(a, t, [[p, p + .3, p - 1.1, p - .8], [p - 1.1, p + 2.3, p - 1.3, p + 2]]), hl: 2 }; } },
+    { k: "bee", label: "Bearish Engulfing", g: "Candlestick", bias: -1, line: "trend", why: "A small green candle is covered by a big red one: sellers took control. A strong reversal sign, best with a red follow-up candle.", b: function () { var a = chop(100, 14, 2), t = trend(lc(a), 1, PM_HIST - 16), p = lc(t); return { h: cat(a, t, [[p, p + 1.1, p - .3, p + .8], [p + 1.1, p + 1.3, p - 2.3, p - 2]]), hl: 2 }; } },
+    { k: "ms", label: "Morning Star", g: "Candlestick", bias: 1, line: "trend", why: "Big red candle, a small star, then a big green candle: selling fades and buyers take over. Bullish reversal, confirm with the next candle.", b: function () { var a = chop(120, 14, 2), t = trend(lc(a), -1, PM_HIST - 17), p = lc(t), q = p - 2.8; return { h: cat(a, t, [[p, p + .2, q - .2, q], [q - .6, q - .3, q - 1.2, q - .9], [q - .8, q + 2.6, q - 1, q + 2.3]]), hl: 3 }; } },
+    { k: "es", label: "Evening Star", g: "Candlestick", bias: -1, line: "trend", why: "Big green candle, a small star, then a big red candle: buying fades and sellers take over. Bearish reversal, confirm with the next candle.", b: function () { var a = chop(100, 14, 2), t = trend(lc(a), 1, PM_HIST - 17), p = lc(t), q = p + 2.8; return { h: cat(a, t, [[p, q + .2, p - .2, q], [q + .6, q + 1.2, q + .3, q + .9], [q + .8, q + 1, q - 2.6, q - 2.3]]), hl: 3 }; } },
+    { k: "tws", label: "Three White Soldiers", g: "Candlestick", bias: 1, line: "flat", why: "Three big green candles, each closing higher: strong buying. Often continues, but after a big run it can mean exhaustion.", b: function () { var a = chop(100, PM_HIST - 3, 2.5), p = lc(a); return { h: cat(a, [[p, p + 2.6, p - .3, p + 2.3], [p + 2.1, p + 4.9, p + 1.8, p + 4.6], [p + 4.4, p + 7.2, p + 4.1, p + 6.9]]), hl: 3 }; } },
+    { k: "tbc", label: "Three Black Crows", g: "Candlestick", bias: -1, line: "flat", why: "Three big red candles, each closing lower: strong selling. Often continues, but after a big drop it can mean exhaustion.", b: function () { var a = chop(110, PM_HIST - 3, 2.5), p = lc(a); return { h: cat(a, [[p, p + .3, p - 2.6, p - 2.3], [p - 2.1, p - 1.8, p - 4.9, p - 4.6], [p - 4.4, p - 4.1, p - 7.2, p - 6.9]]), hl: 3 }; } },
+    { k: "doj", label: "Doji (indecision)", g: "Candlestick", bias: 0, line: "trend", why: "Open and close almost the same: buyers and sellers are tied. After a strong move it can signal a pause or turn, but on its own it is not a signal. Read the next candle.", b: function () { var d = Math.random() < .5 ? 1 : -1, a = chop(110, 14, 2), t = trend(lc(a), d, PM_HIST - 15), p = lc(t); return { h: cat(a, t, [[p, p + 2.4, p - 2.4, p + .08 * d]]), hl: 1 }; } },
+    { k: "non", label: "No clear setup", g: "None", bias: 0, line: "any", why: "Not every chart is tradeable. Choppy, messy candles with no trend, level or pattern are a reason to skip the trade.", b: function () { return { h: run(105, [[PM_HIST, rnd(-3, 3), 1.15]]) }; } }
+  ];
+  /* trend direction of the question, used for the "draw a line" explanation */
+  function genRound(sc) {
+    var b = sc.b(), hist = b.h.slice(0, PM_HIST), i, ai = 0;
+    for (i = hist.length - 14; i < hist.length; i++) ai += hist[i][1] - hist[i][2];
+    var atr = ai / 14, dir = sc.bias ? (Math.random() < .62 ? sc.bias : -sc.bias) : (Math.random() < .5 ? 1 : -1), p = lc(hist);
+    var fut = run(p, [[PM_FUT, dir * atr * rnd(2.6, 5.2), .85]]);
+    return { sc: sc, hist: hist, fut: fut, atr: atr, lv: b.lv || [], dir: dir, hl: b.hl || 0 };
+  }
+  function fmtP(x) { return (PM_BASE + x * PM_SCALE).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ","); }
+  /* ---- chart (pixel-sized so text is never stretched) ---- */
   function pmChart(cs, o) {
     o = o || {};
-    var W = 360, H = 250, padR = 54, lo = Infinity, hi = -Infinity, i;
+    var host = $("#pmChart"), W = host ? host.clientWidth || 360 : 360, H = host ? host.clientHeight || 340 : 340, axisW = 62, top = 10, bot = 22, i;
+    var lo = Infinity, hi = -Infinity;
     cs.forEach(function (k) { lo = Math.min(lo, k[2]); hi = Math.max(hi, k[1]); });
-    (o.lines || []).forEach(function (l) { lo = Math.min(lo, l.y); hi = Math.max(hi, l.y); });
-    var pad = (hi - lo) * .08 + .3; lo -= pad; hi += pad;
-    var Y = function (v) { return 8 + (hi - v) / (hi - lo) * (H - 16); };
-    var n = Math.max(cs.length, o.slots || cs.length), step = (W - padR - 8) / n, bw = Math.max(3, step * .62);
-    var s = '<svg viewBox="0 0 ' + W + " " + H + '" preserveAspectRatio="none" role="img" aria-label="Price chart"><rect width="' + W + '" height="' + H + '" fill="#070b1c"/>';
-    for (i = 1; i < 5; i++) s += '<line x1="0" x2="' + W + '" y1="' + (H * i / 5) + '" y2="' + (H * i / 5) + '" stroke="rgba(255,255,255,.06)"/>';
+    var pad = (hi - lo) * .1 + .6; lo -= pad; hi += pad;
+    if (pm.rng) { lo = Math.min(lo, pm.rng.lo); hi = Math.max(hi, pm.rng.hi); }
+    (o.lines || []).forEach(function (l) { if (l.fit) { lo = Math.min(lo, l.y - 1); hi = Math.max(hi, l.y + 1); } });
+    pm.rng = { lo: lo, hi: hi };
+    var plotH = H - top - bot, slots = o.slots || cs.length, step = (W - axisW - 6) / slots, bw = Math.max(2, step * .64);
+    var Y = function (v) { return top + (hi - v) / (hi - lo) * plotH; };
+    pm.sc = { W: W, H: H, step: step, hi: hi, lo: lo, top: top, plotH: plotH, axisW: axisW };
+    var s = '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + " " + H + '" role="img" aria-label="Price chart"><rect width="' + W + '" height="' + H + '" fill="#0b0f1d"/>';
+    var tick = (hi - lo) / 6, k2;
+    for (i = 0; i <= 6; i++) { var v = lo + tick * i, y = Y(v); s += '<line x1="0" x2="' + (W - axisW) + '" y1="' + y + '" y2="' + y + '" stroke="rgba(255,255,255,.06)"/><text x="' + (W - 6) + '" y="' + (y + 3.5) + '" text-anchor="end" font-size="10.5" font-weight="600" fill="#8b97b8">' + fmtP(v) + "</text>"; }
+    for (i = 0; i < slots; i += 10) { var gx = 6 + step * i + step / 2; s += '<line x1="' + gx + '" x2="' + gx + '" y1="' + top + '" y2="' + (H - bot) + '" stroke="rgba(255,255,255,.045)"/>'; }
     (o.lines || []).forEach(function (l) {
+      if (l.i0 != null) { var x0 = 6 + step * l.i0 + step / 2, x1 = 6 + step * l.i1 + step / 2; s += '<line x1="' + x0 + '" y1="' + Y(l.p0) + '" x2="' + x1 + '" y2="' + Y(l.p1) + '" stroke="' + l.c + '" stroke-width="' + (l.w || 2) + '" stroke-linecap="round"' + (l.d ? ' stroke-dasharray="' + l.d + '"' : "") + "/>" + (l.dots ? '<circle cx="' + x0 + '" cy="' + Y(l.p0) + '" r="5" fill="' + l.c + '"/><circle cx="' + x1 + '" cy="' + Y(l.p1) + '" r="5" fill="' + l.c + '"/>' : "") + (l.t ? '<text x="' + (x1 - 4) + '" y="' + (Y(l.p1) - 7) + '" text-anchor="end" font-size="10.5" font-weight="800" fill="' + l.c + '">' + l.t + "</text>" : ""); return; }
       var y = Y(l.y);
-      s += (l.zone ? '<rect x="0" y="' + (y - 5) + '" width="' + (W - padR) + '" height="10" fill="' + l.c + '" opacity=".16"/>' : "") + '<line x1="0" x2="' + (W - padR) + '" y1="' + y + '" y2="' + y + '" stroke="' + l.c + '" stroke-width="1.6" stroke-dasharray="' + (l.zone ? "6 4" : "4 3") + '"/>' +
-        '<text x="5" y="' + (y - 4) + '" fill="' + l.c + '" font-size="10" font-weight="800">' + l.t + "</text>";
+      s += (l.zone ? '<rect x="0" y="' + (y - 5) + '" width="' + (W - axisW) + '" height="10" fill="' + l.c + '" opacity=".16"/>' : "") + '<line x1="0" x2="' + (W - axisW) + '" y1="' + y + '" y2="' + y + '" stroke="' + l.c + '" stroke-width="1.6" stroke-dasharray="' + (l.zone ? "6 4" : "5 4") + '"/><text x="6" y="' + (y - 5) + '" font-size="10.5" font-weight="800" fill="' + l.c + '">' + l.t + "</text>";
     });
     cs.forEach(function (k, idx) {
-      var x = 6 + step * idx + step / 2, up = k[3] >= k[0], col = up ? "#2ee59d" : "#ff5d73";
-      s += '<line x1="' + x + '" x2="' + x + '" y1="' + Y(k[1]) + '" y2="' + Y(k[2]) + '" stroke="' + col + '" stroke-width="1.5"/><rect x="' + (x - bw / 2) + '" y="' + Y(Math.max(k[0], k[3])) + '" width="' + bw + '" height="' + Math.max(1.6, Math.abs(Y(k[0]) - Y(k[3]))) + '" fill="' + col + '"/>';
+      var x = 6 + step * idx + step / 2, up = k[3] >= k[0], col = up ? "#089981" : "#f23645", hl = o.hl && idx >= cs.length - o.hl && o.mark;
+      s += '<line x1="' + x + '" x2="' + x + '" y1="' + Y(k[1]) + '" y2="' + Y(k[2]) + '" stroke="' + col + '" stroke-width="1.2"/><rect x="' + (x - bw / 2) + '" y="' + Y(Math.max(k[0], k[3])) + '" width="' + bw + '" height="' + Math.max(1.4, Math.abs(Y(k[0]) - Y(k[3]))) + '" fill="' + col + '"' + (hl ? ' stroke="#ffd166" stroke-width="1.2"' : "") + "/>";
     });
-    var lc = last(cs)[3], ly = Y(lc);
-    s += '<line x1="0" x2="' + (W - padR + 4) + '" y1="' + ly + '" y2="' + ly + '" stroke="#ffd166" stroke-width=".8" stroke-dasharray="2 3"/><rect x="' + (W - padR + 4) + '" y="' + (ly - 8) + '" width="' + (padR - 4) + '" height="16" rx="3" fill="#ffd166"/><text x="' + (W - 4) + '" y="' + (ly + 3.5) + '" text-anchor="end" font-size="9.5" font-weight="800" fill="#241a00">' + fmtP(lc) + "</text>";
+    if (o.mark && o.hl) { var xa = 6 + step * (cs.length - o.hl) - 3, xb = 6 + step * cs.length + 3; var hh = 0, ll = Infinity; cs.slice(-o.hl).forEach(function (k) { hh = Math.max(hh, k[1]); ll = Math.min(ll, k[2]); }); s += '<rect x="' + xa + '" y="' + (Y(hh) - 6) + '" width="' + (xb - xa) + '" height="' + (Y(ll) - Y(hh) + 12) + '" rx="5" fill="none" stroke="#ffd166" stroke-dasharray="4 3"/>'; }
+    var lcl = lc(cs), ly = Y(lcl);
+    s += '<line x1="0" x2="' + (W - axisW + 6) + '" y1="' + ly + '" y2="' + ly + '" stroke="' + (last(cs)[3] >= last(cs)[0] ? "#089981" : "#f23645") + '" stroke-width=".9" stroke-dasharray="2 3"/><rect x="' + (W - axisW + 2) + '" y="' + (ly - 9) + '" width="' + (axisW - 2) + '" height="18" rx="3" fill="' + (last(cs)[3] >= last(cs)[0] ? "#089981" : "#f23645") + '"/><text x="' + (W - 5) + '" y="' + (ly + 4) + '" text-anchor="end" font-size="10.5" font-weight="800" fill="#fff">' + fmtP(lcl) + "</text>";
+    s += '<text x="8" y="' + (H - 7) + '" font-size="10" fill="#5f6b8c">Gold · practice chart · not real data</text>';
     return s + "</svg>";
   }
   function pmBest(v) {
@@ -455,61 +475,121 @@
   }
   function money(v) { return (v < 0 ? "-$" : "$") + Math.abs(Math.round(v)).toLocaleString("en-US"); }
   function pmStop() { pm.timers.forEach(clearTimeout); pm.timers = []; }
+  function later(fn, ms) { pm.timers.push(setTimeout(fn, ms)); }
   function pmShow() {
     pmStop(); var host = $("#pm"); if (!host) return;
-    var demo = genRound();
-    host.innerHTML = '<div class="qz-intro"><div class="qz-hero pm-hero" aria-hidden="true">' + pmChart(demo.hist) + '</div><h2>Predict the Market</h2>' +
-      '<p class="pdf-sub">Paper trading with a virtual ' + money(PM_START) + '. A random chart appears every round. Read the candles and patterns, then press <b style="color:#2ee59d">Buy</b> if you think price goes up or <b style="color:#ff8a9a">Sell</b> if you think it goes down. ' + PM_ROUNDS + ' rounds.</p>' +
-      (pmBest() ? '<p class="qz-best">Your best balance: <b>' + money(pmBest()) + "</b></p>" : "") +
-      '<button type="button" class="qz-btn" id="pmGo">Start trading</button><p class="cx-note">Practice money only. Charts are randomly generated for teaching and are not real market data. Patterns tilt the odds but never guarantee a move. Education only, not advice.</p></div>';
-    $("#pmGo").addEventListener("click", function () { pm.r = 0; pm.bal = PM_START; pm.wins = 0; pm.log = []; pmRound(); });
+    host.innerHTML = '<div class="qz-intro"><div class="pm-hero" id="pmChart" aria-hidden="true"></div><h2>Predict the Market</h2>' +
+      '<p class="pdf-sub">' + PM_N + ' random charts. For each one you will: <b>1)</b> watch the market move, <b>2)</b> say what you see (candle pattern, trend, range, support, resistance, breakout), <b>3)</b> draw your line on the chart, then <b>4)</b> place a Buy or Sell trade with a virtual ' + money(PM_START) + '.</p>' +
+      '<p class="pdf-sub">Setups only tilt the odds. The market does not move the same way every time.</p>' +
+      (pmBest() ? '<p class="qz-best">Your best score: <b>' + pmBest() + " / " + PM_N * 3 + "</b></p>" : "") +
+      '<button type="button" class="qz-btn" id="pmGo">Start trading</button><p class="cx-note">Practice money only. Charts are randomly generated for teaching and are not real market data. Education only, not financial advice.</p></div>';
+    var d = genRound(pick(SCN)); pm.rng = null; $("#pmChart").innerHTML = pmChart(d.hist.slice(-40));
+    $("#pmGo").addEventListener("click", function () { pm.r = 0; pm.bal = PM_START; pm.pts = 0; pm.wins = 0; pm.log = []; pm.order = shuffle2(SCN.slice()).slice(0, PM_N); pmRound(); });
   }
-  function pmHead() { return '<div class="qz-top"><span>Round ' + (pm.r + 1) + " of " + PM_ROUNDS + '</span><span>Balance <b class="pm-bal">' + money(pm.bal) + "</b></span></div>" + '<div class="lr-bar"><i style="width:' + (100 * pm.r / PM_ROUNDS).toFixed(0) + '%"></i></div>'; }
+  function pmHead() { return '<div class="qz-top"><span>Question ' + (pm.r + 1) + " of " + PM_N + "</span><span>Score <b>" + pm.pts + "</b> · Balance <b>" + money(pm.bal) + "</b></span></div>" + '<div class="lr-bar"><i style="width:' + (100 * pm.r / PM_N).toFixed(0) + '%"></i></div>'; }
+  function panel(html) { $("#pmPanel").innerHTML = html; }
   function pmRound() {
-    pmStop(); var R = genRound(); pm.round = R; var host = $("#pm"), v = $("#lp-predict"); if (v) v.scrollTop = 0;
-    host.innerHTML = pmHead() + '<div class="qz-card glass"><div class="pm-sym"><b>XAU/USD</b><span>Practice chart</span></div><div class="pm-chart" id="pmChart">' + pmChart(R.hist, { slots: R.hist.length + 10 }) + '</div>' +
-      '<h3 class="qz-q">Which way will price go next?</h3><div class="pm-tix">Risk <b>' + money(PM_RISK) + '</b> · Stop loss 2× ATR · Take profit 4× ATR (1:2)</div>' +
-      '<div class="pm-btns"><button type="button" class="pm-buy" data-side="1">Buy ▲</button><button type="button" class="pm-sell" data-side="-1">Sell ▼</button></div><div class="qz-fb" id="pmFb" aria-live="polite"></div></div>';
-    host.querySelector(".pm-btns").addEventListener("click", function (e) { var b = e.target.closest("button"); if (b) pmTrade(+b.dataset.side); });
+    pmStop(); var S = genRound(pm.order[pm.r]); pm.S = S; pm.line = null; pm.rng = null; var v = $("#lp-predict"); if (v) v.scrollTop = 0;
+    $("#pm").innerHTML = pmHead() + '<div class="pm-chart" id="pmChart"></div><div class="qz-card glass pm-panel" id="pmPanel" aria-live="polite"></div>';
+    panel('<h3 class="qz-q">Watch the market…</h3><p class="pm-wait">Candles are drawing in. Look for trends, levels and patterns.</p>');
+    var seen = S.hist.slice(0, 30), i = 30, slots = PM_HIST + PM_FUT;
+    $("#pmChart").innerHTML = pmChart(seen, { slots: slots });
+    (function tick() {
+      if (i >= S.hist.length) { later(pmAsk, 600); return; }
+      seen.push(S.hist[i++]); $("#pmChart").innerHTML = pmChart(seen, { slots: slots }); later(tick, 55);
+    })();
+  }
+  function drawBase(o) { o = o || {}; o.slots = PM_HIST + PM_FUT; $("#pmChart").innerHTML = pmChart(pm.S.hist, o); }
+  /* ---- step 1: what do you see? ---- */
+  function pmAsk() {
+    var S = pm.S, others = SCN.filter(function (x) { return x.k !== S.sc.k; }), opts = [S.sc].concat(shuffle2(others).slice(0, 3));
+    shuffle2(opts); drawBase();
+    panel('<h3 class="qz-q">1) What do you see on this chart?</h3><div class="qz-opts" role="group">' + opts.map(function (o) { return '<button type="button" class="qz-opt" data-k="' + o.k + '">' + esc(o.label) + "</button>"; }).join("") + "</div>");
+    $("#pmPanel").querySelector(".qz-opts").addEventListener("click", function (e) {
+      var b = e.target.closest(".qz-opt"); if (!b || b.disabled) return; var ok = b.dataset.k === S.sc.k;
+      if (ok) { pm.pts++; } S.idOk = ok;
+      Array.prototype.forEach.call($("#pmPanel").querySelectorAll(".qz-opt"), function (x) { x.disabled = true; if (x.dataset.k === S.sc.k) x.classList.add("right"); else if (x === b) x.classList.add("wrong"); });
+      drawBase({ lines: S.lv.map(function (l) { return { y: l.y, t: l.t, c: l.c, zone: l.zone }; }), hl: S.hl, mark: !!S.hl });
+      var f = document.createElement("div"); f.className = "qz-fb";
+      f.innerHTML = '<p class="qz-verdict ' + (ok ? "ok" : "no") + '">' + (ok ? "Correct! +1 point" : "Not quite. This was: " + esc(S.sc.label)) + "</p><p><b>" + esc(S.sc.label) + "</b> (" + esc(S.sc.g) + "). " + esc(S.sc.why) + '</p><button type="button" class="qz-btn" id="pmN1">Next: draw your line</button>';
+      $("#pmPanel").appendChild(f); $("#pmN1").addEventListener("click", pmDraw); f.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    });
+  }
+  /* ---- step 2: draw a line ---- */
+  function pmDraw() {
+    var S = pm.S, host = $("#pmChart"), drag = null; pm.line = null;
+    drawBase();
+    panel('<h3 class="qz-q">2) Draw your line</h3><p class="pm-wait">Drag your finger across the chart: a <b>trend line</b> along the move, or a <b>flat line</b> at support / resistance if price is ranging.</p><div class="pm-two"><button type="button" class="qz-btn alt" id="pmClr">Clear</button><button type="button" class="qz-btn" id="pmLineOk" disabled>Done</button></div>');
+    host.classList.add("draw");
+    function pt(e) {
+      var r = host.getBoundingClientRect(), sc = pm.sc, x = e.clientX - r.left, y = e.clientY - r.top;
+      return { i: Math.max(0, Math.min(PM_HIST - 1, (x - 6) / sc.step - .5)), p: sc.hi - (y - sc.top) / sc.plotH * (sc.hi - sc.lo) };
+    }
+    function show() { drawBase(pm.line ? { lines: [{ i0: pm.line.i0, p0: pm.line.p0, i1: pm.line.i1, p1: pm.line.p1, c: "#ffd166", w: 2.6, dots: true }] } : {}); }
+    host.onpointerdown = function (e) { if (!host.classList.contains("draw")) return; var a = pt(e); drag = a; pm.line = { i0: a.i, p0: a.p, i1: a.i, p1: a.p }; try { host.setPointerCapture(e.pointerId); } catch (x) {} e.preventDefault(); };
+    host.onpointermove = function (e) { if (!drag) return; var b = pt(e); pm.line = { i0: drag.i, p0: drag.p, i1: b.i, p1: b.p }; show(); };
+    host.onpointerup = host.onpointercancel = function () { if (!drag) return; drag = null; var L = pm.line; $("#pmLineOk").disabled = !(L && Math.abs(L.i1 - L.i0) >= 6); };
+    $("#pmClr").addEventListener("click", function () { pm.line = null; $("#pmLineOk").disabled = true; show(); });
+    $("#pmLineOk").addEventListener("click", function () { host.classList.remove("draw"); host.onpointerdown = host.onpointermove = host.onpointerup = host.onpointercancel = null; gradeLine(); });
+  }
+  function gradeLine() {
+    var S = pm.S, L = pm.line, a = Math.min(L.i0, L.i1), b = Math.max(L.i0, L.i1), sl = (L.p1 - L.p0) / (L.i1 - L.i0), n = 0, fit = 0, i, tol = 1.1 * S.atr;
+    for (i = Math.ceil(a); i <= Math.floor(b) && i < S.hist.length; i++) { var y = L.p0 + sl * (i - L.i0), k = S.hist[i]; n++; if (y >= k[2] - tol * .35 && y <= k[1] + tol * .35) fit++; }
+    var frac = n ? fit / n : 0, flat = Math.abs(L.p1 - L.p0) < 1.4 * S.atr, mid = (L.p0 + L.p1) / 2, near = flat && S.lv.some(function (l) { return Math.abs(l.y - mid) < .9 * S.atr; });
+    var ok = S.sc.line === "any" ? true : (frac >= .5 || near);
+    if (ok) pm.pts++;
+    var lines = S.lv.map(function (l) { return { y: l.y, t: l.t, c: l.c, zone: l.zone }; });
+    if (S.sc.line === "trend") {                        // reference: best-fit line through the last 36 closes
+      var m = 36, x0 = S.hist.length - m, sx = 0, sy = 0, sxx = 0, sxy = 0, j;
+      for (j = 0; j < m; j++) { var c = S.hist[x0 + j][3]; sx += j; sy += c; sxx += j * j; sxy += j * c; }
+      var slope = (m * sxy - sx * sy) / (m * sxx - sx * sx), icp = (sy - slope * sx) / m;
+      lines.push({ i0: x0, p0: icp, i1: x0 + m - 1, p1: icp + slope * (m - 1), c: "#4de1ff", w: 2, d: "6 4", t: slope > 0 ? "Trend line (up)" : "Trend line (down)" });
+    }
+    lines.push({ i0: L.i0, p0: L.p0, i1: L.i1, p1: L.p1, c: "#ffd166", w: 2.6, dots: true });
+    drawBase({ lines: lines, hl: S.hl, mark: !!S.hl });
+    var msg = S.sc.line === "any" ? "There was no clean line to draw here. That is the lesson: some charts have no setup." : ok ? (flat ? "Nice. Your flat line sits on a level price keeps respecting." : "Nice. Your line follows the move.") : "Your line did not follow the price well. The dashed blue line (or the pink / blue levels) shows a better fit.";
+    panel('<p class="qz-verdict ' + (ok ? "ok" : "no") + '">' + (ok ? "Good line! +1 point" : "Not quite.") + "</p><p>" + msg + '</p><p class="pm-key"><span style="color:#ffd166">Yellow</span> = your line · <span style="color:#4de1ff">dashed blue</span> = trend fit · pink/blue bands = key levels</p><button type="button" class="qz-btn" id="pmN2">Next: place your trade</button>');
+    $("#pmN2").addEventListener("click", pmTradeAsk);
+  }
+  /* ---- step 3: trade ---- */
+  function pmTradeAsk() {
+    drawBase();
+    panel('<h3 class="qz-q">3) Where does price go next?</h3><div class="pm-tix">Risk <b>' + money(PM_RISK) + '</b> · Stop loss 2× ATR · Take profit 3× ATR</div><div class="pm-btns"><button type="button" class="pm-buy" data-side="1">Buy ▲</button><button type="button" class="pm-sell" data-side="-1">Sell ▼</button></div>');
+    $("#pmPanel").querySelector(".pm-btns").addEventListener("click", function (e) { var b = e.target.closest("button"); if (b) pmTrade(+b.dataset.side); });
   }
   function pmTrade(side) {
-    var R = pm.round, entry = last(R.hist)[3], sl = side * -1 * 2 * R.atr + entry, tp = side * 4 * R.atr + entry, slD = Math.abs(entry - sl), seen = R.hist.slice(), i = 0, res = null, $c = $("#pmChart");
-    Array.prototype.forEach.call(document.querySelectorAll(".pm-btns button"), function (b) { b.disabled = true; });
-    var lines = [{ y: entry, t: (side > 0 ? "BUY " : "SELL ") + "entry", c: "#ffd166" }, { y: tp, t: "Take profit", c: "#2ee59d" }, { y: sl, t: "Stop loss", c: "#ff5d73" }];
-    function draw() { $c.innerHTML = pmChart(seen, { lines: lines, slots: R.hist.length + 10 }); }
+    var S = pm.S, entry = lc(S.hist), sl = entry - side * 2 * S.atr, tp = entry + side * 3 * S.atr, slD = 2 * S.atr, seen = S.hist.slice(), i = 0, res = null;
+    var lines = [{ y: entry, t: (side > 0 ? "BUY " : "SELL ") + fmtP(entry), c: "#ffd166" }, { y: tp, t: "Take profit", c: "#089981", fit: 1 }, { y: sl, t: "Stop loss", c: "#f23645", fit: 1 }];
+    function draw() { $("#pmChart").innerHTML = pmChart(seen, { lines: lines, slots: PM_HIST + PM_FUT }); }
     function finish() {
-      var pnl, reason;
-      if (res === "tp") { pnl = PM_RISK * 2; reason = "Take profit hit"; }
-      else if (res === "sl") { pnl = -PM_RISK; reason = "Stop loss hit"; }
-      else { var mv = side * (last(seen)[3] - entry); pnl = Math.max(-PM_RISK, Math.min(PM_RISK * 2, PM_RISK * mv / slD)); reason = "Closed after 10 candles"; }
-      pm.bal += pnl; if (pnl > 0) pm.wins++; pm.log.push({ n: R.P.name, w: pnl > 0 });
-      var right = R.dir === side, lv = R.lv.map(function (l) { return { y: l.y, t: l.t, c: l.c, zone: true }; });
-      $c.innerHTML = pmChart(seen, { lines: lv.concat(lines), slots: R.hist.length + 10 });
-      var lastR = pm.r === PM_ROUNDS - 1;
-      $("#pmFb").innerHTML = '<p class="qz-verdict ' + (pnl > 0 ? "ok" : "no") + '">' + (pnl > 0 ? "Profit " : "Loss ") + money(pnl) + " · " + reason + "</p>" +
-        '<p>Chart type: <b>' + esc(R.P.name) + "</b> (" + esc(R.P.kind) + "). " + esc(R.P.why) + '</p><p>' + (R.P.bias ? "This time the market went " + (R.dir > 0 ? "UP" : "DOWN") + (R.dir === R.P.bias ? ", the way this pattern usually points." : ", against what this pattern usually points. Patterns fail about 3 times in 10, which is why we use a stop loss.") : "Price went " + (R.dir > 0 ? "up" : "down") + " this time, but with no setup it was a guess.") + '</p>' +
-        '<button type="button" class="qz-btn" id="pmNext">' + (lastR ? "See my results" : "Next round") + "</button>";
-      var bal = document.querySelector(".pm-bal"); if (bal) bal.textContent = money(pm.bal);
-      var nb = $("#pmNext"); nb.addEventListener("click", function () { if (lastR) pmEnd(); else { pm.r++; pmRound(); } }); nb.focus();
+      pmStop(); var pnl, reason, mv = side * (lc(seen) - entry);
+      if (res === "tp") { pnl = PM_RISK * 1.5; reason = "Take profit hit"; } else if (res === "sl") { pnl = -PM_RISK; reason = "Stop loss hit"; }
+      else { pnl = Math.max(-PM_RISK, Math.min(PM_RISK * 1.5, PM_RISK * mv / slD)); reason = "Closed after " + PM_FUT + " candles"; }
+      var right = mv > 0; if (right) pm.pts++; pm.bal += pnl; if (pnl > 0) pm.wins++;
+      pm.log.push({ n: S.sc.label, p: (S.idOk ? 1 : 0) + 0, pnl: pnl });
+      var lastQ = pm.r === PM_N - 1;
+      panel('<p class="qz-verdict ' + (right ? "ok" : "no") + '">' + (right ? "You read the direction right! +1 point" : "Price went against you.") + "</p><p><b>" + (pnl >= 0 ? "Profit " : "Loss ") + money(pnl) + "</b> · " + reason + ". " + (S.sc.bias ? "This " + esc(S.sc.label) + " usually points " + (S.sc.bias > 0 ? "up" : "down") + "; this time the market went " + (S.dir > 0 ? "UP" : "DOWN") + (S.dir === S.sc.bias ? ", as expected." : ". Setups fail about 4 times in 10. That is why you always use a stop loss.") : "With no clear edge, price went " + (S.dir > 0 ? "up" : "down") + " this time. That one was a coin flip.") + '</p><button type="button" class="qz-btn" id="pmNext">' + (lastQ ? "See my score" : "Next question") + "</button>");
+      $("#pm .qz-top span:last-child").innerHTML = "Score <b>" + pm.pts + "</b> · Balance <b>" + money(pm.bal) + "</b>";
+      var nb = $("#pmNext"); nb.addEventListener("click", function () { if (lastQ) pmEnd(); else { pm.r++; pmRound(); } });
     }
     function tick() {
-      if (i >= R.fut.length) { finish(); return; }
-      var k = R.fut[i++]; seen.push(k); draw();
+      if (i >= S.fut.length) { finish(); return; }
+      var k = S.fut[i++]; seen.push(k); draw();
       var hitSL = side > 0 ? k[2] <= sl : k[1] >= sl, hitTP = side > 0 ? k[1] >= tp : k[2] <= tp;
-      if (hitSL) { res = "sl"; finish(); return; }
-      if (hitTP) { res = "tp"; finish(); return; }
-      pm.timers.push(setTimeout(tick, 420));
+      if (hitSL) { res = "sl"; later(finish, 500); return; } if (hitTP) { res = "tp"; later(finish, 500); return; }
+      later(tick, 260);
     }
-    draw(); pm.timers.push(setTimeout(tick, 500));
-    $("#pmFb").innerHTML = '<button type="button" class="qz-btn alt" id="pmSkip">Skip animation</button>';
-    $("#pmSkip").addEventListener("click", function () { pmStop(); while (!res && i < R.fut.length) { var k = R.fut[i++]; seen.push(k); if (side > 0 ? k[2] <= sl : k[1] >= sl) res = "sl"; else if (side > 0 ? k[1] >= tp : k[2] <= tp) res = "tp"; } finish(); });
+    draw(); panel('<h3 class="qz-q">Trade placed…</h3><button type="button" class="qz-btn alt" id="pmSkip">Skip animation</button>');
+    later(tick, 450);
+    $("#pmSkip").addEventListener("click", function () { pmStop(); while (!res && i < S.fut.length) { var k = S.fut[i++]; seen.push(k); if (side > 0 ? k[2] <= sl : k[1] >= sl) res = "sl"; else if (side > 0 ? k[1] >= tp : k[2] <= tp) res = "tp"; } draw(); finish(); });
   }
   function pmEnd() {
-    pmStop(); var ret = (pm.bal - PM_START) / PM_START * 100, prev = pmBest(), isBest = pm.bal > prev && pm.bal > PM_START; pmBest(pm.bal);
-    var msg = pm.bal >= PM_START * 1.1 ? "Excellent. Disciplined risk and good reading." : pm.bal > PM_START ? "In profit. Nice work." : pm.bal === PM_START ? "Break-even. Try again." : "A losing run. That is normal in trading. Review the guides and try again.";
-    $("#pm").innerHTML = '<div class="qz-end"><h2>Your results</h2><div class="qz-score pm-final"><b style="color:' + (pm.bal >= PM_START ? "#2ee59d" : "#ff8a9a") + '">' + money(pm.bal) + '</b></div><p class="qz-msg">' + (ret >= 0 ? "+" : "") + ret.toFixed(1) + "% · " + pm.wins + " of " + PM_ROUNDS + " trades won</p><p class=\"qz-msg\">" + msg + "</p>" + (isBest ? '<p class="qz-best">New best balance!</p>' : "") +
-      '<div class="pm-log">' + pm.log.map(function (l, i) { return '<span class="' + (l.w ? "ok" : "no") + '">' + (i + 1) + ". " + esc(l.n) + "</span>"; }).join("") + "</div>" +
-      '<div class="qz-actions"><button type="button" class="qz-btn" id="pmAgain">Trade again</button><button type="button" class="qz-btn alt" id="pmQuiz">Play the Candle Quiz</button><button type="button" class="qz-btn alt" id="pmHome">More tools</button></div><p class="cx-note">Practice money only. Not financial advice.</p></div>';
+    pmStop(); var max = PM_N * 3, ret = (pm.bal - PM_START) / PM_START * 100, prev = pmBest(), isBest = pm.pts > prev; pmBest(pm.pts);
+    var pct = pm.pts / max, msg = pct >= .8 ? "Elite. You read the market like a pro." : pct >= .6 ? "Strong. You see the setups well." : pct >= .4 ? "Good start. Replay and study the patterns in the PDF guides." : "Keep practising. Open the PDF guides and try again: every run is a new set of charts.";
+    $("#pm").innerHTML = '<div class="qz-end"><h2>Your results</h2><div class="qz-score"><b>' + pm.pts + "</b><span>/ " + max + '</span></div><p class="qz-msg">' + msg + "</p>" +
+      '<p class="qz-msg">Practice balance: <b style="color:' + (pm.bal >= PM_START ? "#2ee59d" : "#ff8a9a") + '">' + money(pm.bal) + "</b> (" + (ret >= 0 ? "+" : "") + ret.toFixed(1) + "%) · " + pm.wins + " of " + PM_N + " trades in profit</p>" + (isBest && pm.pts > 0 ? '<p class="qz-best">New best score!</p>' : "") +
+      '<div class="pm-log">' + pm.log.map(function (l, i) { return '<span class="' + (l.pnl > 0 ? "ok" : "no") + '">' + (i + 1) + ". " + esc(l.n) + " " + (l.pnl > 0 ? "+" : "") + money(l.pnl) + "</span>"; }).join("") + "</div>" +
+      '<div class="qz-actions"><button type="button" class="qz-btn" id="pmAgain">Play again (new random charts)</button><button type="button" class="qz-btn alt" id="pmQuiz">Play the Candle Quiz</button><button type="button" class="qz-btn alt" id="pmHome">More tools</button></div><p class="cx-note">Practice money only. Not financial advice.</p></div>';
     $("#pmAgain").addEventListener("click", pmShow); $("#pmQuiz").addEventListener("click", function () { openView("quiz"); }); $("#pmHome").addEventListener("click", function () { openView("home"); });
   }
 

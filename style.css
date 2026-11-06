@@ -604,3 +604,10 @@ html.iu-pdfopen .iu-dock{visibility:hidden}
 .pm-two{display:grid;grid-template-columns:1fr 1.4fr;gap:10px}
 .pm-key{font-size:.82rem;color:#aebcdc}
 .pm-final b{font-size:3.4rem}
+.pm-calc{font-size:.92rem;line-height:1.6;color:#e1eaff;margin:10px 0 0}
+.pm-inf{font:800 .98rem Sora,sans-serif;margin:14px 0 6px;color:#ffd166}
+.pm-votes{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.pm-votes li{padding:9px 11px;border-radius:10px;background:rgba(255,255,255,.06);font-size:.9rem;line-height:1.4}
+.pm-votes li b{display:inline-block;min-width:38px;font-variant-numeric:tabular-nums}
+.pm-votes li.up b{color:#2ee59d}.pm-votes li.dn b{color:#ff8a9a}
+.pm-votes li span{color:#aebcdc;font-size:.84rem}

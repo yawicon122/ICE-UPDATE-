@@ -10,7 +10,7 @@
 <meta property="og:description" content="Free video lessons, PDFs and charts for beginners.">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=20261106f">
+<link rel="stylesheet" href="style.css?v=20261106h">
 </head>
 <body>
 <script src="config.js?v=20261105b"></script>
@@ -25,7 +25,7 @@
 <header class="nav glass" id="nav">
   <a class="logo" href="#top" data-track="nav-logo"><span class="logo-mark cube" aria-hidden="true"><span class="mini-cube hc-scene"><span class="hc-float"><span class="hc-tilt"><span class="hc-core"></span><span class="hc-cube"><i class="f1"></i><i class="f2"></i><i class="f3"></i><i class="f4"></i><i class="f5"></i><i class="f6"></i></span><span class="hc-cube hc-cube2"><i class="f1"></i><i class="f2"></i><i class="f3"></i><i class="f4"></i><i class="f5"></i><i class="f6"></i></span></span></span></span></span><b id="brandName">Ice Update</b></a>
   <nav>
-    <a href="#start">Learn</a><a href="#join">Join</a><a href="#lessons">Lessons</a><a href="#pdf-card" id="navPdfs">PDFs</a><a href="#gallery">Gallery</a><a href="#brokers">Brokers</a><a href="#social">Social</a>
+    <a href="#learn-card" id="navLearn">Learn</a><a href="#join">Join</a><a href="#lessons">Lessons</a><a href="#pdf-card" id="navPdfs">PDFs</a><a href="#gallery">Gallery</a><a href="#brokers">Brokers</a><a href="#social">Social</a>
   </nav>
 </header>
 
@@ -47,16 +47,6 @@
   </section>
 
 
-  <section id="start" class="section">
-    <h2>Start here</h2>
-    <p class="sub">Five steps from your first candle to your first review. Tick each one when you finish it.</p>
-    <div class="lr-progress glass">
-      <b id="routeText" role="status">Your learning progress: 0 of 5 complete.</b>
-      <div class="lr-bar"><i id="routeProg"></i></div>
-      <button type="button" id="routeReset" class="lr-reset">Start over</button>
-    </div>
-    <ol class="lr-list" id="routeList"></ol>
-  </section>
   <section id="gold-chart" class="section gold-section" aria-labelledby="goldTitle">
     <div class="gold-head">
       <div>
@@ -98,6 +88,13 @@
 
   <section class="resource-rail section">
     <div class="resource-grid">
+      <article id="learn-card" class="resource-card glass learn-play-card" tabindex="0" role="button" aria-label="Open Learn and Play: candle game and learning tools" data-track="learn-play-card">
+        <span class="resource-icon">🎮</span>
+        <div>
+          <h3>Learn &amp; Play</h3>
+          <p>Predict the market, play the candle quiz, follow the Start here route, build a candle and explore a chart.</p>
+        </div>
+      </article>
       <article class="resource-card glass">
         <span class="resource-icon">🎓</span>
         <div>
@@ -122,37 +119,6 @@
     </div>
   </section>
 
-  <section id="explorer" class="section">
-    <h2>Build a candle. Understand the story.</h2>
-    <p class="sub">Move the sliders and watch the candle change. Tap the body or a wick to see what it means.</p>
-    <div class="cx glass">
-      <div class="cx-chart"><svg id="cxSvg" viewBox="0 0 220 280" role="img" aria-label="A candlestick that changes as you move the sliders"></svg></div>
-      <div class="cx-side">
-        <div class="cx-sliders">
-          <label>Open <output id="cxv-o"></output><input id="cx-o" type="range" min="0" max="100" step="1"></label>
-          <label>High <output id="cxv-h"></output><input id="cx-h" type="range" min="0" max="100" step="1"></label>
-          <label>Low <output id="cxv-l"></output><input id="cx-l" type="range" min="0" max="100" step="1"></label>
-          <label>Close <output id="cxv-c"></output><input id="cx-c" type="range" min="0" max="100" step="1"></label>
-        </div>
-        <div class="cx-presets" id="cxPresets" aria-label="Example candles"></div>
-        <div class="cx-read" aria-live="polite">
-          <b id="cxName"></b>
-          <p id="cxStory"></p>
-          <p class="cx-part" id="cxPart"></p>
-        </div>
-        <p class="cx-note">Education only. One candle never guarantees what happens next.</p>
-      </div>
-    </div>
-  </section>
-  <section id="compare" class="section">
-    <h2>Before &amp; after: read the chart</h2>
-    <p class="sub">Drag the handle left to reveal the support and resistance zones.</p>
-    <div class="cp glass">
-      <div class="cp-box" id="cpBox"></div>
-      <p class="cp-key"><b style="color:#ff9be4">Pink</b> = resistance: sellers showed up here twice. <b style="color:#8be9ff">Blue</b> = support: buyers showed up here twice. <b style="color:#ffd166">Yellow circles</b> = a rejection at resistance, and a false break where price dipped under support but closed back above. Setups can fail.</p>
-      <p class="cp-note" id="cpNote">Illustrative teaching example, not real market data. A setup that failed is marked on purpose: trades do fail.</p>
-    </div>
-  </section>
   <section id="join" class="section">
     <h2>Join the community</h2>
     <div class="join-grid">
@@ -215,6 +181,62 @@
   </div>
 </div>
 
+<div id="learn-modal" class="pdf-modal lp-modal" aria-hidden="true">
+  <div class="pdf-panel" role="dialog" aria-modal="true" aria-label="Learn and Play">
+    <button id="lp-close" class="ice-close" type="button" aria-label="Close Learn and Play">&#10005;</button>
+    <button id="lp-back" class="lp-back" type="button" hidden>&lsaquo; Back</button>
+    <div class="lp-view lp-home" id="lp-home" data-view="home">
+      <h2>Learn &amp; Play</h2>
+      <p class="pdf-sub">Start with the game, then use the tools to go deeper.</p>
+      <div class="lp-items" id="lpItems"></div>
+    </div>
+    <div class="lp-view lp-tool" id="lp-predict" data-view="predict" hidden><div class="pm" id="pm"></div></div>
+    <div class="lp-view lp-tool" id="lp-quiz" data-view="quiz" hidden><div class="qz" id="qz"></div></div>
+
+  <div class="lp-view lp-tool" hidden data-view="route" id="lp-route">
+    <h2>Start here</h2>
+    <p class="sub">Five steps from your first candle to your first review. Tick each one when you finish it.</p>
+    <div class="lr-progress glass">
+      <b id="routeText" role="status">Your learning progress: 0 of 5 complete.</b>
+      <div class="lr-bar"><i id="routeProg"></i></div>
+      <button type="button" id="routeReset" class="lr-reset">Start over</button>
+    </div>
+    <ol class="lr-list" id="routeList"></ol>
+  </div>
+  <div class="lp-view lp-tool" hidden data-view="explorer" id="lp-explorer">
+    <h2>Build a candle. Understand the story.</h2>
+    <p class="sub">Move the sliders and watch the candle change. Tap the body or a wick to see what it means.</p>
+    <div class="cx glass">
+      <div class="cx-chart"><svg id="cxSvg" viewBox="0 0 220 280" role="img" aria-label="A candlestick that changes as you move the sliders"></svg></div>
+      <div class="cx-side">
+        <div class="cx-sliders">
+          <label>Open <output id="cxv-o"></output><input id="cx-o" type="range" min="0" max="100" step="1"></label>
+          <label>High <output id="cxv-h"></output><input id="cx-h" type="range" min="0" max="100" step="1"></label>
+          <label>Low <output id="cxv-l"></output><input id="cx-l" type="range" min="0" max="100" step="1"></label>
+          <label>Close <output id="cxv-c"></output><input id="cx-c" type="range" min="0" max="100" step="1"></label>
+        </div>
+        <div class="cx-presets" id="cxPresets" aria-label="Example candles"></div>
+        <div class="cx-read" aria-live="polite">
+          <b id="cxName"></b>
+          <p id="cxStory"></p>
+          <p class="cx-part" id="cxPart"></p>
+        </div>
+        <p class="cx-note">Education only. One candle never guarantees what happens next.</p>
+      </div>
+    </div>
+  </div>
+  <div class="lp-view lp-tool" hidden data-view="compare" id="lp-compare">
+    <h2>Before &amp; after: read the chart</h2>
+    <p class="sub">Drag the handle left to reveal the support and resistance zones.</p>
+    <div class="cp glass">
+      <div class="cp-box" id="cpBox"></div>
+      <p class="cp-key"><b style="color:#ff9be4">Pink</b> = resistance: sellers showed up here twice. <b style="color:#8be9ff">Blue</b> = support: buyers showed up here twice. <b style="color:#ffd166">Yellow circles</b> = a rejection at resistance, and a false break where price dipped under support but closed back above. Setups can fail.</p>
+      <p class="cp-note" id="cpNote">Illustrative teaching example, not real market data. A setup that failed is marked on purpose: trades do fail.</p>
+    </div>
+  </div>
+  </div>
+</div>
+
 <div id="pdf-modal" class="pdf-modal" aria-hidden="true">
   <div class="pdf-panel" role="dialog" aria-modal="true" aria-label="PDF Guides">
     <button id="pdf-close" class="ice-close" type="button" aria-label="Close PDF Guides">&#10005;</button>
@@ -252,6 +274,6 @@
 <script src="polish.js?v=20261105c" defer></script>
 <script src="dock.js?v=20261105a" defer></script>
 <script src="social-dock.js?v=20261106b" defer></script>
-<script src="learn.js?v=20261106c" defer></script>
+<script src="learn.js?v=20261106e" defer></script>
 </body>
 </html>

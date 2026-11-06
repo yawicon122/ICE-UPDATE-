@@ -29,7 +29,7 @@ img{max-width:100%;display:block}
 .nav nav{display:flex;gap:4px;flex-wrap:wrap}
 .nav nav a{padding:8px 14px;border-radius:999px;font-size:.92rem;color:var(--mut);transition:.25s;font-weight:600}
 .nav nav a:hover{background:rgba(255,255,255,.14);color:#fff}
-@media(max-width:760px){.nav nav a:not(:nth-child(1)):not(:nth-child(2)):not(:nth-child(3)){display:none}.nav nav a{padding:8px 10px}}
+@media(max-width:760px){.nav nav a:not(:nth-child(2)):not(:nth-child(3)):not(:nth-child(5)){display:none}.nav nav{flex-wrap:nowrap;gap:0}.nav nav a{padding:8px 8px;font-size:.84rem;white-space:nowrap}.logo{white-space:nowrap;gap:8px;font-size:.98rem}.logo-mark.cube{width:42px;height:42px;flex:none}}
 
 main{width:min(1100px,calc(100% - 32px));margin:0 auto}
 .section{padding:40px 0 8px}
@@ -441,7 +441,8 @@ html.iu-intro-on .sd,html.iu-intro-hold .sd,html.iu-pdfopen .sd{visibility:hidde
 
 /* v3 — one merged hero heading; corner button cycles through the social icons */
 .hero-h1{display:block}
-.hero-h1 .h1-top{display:block;font-size:clamp(1.05rem,4.4vw,1.55rem);font-weight:700;letter-spacing:-.01em;line-height:1.25;margin-bottom:10px}
+.hero .hero-h1{font-size:clamp(1.9rem,5.4vw,3.3rem);line-height:1.1}
+.hero-h1 .h1-top{display:block;font-size:inherit;font-weight:inherit;letter-spacing:inherit;line-height:inherit;margin-bottom:6px}
 .hero-h1 .h1-main{display:block}
 .sd-face{position:absolute;inset:3px;border-radius:50%;overflow:hidden;opacity:0;transform:scale(.3) rotate(-90deg);transition:opacity .3s,transform .5s cubic-bezier(.2,1.3,.3,1);pointer-events:none}
 .sd-face.on{opacity:1;transform:none}

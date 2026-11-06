@@ -368,7 +368,7 @@
        1) say what you see (candle pattern, trend, range, support/resistance, breakout...)
        2) draw your line on the chart (trend line or flat level)
        3) place a Buy or Sell trade and watch what happens.
-     Every chart is randomly generated. Setups only tilt the odds (about 62/38),
+     Every chart is randomly generated. Clear setups play out in their direction,
      so the market never moves one way every time.
      ------------------------------------------------------------------ */
   var PM_N = 15, PM_START = 10000, PM_RISK = 200, PM_KEY = "iu_predict_best_v2", PM_BASE = 4040, PM_SCALE = 5, PM_HIST = 62, PM_FUT = 14;
@@ -433,7 +433,7 @@
   function genRound(sc) {
     var b = sc.b(), hist = b.h.slice(0, PM_HIST), i, ai = 0;
     for (i = hist.length - 14; i < hist.length; i++) ai += hist[i][1] - hist[i][2];
-    var atr = ai / 14, dir = sc.bias ? (Math.random() < .62 ? sc.bias : -sc.bias) : (Math.random() < .5 ? 1 : -1), p = lc(hist);
+    var atr = ai / 14, dir = sc.bias ? sc.bias : (Math.random() < .5 ? 1 : -1), p = lc(hist);
     var fut = run(p, [[PM_FUT, dir * atr * rnd(2.6, 5.2), .85]]);
     return { sc: sc, hist: hist, fut: fut, atr: atr, lv: b.lv || [], dir: dir, hl: b.hl || 0 };
   }
@@ -480,7 +480,7 @@
     pmStop(); var host = $("#pm"); if (!host) return;
     host.innerHTML = '<div class="qz-intro"><div class="pm-hero" id="pmChart" aria-hidden="true"></div><h2>Predict the Market</h2>' +
       '<p class="pdf-sub">' + PM_N + ' random charts. For each one you will: <b>1)</b> watch the market move, <b>2)</b> say what you see (candle pattern, trend, range, support, resistance, breakout), <b>3)</b> draw your line on the chart, then <b>4)</b> place a Buy or Sell trade with a virtual ' + money(PM_START) + '.</p>' +
-      '<p class="pdf-sub">Setups only tilt the odds. The market does not move the same way every time.</p>' +
+      '<p class="pdf-sub">Some charts end up, some end down, and some are coin flips. The market follows the chart, never your choice.</p>' +
       (pmBest() ? '<p class="qz-best">Your best score: <b>' + pmBest() + " / " + PM_N * 3 + "</b></p>" : "") +
       '<button type="button" class="qz-btn" id="pmGo">Start trading</button><p class="cx-note">Practice money only. Charts are randomly generated for teaching and are not real market data. Education only, not financial advice.</p></div>';
     var d = genRound(pick(SCN)); pm.rng = null; $("#pmChart").innerHTML = pmChart(d.hist.slice(-40));
@@ -568,7 +568,7 @@
       var right = mv > 0; if (right) pm.pts++; pm.bal += pnl; if (pnl > 0) pm.wins++;
       pm.log.push({ n: S.sc.label, p: (S.idOk ? 1 : 0) + 0, pnl: pnl });
       var lastQ = pm.r === PM_N - 1;
-      panel('<p class="qz-verdict ' + (right ? "ok" : "no") + '">' + (right ? "You read the direction right! +1 point" : "Price went against you.") + "</p><p><b>" + (pnl >= 0 ? "Profit " : "Loss ") + money(pnl) + "</b> · " + reason + ". " + (S.sc.bias ? "This " + esc(S.sc.label) + " usually points " + (S.sc.bias > 0 ? "up" : "down") + "; this time the market went " + (S.dir > 0 ? "UP" : "DOWN") + (S.dir === S.sc.bias ? ", as expected." : ". Setups fail about 4 times in 10. That is why you always use a stop loss.") : "With no clear edge, price went " + (S.dir > 0 ? "up" : "down") + " this time. That one was a coin flip.") + '</p><button type="button" class="qz-btn" id="pmNext">' + (lastQ ? "See my score" : "Next question") + "</button>");
+      panel('<p class="qz-verdict ' + (right ? "ok" : "no") + '">' + (right ? "You read the direction right! +1 point" : "Price went against you.") + "</p><p><b>" + (pnl >= 0 ? "Profit " : "Loss ") + money(pnl) + "</b> · " + reason + ". " + (S.sc.bias ? "The " + esc(S.sc.label) + " pointed " + (S.sc.bias > 0 ? "UP (Buy)" : "DOWN (Sell)") + ", and the market went " + (S.dir > 0 ? "UP" : "DOWN") + ". The market moves by the chart, never by your choice." + (right ? "" : " You chose " + (side > 0 ? "Buy" : "Sell") + ", so you lost.") : "No clear edge here, so the market was a coin flip: it went " + (S.dir > 0 ? "up" : "down") + ". The market moves by itself, never by your choice.") + '</p><button type="button" class="qz-btn" id="pmNext">' + (lastQ ? "See my score" : "Next question") + "</button>");
       $("#pm .qz-top span:last-child").innerHTML = "Score <b>" + pm.pts + "</b> · Balance <b>" + money(pm.bal) + "</b>";
       var nb = $("#pmNext"); nb.addEventListener("click", function () { if (lastQ) pmEnd(); else { pm.r++; pmRound(); } });
     }

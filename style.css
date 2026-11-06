@@ -64,7 +64,7 @@ h2{font-size:clamp(2rem,4vw,2.9rem);font-weight:800;margin-bottom:18px;letter-sp
 
 .join-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
 .join-card{padding:24px 22px;display:block;transition:transform .2s ease-out;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.06);box-shadow:0 16px 40px rgba(8,12,26,.22);min-height:100%}
-.join-card img{margin-bottom:14px;filter:drop-shadow(0 6px 14px rgba(0,0,0,.4));width:54px;height:54px}
+.join-card img,.join-card .ji{display:block;margin-bottom:14px;filter:drop-shadow(0 6px 14px rgba(0,0,0,.4));width:54px;height:54px}
 .join-card h3{font-size:1.4rem;margin-bottom:8px}.join-card p{color:rgba(244,247,255,.82);margin-bottom:16px;font-size:1rem;line-height:1.6}
 .join-card .go{font-weight:700;color:#fff}
 .join-card.wa{background:linear-gradient(145deg,rgba(37,211,102,.32),rgba(255,255,255,.06))}
@@ -448,3 +448,20 @@ html.iu-intro-on .sd,html.iu-intro-hold .sd,html.iu-pdfopen .sd{visibility:hidde
 .sd-face.on{opacity:1;transform:none}
 .sd-face .si{display:grid;place-items:center;width:100%;height:100%;border-radius:50%}
 @media(prefers-reduced-motion:reduce){.sd-face{transition:none}}
+
+/* ===== LIGHT MODE (turned on automatically by perf.js for weaker phones) =====
+   Same pages, same features, same look. Only the costliest effects are swapped for cheaper ones:
+   the glass blur becomes a slightly deeper tint, the slow background drift stands still,
+   and the reflection under the broker logos is dropped. */
+html.iu-lite *,html.iu-lite *::before,html.iu-lite *::after{-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
+html.iu-lite .glass{background:linear-gradient(145deg,rgba(30,46,98,.80),rgba(14,24,58,.74) 55%,rgba(26,40,86,.78))}
+html.iu-lite .nav{background:rgba(10,18,46,.88)}
+html.iu-lite .scroll-hint,html.iu-lite .sd-name{background:rgba(8,13,39,.94)}
+html.iu-lite .modal,html.iu-lite .lightbox{background:rgba(2,4,15,.9)}
+html.iu-lite .pdf-modal{background:rgba(2,4,14,.95)}
+html.iu-lite .blob{animation:none;will-change:auto}
+html.iu-lite .grain{display:none}
+html.iu-lite .broker{-webkit-box-reflect:none}
+html.iu-lite .glass{box-shadow:0 8px 22px rgba(0,0,0,.35)}
+/* while scrolling (all phones): the slow background drift and floating logos wait a moment */
+html.iu-scrolling .blob,html.iu-scrolling .broker{animation-play-state:paused}

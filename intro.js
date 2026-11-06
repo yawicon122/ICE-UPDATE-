@@ -26,6 +26,7 @@ css.textContent = `
 #iu-intro .brand{font-weight:800;letter-spacing:.02em;white-space:nowrap;font-size:clamp(2.6rem,12.5vw,9.5rem);line-height:1;
   background:linear-gradient(100deg,#ffffff 0%,#bff0ff 22%,#5fc6ff 45%,#ffffff 52%,#7fd3ff 70%,#3d8bff 100%);background-size:220% 100%;
   -webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 22px rgba(70,190,255,.85)) drop-shadow(0 0 60px rgba(70,150,255,.55))}
+html.iu-lite #iu-intro .gold,html.iu-lite #iu-intro .brand{filter:none}
 #iu-intro .skip{position:absolute;right:16px;top:14px;z-index:3;font:600 .82rem Inter,system-ui,sans-serif;color:#fff;padding:9px 16px;border-radius:999px;cursor:pointer;
   background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.3);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);opacity:0;transition:opacity .6s}
 #iu-intro .skip.on{opacity:.9}
@@ -54,13 +55,13 @@ let revealed = false;
 function reveal() { if (revealed) return; revealed = true; root.classList.remove("iu-intro-on"); root.classList.add("iu-intro-rev"); }
 
 let W, H, DPR;
-function size() { DPR = Math.min(devicePixelRatio || 1, 1.5); W = innerWidth; H = innerHeight; cv.width = W * DPR; cv.height = H * DPR; ctx.setTransform(DPR, 0, 0, DPR, 0, 0); }
+function size() { DPR = (window.IU_LITE && window.IU_LITE()) ? 1 : Math.min(devicePixelRatio || 1, 1.5); W = innerWidth; H = innerHeight; cv.width = W * DPR; cv.height = H * DPR; ctx.setTransform(DPR, 0, 0, DPR, 0, 0); }
 size(); addEventListener("resize", size);
 
 /* soft snow sprite */
 const spr = document.createElement("canvas"); spr.width = spr.height = 64;
 { const g = spr.getContext("2d"), gr = g.createRadialGradient(32, 32, 0, 32, 32, 32); gr.addColorStop(0, "rgba(255,255,255,1)"); gr.addColorStop(.35, "rgba(235,248,255,.8)"); gr.addColorStop(1, "rgba(200,235,255,0)"); g.fillStyle = gr; g.fillRect(0, 0, 64, 64); }
-const N = innerWidth < 700 ? 170 : 380, snow = [];
+const N = (window.IU_LITE && window.IU_LITE()) ? (innerWidth < 700 ? 80 : 170) : (innerWidth < 700 ? 170 : 380), snow = [];
 for (let i = 0; i < N; i++) { const z = Math.random(); snow.push({ x: Math.random() * W, y: Math.random() * H, z, r: 1 + z * z * 7, ph: Math.random() * 6.28, a: .35 + .65 * z }); }
 const stars = Array.from({ length: 90 }, () => ({ x: Math.random(), y: Math.random(), r: Math.random() * 1.3 + .3, p: Math.random() * 6.28 }));
 
@@ -85,7 +86,11 @@ addEventListener("keydown", e => { if (e.key === "Escape" && skipAt === null) { 
 setTimeout(() => skip.classList.add("on"), 900);
 
 let last = t0;
+let lastDraw = 0;
 function frame(now) {
+  /* light mode (weaker phones): draw every other frame, the motion looks the same */
+  if (now - lastDraw < 30 && document.documentElement.classList.contains("iu-lite")) { raf = requestAnimationFrame(frame); return; }
+  lastDraw = now;
   try { draw(now); } catch (err) { finish(); return; }
 }
 function draw(now) {
@@ -157,7 +162,7 @@ function draw(now) {
 
   /* ---------- text ---------- */
   const shake = flash > .05 ? flash * 7 : 0; stage.style.transform = shake ? `translate(${(Math.random() - .5) * shake}px,${(Math.random() - .5) * shake}px)` : "";
-  const set = (e, o, tr, bl) => { e.style.opacity = (o * kill).toFixed(3); e.style.transform = tr; e.style.filter = bl > .05 ? `blur(${bl.toFixed(1)}px)` : ""; };
+  const set = (e, o, tr, bl) => { e.style.opacity = (o * kill).toFixed(3); e.style.transform = tr; e.style.filter = (bl > .05 && !document.documentElement.classList.contains("iu-lite")) ? `blur(${bl.toFixed(1)}px)` : ""; };
   { // line 1
     const i = ease(seg(t, .7, 1.9)), o = 1 - easeIO(seg(t, 3.2, 3.9));
     tL1.style.letterSpacing = (.5 - .38 * i).toFixed(3) + "em";
@@ -165,7 +170,7 @@ function draw(now) {
   }
   { // line 2, word by word
     const o = 1 - easeIO(seg(t, 6.0, 6.6)); tL2.style.opacity = (o * kill).toFixed(3); tL2.style.transform = `scale(${1 + seg(t, 6.0, 6.6) * .06})`;
-    wordEls.forEach((w, k) => { const p = ease(seg(t, 4.0 + k * .16, 4.7 + k * .16)); w.style.opacity = p.toFixed(3); w.style.transform = `translateY(${(1 - p) * 16}px)`; w.style.filter = p < .98 ? `blur(${((1 - p) * 8).toFixed(1)}px)` : ""; });
+    wordEls.forEach((w, k) => { const p = ease(seg(t, 4.0 + k * .16, 4.7 + k * .16)); w.style.opacity = p.toFixed(3); w.style.transform = `translateY(${(1 - p) * 16}px)`; w.style.filter = (p < .98 && !document.documentElement.classList.contains("iu-lite")) ? `blur(${((1 - p) * 8).toFixed(1)}px)` : ""; });
     tL2.style.visibility = (t >= 3.9 && t <= 6.7) ? "visible" : "hidden"; tL2.style.opacity = tL2.style.visibility === "visible" ? tL2.style.opacity : 0;
   }
   { // welcome to

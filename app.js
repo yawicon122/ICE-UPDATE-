@@ -179,13 +179,13 @@ addEventListener("keydown", e => { if (e.key === "Escape") { closeModal(); lb.hi
 
 /* ---------- starfield ---------- */
 const cv = $("#stars"), cx = cv.getContext("2d"); let W, H, pts = [];
-function size(){ W = cv.width = innerWidth; H = cv.height = innerHeight; pts = Array.from({ length: Math.min(110, W / 12) }, () => ({ x: Math.random() * W, y: Math.random() * H, r: Math.random() * 1.6 + .3, s: Math.random() * .25 + .05, a: Math.random() })); }
+function size(){ W = cv.width = innerWidth; H = cv.height = innerHeight; pts = Array.from({ length: Math.min(document.documentElement.classList.contains("iu-lite") ? 45 : 110, W / 12) }, () => ({ x: Math.random() * W, y: Math.random() * H, r: Math.random() * 1.6 + .3, s: Math.random() * .25 + .05, a: Math.random() })); }
 size(); addEventListener("resize", size);
 if (!matchMedia("(prefers-reduced-motion:reduce)").matches) (function loop(t){
   requestAnimationFrame(loop);
   /* 30 fps is plenty for tiny stars; paused when the tab is hidden or a full-screen animation / window is open */
   const rc = document.documentElement.classList;
-  if (document.hidden || rc.contains("iu-intro-on") || rc.contains("iu-pdfopen") || t - (loop.last || 0) < 30) return; loop.last = t;
+  if (document.hidden || rc.contains("iu-intro-on") || rc.contains("iu-pdfopen") || rc.contains("iu-scrolling") || t - (loop.last || 0) < (rc.contains("iu-lite") ? 60 : 30)) return; loop.last = t;
   cx.clearRect(0, 0, W, H);
   for (const q of pts) { q.y -= q.s * 2; if (q.y < -5) { q.y = H + 5; q.x = Math.random() * W; } cx.globalAlpha = .35 + .5 * Math.abs(Math.sin(t / 1400 + q.a * 6)); cx.fillStyle = "#fff"; cx.beginPath(); cx.arc(q.x, q.y, q.r, 0, 6.3); cx.fill(); }
 })(0);

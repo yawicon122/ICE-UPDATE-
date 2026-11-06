@@ -3,7 +3,7 @@
    Change the words in config.js → intro: { line1, line2, welcome, brand, enabled, once } */
 (() => {
 const D = Object.assign({ enabled: true, once: true,
-  line1: "Welcome to the top 1%", line2: "You are on the right path to becoming rich",
+  line1: "Welcome to the top 1%", line2: "Understand the market. Build your knowledge.",
   welcome: "Welcome to", brand: "ICE UPDATE" }, (window.SITE && window.SITE.intro) || {});
 const force = /[?&]intro\b/.test(location.search);
 try { if (!force && D.once && sessionStorage.getItem("iu_intro_done")) return; } catch (e) {}
@@ -36,7 +36,7 @@ document.head.appendChild(css);
 const el = document.createElement("div"); el.id = "iu-intro";
 const esc = s => String(s).replace(/[&<>]/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;" }[c]));
 const l1 = esc(D.line1).replace(/(top\s*1%)/i, '<span class="gold">$1</span>');
-const l2 = esc(D.line2).split(/\s+/).map(w => /^(rich)$/i.test(w) ? `<span class="gold">${w}</span>` : `<span>${w}</span>`).join(" ");
+const l2 = esc(D.line2).split(/\s+/).map(w => /^(rich|knowledge\.?)$/i.test(w) ? `<span class="gold">${w}</span>` : `<span>${w}</span>`).join(" ");
 el.innerHTML = `<div class="bg"></div><canvas></canvas><div class="frost"></div>
 <div class="stage"><div class="t l1">${l1}</div><div class="t l2">${l2}</div><div class="t welcome">${esc(D.welcome)}</div><div class="t brand">${esc(D.brand)}</div></div>
 <div class="skip">Skip ›</div>`;

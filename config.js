@@ -97,5 +97,16 @@ window.SITE = {
     { name: "MH Markets",        logo: "mh-markets.png",        url: "https://client.mhmarkets-asia.com/signup?partnerCode=A4CFMDIG", note: "Official broker" }
   ],
 
+  /* START HERE route (optional): change the five steps. Each step: id, title, desc, cta, and ONE of
+       go: "#section"   → scrolls to a part of the page
+       pdf: true        → opens the PDF Guides window
+       panel: "risk" or "recap" → opens the built-in text panel
+     Leave this out to use the default five steps. */
+  // route: [ { id: "candle", title: "Understand a candlestick", desc: "…", cta: "Open", go: "#explorer" } ],
+
+  /* BEFORE / AFTER slider (optional): replace the built-in teaching chart with your own two pictures
+     of the SAME chart (one plain, one with your marks). Upload them to the repo and write the file names. */
+  // compare: { before: "chart-before.jpg", after: "chart-after.jpg", note: "Historical example, XAUUSD M15. Not financial advice." },
+
   footerNote: "Empowering your trading journey. We provide high-probability trading signals and comprehensive educational content designed to help you navigate the markets with confidence. To ensure the highest quality, we focus on sound risk management, disciplined execution, and practical market education."
 };

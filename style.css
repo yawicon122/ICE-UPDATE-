@@ -29,7 +29,7 @@ img{max-width:100%;display:block}
 .nav nav{display:flex;gap:4px;flex-wrap:wrap}
 .nav nav a{padding:8px 14px;border-radius:999px;font-size:.92rem;color:var(--mut);transition:.25s;font-weight:600}
 .nav nav a:hover{background:rgba(255,255,255,.14);color:#fff}
-@media(max-width:760px){.nav nav a[href="#learn-card"],.nav nav a[href="#join"],.nav nav a[href="#gallery"],.nav nav a[href="#social"]{display:none}.nav nav{flex-wrap:nowrap;gap:0}.nav nav a{padding:8px 8px;font-size:.84rem;white-space:nowrap}.logo{white-space:nowrap;gap:8px;font-size:.98rem}.logo-mark.cube{width:42px;height:42px;flex:none}}
+@media(max-width:760px){.nav nav a[href="#lessons"],.nav nav a[href="#join"],.nav nav a[href="#gallery"],.nav nav a[href="#social"]{display:none}.nav nav{flex-wrap:nowrap;gap:0}.nav nav a{padding:8px 8px;font-size:.84rem;white-space:nowrap}.logo{white-space:nowrap;gap:8px;font-size:.98rem}.logo-mark.cube{width:42px;height:42px;flex:none}}
 
 main{width:min(1100px,calc(100% - 32px));margin:0 auto}
 .section{padding:40px 0 8px}
@@ -611,3 +611,36 @@ html.iu-pdfopen .iu-dock{visibility:hidden}
 .pm-votes li b{display:inline-block;min-width:38px;font-variant-numeric:tabular-nums}
 .pm-votes li.up b{color:#2ee59d}.pm-votes li.dn b{color:#ff8a9a}
 .pm-votes li span{color:#aebcdc;font-size:.84rem}
+
+/* Nav: never wrap */
+.nav nav{flex-wrap:nowrap}.nav nav a{white-space:nowrap}.logo{white-space:nowrap}
+@media(max-width:1000px){.nav nav a[href="#gallery"],.nav nav a[href="#social"]{display:none}.nav nav a{padding:8px 10px}}
+/* Candle Hunt + coach tips */
+.pm-chart{position:relative}
+.pm-chart.tap{cursor:crosshair;touch-action:none}
+.pm-chart.drag{cursor:ns-resize;touch-action:none}
+.h-hero{font-size:4rem;margin-bottom:6px}
+.h-chips,.h-lev{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:4px 0 8px}
+.h-lev>span{font-weight:700;color:#cfdbf5;margin-right:2px}
+.h-chip{padding:9px 13px;border-radius:99px;border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.08);color:#fff;font:700 .85rem Inter,sans-serif;cursor:pointer}
+.h-chip.sel{border-color:#ffd166;box-shadow:0 0 0 2px rgba(255,209,102,.35);background:rgba(255,209,102,.14)}
+.h-chip.done{background:rgba(46,229,157,.22);border-color:#2ee59d}
+.h-mark{position:absolute;transform:translate(-50%,-50%);font:900 2rem/1 Inter,sans-serif;pointer-events:none;z-index:5;text-shadow:0 0 8px rgba(0,0,0,.8)}
+.h-mark.no{color:#ff5d73;animation:hFade .9s forwards}
+.h-mark.ok{color:#2ee59d;font-size:2.4rem;animation:hPop 1.1s forwards}
+@keyframes hFade{0%{opacity:1;transform:translate(-50%,-50%) scale(1.3)}100%{opacity:0;transform:translate(-50%,-80%) scale(.8)}}
+@keyframes hPop{0%{opacity:0;transform:translate(-50%,-50%) scale(.3)}30%{opacity:1;transform:translate(-50%,-50%) scale(1.3)}100%{opacity:0;transform:translate(-50%,-90%) scale(1)}}
+.h-read{display:grid;gap:6px;margin:4px 0 6px}
+.h-r{display:flex;justify-content:space-between;gap:10px;font-size:.9rem;color:#cfdbf5}
+.h-r b{color:#fff}.h-r b.up{color:#2ee59d}.h-r b.dn{color:#ff8a9a}
+.h-warn{margin:2px 0;font-size:.85rem;color:#ffd166;line-height:1.4}
+.h-title{font:800 1.3rem Sora,sans-serif;color:#ffd166;margin:4px 0}
+.coach{position:absolute;inset:0;z-index:40;pointer-events:none;overflow:hidden;border-radius:inherit}
+.coach-ring{position:absolute;border:3px solid #ffd166;border-radius:14px;box-shadow:0 0 0 9999px rgba(3,6,20,.55),0 0 18px rgba(255,209,102,.8)}
+.coach-hand{position:absolute;font-size:2rem;line-height:1;animation:coachBob .9s ease-in-out infinite;filter:drop-shadow(0 2px 4px rgba(0,0,0,.6))}
+@keyframes coachBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.coach-tip{position:absolute;pointer-events:auto;background:#fff;color:#10142a;border-radius:14px;padding:12px 14px;font:600 .92rem/1.45 Inter,sans-serif;box-shadow:0 10px 30px rgba(0,0,0,.5)}
+.coach-tip button{margin-top:10px;border:0;border-radius:99px;padding:8px 18px;background:#10142a;color:#fff;font:800 .85rem Inter,sans-serif;cursor:pointer}
+.coach-tip:after{content:"";position:absolute;left:var(--ax,30px);border:8px solid transparent}
+.coach-tip.below:after{top:-16px;border-bottom-color:#fff}
+.coach-tip.above:after{bottom:-16px;border-top-color:#fff}

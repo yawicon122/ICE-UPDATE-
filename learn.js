@@ -223,8 +223,9 @@
      ------------------------------------------------------------------ */
   var modal = $("#learn-modal"), curView = "home", lastFocus = null;
   var ITEMS = [
-    { v: "predict", ico: "📈", t: "Predict the Market", d: "15 random charts. Spot the pattern, draw your line, then place a Buy or Sell trade. Scored at the end.", tag: "New" },
-    { v: "quiz", ico: "🎮", t: "Candle Quiz", d: "12 questions on candles, patterns and support & resistance. Get a score at the end.", tag: "Play" },
+    { v: "hunt", ico: "🎯", t: "Candle Hunt", d: "Find the candlestick patterns hiding on the chart, then trade with your own entry, take profit and stop loss.", tag: "New" },
+    { v: "predict", ico: "📈", t: "Predict the Market", d: "15 random charts. Spot the pattern, draw your line, then place a Buy or Sell trade. Scored at the end.", tag: "Play" },
+    { v: "quiz", ico: "🎮", t: "Candle Quiz", d: "12 questions on candles, patterns and support & resistance. Get a score at the end." },
     { v: "route", ico: "🧭", t: "Start here", d: "A five-step route from your first candle to your first review." },
     { v: "explorer", ico: "🕯️", t: "Build a candle", d: "Move the sliders and see what the body and wicks mean." },
     { v: "compare", ico: "↔️", t: "Before & after chart", d: "Drag to reveal support and resistance zones." }
@@ -234,7 +235,8 @@
     Array.prototype.forEach.call(modal.querySelectorAll(".lp-view"), function (el) { el.hidden = el.dataset.view !== v; el.scrollTop = 0; });
     $("#lp-back").hidden = v === "home";
     if (v === "quiz") quizShow();
-    if (v === "predict") pmShow(); else pmStop();
+    tipOff(); var e1 = $("#pm"), e2 = $("#hunt"); if (v !== "predict" && e1) e1.innerHTML = ""; if (v !== "hunt" && e2) e2.innerHTML = "";
+    if (v === "predict") pmShow(); else if (v === "hunt") hShow(); else pmStop();
   }
   function openWin(view) {
     if (!modal) return; lastFocus = document.activeElement;
@@ -244,7 +246,7 @@
   }
   function closeWin() {
     if (!modal || !modal.classList.contains("open")) return;
-    pmStop(); modal.classList.remove("open"); modal.setAttribute("aria-hidden", "true");
+    pmStop(); tipOff(); modal.classList.remove("open"); modal.setAttribute("aria-hidden", "true");
     document.body.style.overflow = ""; document.documentElement.classList.remove("iu-pdfopen");
     if (lastFocus && lastFocus.focus) { try { lastFocus.focus(); } catch (e) {} }
   }
@@ -483,6 +485,11 @@
       if (l.pts) { s += '<polyline fill="none" stroke="' + l.c + '" stroke-width="' + (l.w || 1.4) + '" stroke-linejoin="round" points="' + l.pts.map(function (q) { return (6 + step * q[0] + step / 2).toFixed(1) + "," + Y(q[1]).toFixed(1); }).join(" ") + '"/>'; return; }
       if (l.i0 != null) { var x0 = 6 + step * l.i0 + step / 2, x1 = 6 + step * l.i1 + step / 2; s += '<line x1="' + x0 + '" y1="' + Y(l.p0) + '" x2="' + x1 + '" y2="' + Y(l.p1) + '" stroke="' + l.c + '" stroke-width="' + (l.w || 2) + '" stroke-linecap="round"' + (l.d ? ' stroke-dasharray="' + l.d + '"' : "") + "/>" + (l.dots ? '<circle cx="' + x0 + '" cy="' + Y(l.p0) + '" r="5" fill="' + l.c + '"/><circle cx="' + x1 + '" cy="' + Y(l.p1) + '" r="5" fill="' + l.c + '"/>' : "") + (l.t ? '<text x="' + (x1 - 4) + '" y="' + (Y(l.p1) - 7) + '" text-anchor="end" font-size="10.5" font-weight="800" fill="' + l.c + '">' + l.t + "</text>" : ""); return; }
       var y = Y(l.y);
+      if (l.pill) {
+        var tw = String(l.t).length * 6.4 + 16, tc = l.tc || "#0b0f1d";
+        s += '<line x1="0" x2="' + (W - axisW) + '" y1="' + y + '" y2="' + y + '" stroke="' + l.c + '" stroke-width="2"' + (l.d ? ' stroke-dasharray="' + l.d + '"' : "") + '/><rect x="6" y="' + (y - 10) + '" width="' + tw + '" height="20" rx="10" fill="' + l.c + '"/><text x="' + (6 + tw / 2) + '" y="' + (y + 4) + '" text-anchor="middle" font-size="10.5" font-weight="800" fill="' + tc + '">' + l.t + '</text><rect x="' + (W - axisW + 2) + '" y="' + (y - 9) + '" width="' + (axisW - 2) + '" height="18" rx="3" fill="' + l.c + '"/><text x="' + (W - 5) + '" y="' + (y + 4) + '" text-anchor="end" font-size="10.5" font-weight="800" fill="' + tc + '">' + fmtP(l.y) + "</text>";
+        return;
+      }
       s += (l.zone ? '<rect x="0" y="' + (y - 5) + '" width="' + (W - axisW) + '" height="10" fill="' + l.c + '" opacity=".16"/>' : "") + '<line x1="0" x2="' + (W - axisW) + '" y1="' + y + '" y2="' + y + '" stroke="' + l.c + '" stroke-width="1.6" stroke-dasharray="' + (l.zone ? "6 4" : "5 4") + '"/><text x="6" y="' + (y - 5) + '" font-size="10.5" font-weight="800" fill="' + l.c + '">' + l.t + "</text>";
     });
     cs.forEach(function (k, idx) {
@@ -490,7 +497,11 @@
       s += '<line x1="' + x + '" x2="' + x + '" y1="' + Y(k[1]) + '" y2="' + Y(k[2]) + '" stroke="' + col + '" stroke-width="1.2"/><rect x="' + (x - bw / 2) + '" y="' + Y(Math.max(k[0], k[3])) + '" width="' + bw + '" height="' + Math.max(1.4, Math.abs(Y(k[0]) - Y(k[3]))) + '" fill="' + col + '"' + (hl ? ' stroke="#ffd166" stroke-width="1.2"' : "") + "/>";
     });
     if (o.mark && o.hl) { var xa = 6 + step * (cs.length - o.hl) - 3, xb = 6 + step * cs.length + 3; var hh = 0, ll = Infinity; cs.slice(-o.hl).forEach(function (k) { hh = Math.max(hh, k[1]); ll = Math.min(ll, k[2]); }); s += '<rect x="' + xa + '" y="' + (Y(hh) - 6) + '" width="' + (xb - xa) + '" height="' + (Y(ll) - Y(hh) + 12) + '" rx="5" fill="none" stroke="#ffd166" stroke-dasharray="4 3"/>'; }
-    (o.circles || []).forEach(function (q) { var cx = 6 + step * q.i + step / 2, y1 = Y(q.h), y2 = Y(q.l); s += '<ellipse cx="' + cx + '" cy="' + ((y1 + y2) / 2) + '" rx="' + (step * 1.1 + 5) + '" ry="' + ((y2 - y1) / 2 + 6) + '" fill="none" stroke="' + (q.c || "#ffd166") + '" stroke-width="2"/>'; });
+    (o.circles || []).forEach(function (q) {
+      var i1 = q.i1 != null ? q.i1 : q.i, xa = 6 + step * q.i + step / 2, xb = 6 + step * i1 + step / 2, cx = (xa + xb) / 2, y1 = Y(q.h), y2 = Y(q.l), rx = (xb - xa) / 2 + step * 1.1 + 6, ry = (y2 - y1) / 2 + 7;
+      s += '<ellipse cx="' + cx + '" cy="' + ((y1 + y2) / 2) + '" rx="' + rx + '" ry="' + ry + '" fill="none" stroke="' + (q.c || "#ffd166") + '" stroke-width="2.2"' + (q.dash ? ' stroke-dasharray="' + q.dash + '"' : "") + '/>';
+      if (q.t) { var tw2 = q.t.length * 6 + 12; s += '<rect x="' + (cx - tw2 / 2) + '" y="' + (Math.min(y1, y2) - ry - 17) + '" width="' + tw2 + '" height="15" rx="7" fill="' + (q.c || "#ffd166") + '"/><text x="' + cx + '" y="' + (Math.min(y1, y2) - ry - 6) + '" text-anchor="middle" font-size="9.5" font-weight="800" fill="#06122e">' + q.t + "</text>"; }
+    });
     var lcl = lc(cs), ly = Y(lcl);
     s += '<line x1="0" x2="' + (W - axisW + 6) + '" y1="' + ly + '" y2="' + ly + '" stroke="' + (last(cs)[3] >= last(cs)[0] ? "#089981" : "#f23645") + '" stroke-width=".9" stroke-dasharray="2 3"/><rect x="' + (W - axisW + 2) + '" y="' + (ly - 9) + '" width="' + (axisW - 2) + '" height="18" rx="3" fill="' + (last(cs)[3] >= last(cs)[0] ? "#089981" : "#f23645") + '"/><text x="' + (W - 5) + '" y="' + (ly + 4) + '" text-anchor="end" font-size="10.5" font-weight="800" fill="#fff">' + fmtP(lcl) + "</text>";
     s += '<text x="8" y="' + (H - 7) + '" font-size="10" fill="#5f6b8c">Gold · practice chart · not real data</text>';
@@ -508,8 +519,9 @@
       '<p class="pdf-sub">' + PM_N + ' random charts. For each one you will: <b>1)</b> watch the market move, <b>2)</b> say what you see (candle pattern, trend, range, support, resistance, breakout), <b>3)</b> draw your line on the chart, then <b>4)</b> place a Buy or Sell trade with a virtual ' + money(PM_START) + '.</p>' +
       '<p class="pdf-sub">The market has a mind of its own: it calculates its own signal from the trend, RSI, support and resistance and candle patterns, then moves that way. Wrong answers lose, correct answers win, and every answer is explained.</p>' +
       (pmBest() ? '<p class="qz-best">Your best score: <b>' + pmBest() + " / " + PM_N * 3 + "</b></p>" : "") +
-      '<button type="button" class="qz-btn" id="pmGo">Start trading</button><p class="cx-note">Practice money only. Charts are randomly generated for teaching and are not real market data. Education only, not financial advice.</p></div>';
+      '<button type="button" class="qz-btn" id="pmGo">Start trading</button><button type="button" class="qz-btn alt" id="pmTips">Show me how to play</button><p class="cx-note">Practice money only. Charts are randomly generated for teaching and are not real market data. Education only, not financial advice.</p></div>';
     var d = genRound(pick(SCN)); pm.rng = null; $("#pmChart").innerHTML = pmChart(d.hist.slice(-40));
+    $("#pmTips").addEventListener("click", function () { tipsReset(); $("#pmTips").textContent = "Tips will show when you start ✓"; });
     $("#pmGo").addEventListener("click", function () { pm.r = 0; pm.bal = PM_START; pm.pts = 0; pm.wins = 0; pm.log = []; pm.order = shuffle2(SCN.slice()).slice(0, PM_N); pmRound(); });
   }
   function pmHead() { return '<div class="qz-top"><span>Question ' + (pm.r + 1) + " of " + PM_N + "</span><span>Score <b>" + pm.pts + "</b> · Balance <b>" + money(pm.bal) + "</b></span></div>" + '<div class="lr-bar"><i style="width:' + (100 * pm.r / PM_N).toFixed(0) + '%"></i></div>'; }
@@ -558,6 +570,7 @@
   function pmAsk() {
     var S = pm.S, others = SCN.filter(function (x) { return x.k !== S.sc.k; }), opts = [S.sc].concat(shuffle2(others).slice(0, 3));
     shuffle2(opts); drawBase();
+    later(function () { tip("pm-ask", "#pmPanel .qz-opts", "<b>Step 1.</b> Look at the chart, then tap what you see: a candle pattern, a trend, a range or a level."); }, 100);
     panel('<h3 class="qz-q">1) What do you see on this chart?</h3><div class="qz-opts" role="group">' + opts.map(function (o) { return '<button type="button" class="qz-opt" data-k="' + o.k + '">' + esc(o.label) + "</button>"; }).join("") + "</div>");
     $("#pmPanel").querySelector(".qz-opts").addEventListener("click", function (e) {
       var b = e.target.closest(".qz-opt"); if (!b || b.disabled) return; var ok = b.dataset.k === S.sc.k;
@@ -575,6 +588,7 @@
     drawBase();
     panel('<h3 class="qz-q">2) Draw your line</h3><p class="pm-wait">Drag your finger across the chart: a <b>trend line</b> along the move, or a <b>flat line</b> at support / resistance if price is ranging.</p><div class="pm-two"><button type="button" class="qz-btn alt" id="pmClr">Clear</button><button type="button" class="qz-btn" id="pmLineOk" disabled>Done</button></div>');
     host.classList.add("draw");
+    tip("pm-draw", "#pmChart", "<b>Step 2.</b> Drag your finger across the chart to draw a trend line (or a flat line at support / resistance). Then tap <b>Done</b>.");
     function pt(e) {
       var r = host.getBoundingClientRect(), sc = pm.sc, x = e.clientX - r.left, y = e.clientY - r.top;
       return { i: Math.max(0, Math.min(PM_HIST - 1, (x - 6) / sc.step - .5)), p: sc.hi - (y - sc.top) / sc.plotH * (sc.hi - sc.lo) };
@@ -610,6 +624,7 @@
     drawBase();
     panel('<h3 class="qz-q">3) Where does price go next?</h3><div class="pm-tix">Risk <b>' + money(PM_RISK) + '</b> · Stop loss 2× ATR · Take profit 3× ATR</div><div class="pm-btns"><button type="button" class="pm-buy" data-side="1">Buy ▲</button><button type="button" class="pm-sell" data-side="-1">Sell ▼</button></div>');
     $("#pmPanel").querySelector(".pm-btns").addEventListener("click", function (e) { var b = e.target.closest("button"); if (b) pmTrade(+b.dataset.side); });
+    tip("pm-trade", ".pm-btns", "<b>Step 3.</b> Tap <b>Buy</b> if you think price goes up, or <b>Sell</b> if you think it goes down. The market decides by its own calculation, not by your choice.");
   }
   function influence(S) {                            // everything that moved the market, drawn on the chart
     var h = S.hist, n = h.length, lines = [], circles = [], i;
@@ -682,5 +697,265 @@
     $("#pmAgain").addEventListener("click", pmShow); $("#pmQuiz").addEventListener("click", function () { openView("quiz"); }); $("#pmHome").addEventListener("click", function () { openView("home"); });
   }
 
+  /* ------------------------------------------------------------------
+     6b) COACH TIPS — first-time "do this now" pointers (saved on this phone)
+     ------------------------------------------------------------------ */
+  var TIPS_KEY = "iu_tips_v1", coachEl = null;
+  function tipsSeen() { try { return JSON.parse(localStorage.getItem(TIPS_KEY) || "{}") || {}; } catch (e) { return {}; } }
+  function tipSave(id) { try { var t = tipsSeen(); t[id] = 1; localStorage.setItem(TIPS_KEY, JSON.stringify(t)); } catch (e) {} }
+  function tipsReset() { try { localStorage.removeItem(TIPS_KEY); } catch (e) {} }
+  function tipOff() { if (coachEl) { coachEl.remove(); coachEl = null; } }
+  function tip(id, sel, text, next) {
+    if (tipsSeen()[id]) { if (next) next(); return; }
+    later(function () {
+      var el = typeof sel === "function" ? sel() : $(sel), pan = $("#learn-modal .pdf-panel");
+      if (!el || !pan || !modal.classList.contains("open")) return;
+      tipOff();
+      var pr = pan.getBoundingClientRect(), r = el.getBoundingClientRect();
+      if (r.bottom > pr.bottom - 8 || r.top < pr.top + 56) { el.scrollIntoView({ block: "center" }); r = el.getBoundingClientRect(); }
+      var c = document.createElement("div"); c.className = "coach"; coachEl = c;
+      var ring = document.createElement("div"); ring.className = "coach-ring";
+      ring.style.cssText = "left:" + (r.left - pr.left - 5) + "px;top:" + (r.top - pr.top - 5) + "px;width:" + (r.width + 10) + "px;height:" + (r.height + 10) + "px";
+      var hand = document.createElement("div"); hand.className = "coach-hand"; hand.textContent = "👆";
+      hand.style.cssText = "left:" + (r.left - pr.left + r.width / 2 - 14) + "px;top:" + (r.top - pr.top + Math.min(r.height - 30, 60)) + "px";
+      var bub = document.createElement("div"); bub.className = "coach-tip"; bub.innerHTML = '<div>' + text + '</div><button type="button">Got it</button>';
+      c.appendChild(ring); c.appendChild(hand); c.appendChild(bub); pan.appendChild(c);
+      var bw = Math.min(300, pr.width - 24), bh = bub.offsetHeight, below = pr.bottom - r.bottom > bh + 40, tp2 = below ? r.bottom - pr.top + 14 : r.top - pr.top - bh - 14;
+      if (!below && tp2 < 56) tp2 = 56;
+      var lf = Math.max(10, Math.min(pr.width - bw - 10, r.left - pr.left + r.width / 2 - bw / 2));
+      bub.style.cssText = "width:" + bw + "px;left:" + lf + "px;top:" + tp2 + "px;--ax:" + Math.max(18, Math.min(bw - 30, r.left - pr.left + r.width / 2 - lf - 8)) + "px";
+      bub.className += below ? " below" : " above";
+      function done() { tipSave(id); tipOff(); el.removeEventListener("pointerdown", done, true); if (next) next(); }
+      bub.querySelector("button").addEventListener("click", done);
+      el.addEventListener("pointerdown", function () { tipSave(id); tipOff(); }, { once: true, capture: true });
+    }, 450);
+  }
+
+  /* ------------------------------------------------------------------
+     7) CANDLE HUNT — find the patterns, then trade with your own entry / TP / SL
+     ------------------------------------------------------------------ */
+  var HN = 5, HKEY = "iu_hunt_best_v1", HFUT = 18, H_MARGIN = 200, H_LEVS = [10, 50, 100, 500];
+  var PATS = {
+    ham: { n: "Hammer", pre: -1, bias: 1, c: function (p) { return [[p, p + .4, p - 3.6, p + .25]]; } },
+    ss: { n: "Shooting Star", pre: 1, bias: -1, c: function (p) { return [[p, p + 3.6, p - .4, p - .25]]; } },
+    bue: { n: "Bullish Engulfing", pre: -1, bias: 1, c: function (p) { return [[p, p + .3, p - 1.1, p - .8], [p - 1.1, p + 2.3, p - 1.3, p + 2]]; } },
+    bee: { n: "Bearish Engulfing", pre: 1, bias: -1, c: function (p) { return [[p, p + 1.1, p - .3, p + .8], [p + 1.1, p + 1.3, p - 2.3, p - 2]]; } },
+    ms: { n: "Morning Star", pre: -1, bias: 1, c: function (p) { var q = p - 2.8; return [[p, p + .2, q - .2, q], [q - .6, q - .3, q - 1.2, q - .9], [q - .8, q + 2.6, q - 1, q + 2.3]]; } },
+    es: { n: "Evening Star", pre: 1, bias: -1, c: function (p) { var q = p + 2.8; return [[p, q + .2, p - .2, q], [q + .6, q + 1.2, q + .3, q + .9], [q + .8, q + 1, q - 2.6, q - 2.3]]; } },
+    tws: { n: "Three White Soldiers", pre: 0, bias: 1, c: function (p) { return [[p, p + 2.6, p - .3, p + 2.3], [p + 2.1, p + 4.9, p + 1.8, p + 4.6], [p + 4.4, p + 7.2, p + 4.1, p + 6.9]]; } },
+    tbc: { n: "Three Black Crows", pre: 0, bias: -1, c: function (p) { return [[p, p + .3, p - 2.6, p - 2.3], [p - 2.1, p - 1.8, p - 4.9, p - 4.6], [p - 4.4, p - 4.1, p - 7.2, p - 6.9]]; } },
+    doj: { n: "Doji", pre: 0, bias: 0, c: function (p, d) { return [[p, p + 2.4, p - 2.4, p + .08 * d]]; } }
+  };
+  var H = { r: 0, pts: 0, bal: PM_START, streak: 0, S: null, found: [], chips: [], sel: 0, wrong: [], hintOn: false, phase: "", side: 0, ln: null, lev: 100, log: [], badges: {} };
+  function plant(key, p, follow) {
+    var P = PATS[key], d = Math.random() < .5 ? 1 : -1, pre = (P.pre || key === "doj") ? trend(p, P.pre || d, 9) : chop(p, 9, 2), q = lc(pre), pc = P.c(q, d), out = pre.concat(pc);
+    var o = { i0: pre.length, i1: out.length - 1, key: key, name: P.n, bias: P.bias };
+    if (follow) out = out.concat(run(lc(pc), [[5, (P.bias || -d) * rnd(3, 4.2), .8]]));
+    o.c = out; return o;
+  }
+  function hbuild() {
+    var keys = shuffle2(Object.keys(PATS)).slice(0, 3), out = chop(100, 6, 2), marks = [], k, pl, gap;
+    for (k = 0; k < 3; k++) {
+      gap = k === 1 ? 4 : k === 2 ? Math.max(2, 64 - out.length - 12) : 0;
+      if (gap) out = out.concat(chop(lc(out), gap, 1.6));
+      pl = plant(keys[k], lc(out), k < 2); pl.i0 += out.length; pl.i1 += out.length; marks.push(pl); out = out.concat(pl.c);
+    }
+    return { h: out, marks: marks };
+  }
+  /* the market's own behaviour after the setup: sometimes straight, sometimes it hovers at a stop area or spikes through it first */
+  function hFuture(hist, atr, dir) {
+    var p = lc(hist), r = Math.random(), beh, depth = 0, tgt = atr * rnd(3.6, 6.2), c, a, pb;
+    if (r < .26) beh = "clean"; else if (r < .5) { beh = "shallow"; depth = rnd(.5, 1.1); } else if (r < .82) { beh = "deep"; depth = rnd(1.5, 2.5); } else { beh = "spike"; depth = rnd(2.1, 2.6); }
+    if (beh === "clean") c = run(p, [[HFUT, dir * tgt, .8]]);
+    else if (beh === "spike") {
+      c = run(p, [[HFUT, dir * tgt, .8]]); a = 3 + Math.floor(Math.random() * 3);
+      if (dir > 0) c[a][2] = Math.min(c[a][2], p - depth * atr); else c[a][1] = Math.max(c[a][1], p + depth * atr);
+    } else {
+      a = Math.round(rnd(4, 6)); pb = -dir * depth * atr;
+      c = run(p, [[a, pb, .75], [3, 0, .4], [HFUT - a - 3, dir * tgt - pb, .8]]);
+    }
+    return { c: c, beh: beh, depth: depth };
+  }
+  function hGen() {
+    var B = hbuild(), hist = B.h, live = B.marks[2], P = PATS[live.key], i, ai = 0;
+    for (i = hist.length - 14; i < hist.length; i++) ai += hist[i][1] - hist[i][2];
+    var atr = ai / 14, hl = live.i1 - live.i0 + 1, sc = { bias: P.bias, label: live.name, g: "Candlestick", line: "trend", hl: hl };
+    var A = analyse(sc, hist, atr), F = hFuture(hist, atr, A.dir);
+    return { hist: hist, marks: B.marks, live: live, atr: atr, A: A, dir: A.dir, sc: sc, hl: hl, lv: [], fut: F.c, beh: F.beh, depth: F.depth };
+  }
+  function hSlots() { return H.S.hist.length + HFUT; }
+  function hRegion(m) {
+    var sc = pm.sc, hi = -Infinity, lo = Infinity, i; for (i = m.i0; i <= m.i1; i++) { hi = Math.max(hi, H.S.hist[i][1]); lo = Math.min(lo, H.S.hist[i][2]); }
+    var X = function (n) { return 6 + sc.step * n + sc.step / 2; }, Y = function (v) { return sc.top + (sc.hi - v) / (sc.hi - sc.lo) * sc.plotH; };
+    return { xa: X(m.i0) - 16, xb: X(m.i1) + 16, ya: Y(hi) - 20, yb: Y(lo) + 20, hi: hi, lo: lo };
+  }
+  function hCircles(extra) {
+    var out = [];
+    H.S.marks.forEach(function (m, k) { if (H.found[k]) { var R = hRegion2(m); out.push({ i: m.i0, i1: m.i1, h: R.hi, l: R.lo, c: "#2ee59d", t: m.name }); } });
+    if (extra) out = out.concat(extra); return out;
+  }
+  function hRegion2(m) { var hi = -Infinity, lo = Infinity, i; for (i = m.i0; i <= m.i1; i++) { hi = Math.max(hi, H.S.hist[i][1]); lo = Math.min(lo, H.S.hist[i][2]); } return { hi: hi, lo: lo }; }
+  function hHead() { return '<div class="qz-top"><span>Round ' + (H.r + 1) + " of " + HN + "</span><span>Score <b>" + H.pts + "</b>" + (H.streak >= 2 ? " · 🔥" + H.streak : "") + " · Balance <b>" + money(H.bal) + "</b></span></div>" + '<div class="lr-bar"><i style="width:' + (100 * H.r / HN).toFixed(0) + '%"></i></div>'; }
+  function hdraw(o) { o = o || {}; o.slots = hSlots(); $("#pmChart").innerHTML = pmChart(H.S.hist, o); }
+  function hShow() {
+    pmStop(); tipOff(); var host = $("#hunt"); if (!host) return;
+    host.innerHTML = '<div class="qz-intro"><div class="h-hero" aria-hidden="true">🎯</div><h2>Candle Hunt</h2>' +
+      '<p class="pdf-sub">Real traders spot patterns fast. Each round hides <b>3 candlestick patterns</b> on a chart. <b>1)</b> Tap each one where you see it. <b>2)</b> Choose Buy or Sell for the live pattern at the right edge. <b>3)</b> Drag your own <b>Entry</b>, <b>Take profit</b> and <b>Stop loss</b> lines, pick your leverage, and watch the market decide.</p>' +
+      '<p class="pdf-sub">Careful: price can hover at your stop, spike through it, or liquidate you.</p>' +
+      (hBest() ? '<p class="qz-best">Your best score: <b>' + hBest() + " / " + HN * 5 + "</b></p>" : "") +
+      '<button type="button" class="qz-btn" id="hGo">Start hunting</button><button type="button" class="qz-btn alt" id="hTips">Show me how to play</button><p class="cx-note">Practice money only. Charts are randomly generated for teaching and are not real market data. Education only, not financial advice.</p></div>';
+    $("#hGo").addEventListener("click", function () { H.r = 0; H.pts = 0; H.bal = PM_START; H.streak = 0; H.log = []; H.badges = {}; hRound(); });
+    $("#hTips").addEventListener("click", function () { tipsReset(); $("#hTips").textContent = "Tips will show when you start ✓"; });
+  }
+  function hBest(v) { try { if (v != null) { var b = +localStorage.getItem(HKEY) || 0; if (v > b) localStorage.setItem(HKEY, Math.round(v)); } return +localStorage.getItem(HKEY) || 0; } catch (e) { return 0; } }
+  function hPanel(h) { $("#hPanel").innerHTML = h; }
+  function hRound() {
+    pmStop(); tipOff(); var S = hGen(); H.S = S; H.found = [false, false, false]; H.wrong = [0, 0, 0]; H.chips = shuffle2([0, 1, 2]); H.sel = H.chips[0]; H.hintOn = false; H.phase = "find"; pm.rng = null;
+    var v = $("#lp-hunt"); if (v) v.scrollTop = 0;
+    $("#hunt").innerHTML = hHead() + '<div class="pm-chart" id="pmChart"></div><div class="qz-card glass pm-panel" id="hPanel" aria-live="polite"></div>';
+    hdraw(); hFindPanel();
+    var host = $("#pmChart"); host.classList.add("tap"); host.onpointerdown = hTap;
+    tip("h-chips", ".h-chips", "<b>Step 1.</b> These are the patterns hiding on the chart. Tap a name to choose which one you are hunting.", function () {
+      tip("h-chart", "#pmChart", "Now <b>tap the exact spot</b> on the chart where you see it. A wrong tap shows ❌, a right one gets a green circle ✅.");
+    });
+  }
+  function hFindPanel(msg) {
+    var chips = H.chips.map(function (k) { var m = H.S.marks[k]; return '<button type="button" class="h-chip' + (H.found[k] ? " done" : "") + (H.sel === k && !H.found[k] ? " sel" : "") + '" data-m="' + k + '">' + (H.found[k] ? "✓ " : "") + esc(m.name) + "</button>"; }).join("");
+    hPanel('<h3 class="qz-q">Find these patterns</h3><div class="h-chips">' + chips + '</div><p class="pm-wait" id="hMsg">' + (msg || "Tap the exact spot where you see the <b>" + esc(H.S.marks[H.sel].name) + "</b>.") + "</p>");
+    $("#hPanel").querySelector(".h-chips").addEventListener("click", function (e) { var b = e.target.closest(".h-chip"); if (!b || H.phase !== "find") return; var k = +b.dataset.m; if (H.found[k]) return; H.sel = k; H.hintOn = false; hdraw({ circles: hCircles() }); hFindPanel(); });
+  }
+  function hMark(x, y, ok) {
+    var host = $("#pmChart"); if (!host) return; var el = document.createElement("span"); el.className = "h-mark " + (ok ? "ok" : "no"); el.textContent = ok ? "✓" : "✕"; el.style.left = x + "px"; el.style.top = y + "px"; host.appendChild(el);
+    later(function () { el.remove(); }, ok ? 1100 : 900);
+  }
+  function hTap(e) {
+    if (H.phase !== "find") return; var host = $("#pmChart"), r = host.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top, k = H.sel, m = H.S.marks[k], R = hRegion(m);
+    if (x >= R.xa && x <= R.xb && y >= R.ya && y <= R.yb) {
+      H.found[k] = true; var first = H.wrong[k] <= 2; if (first) H.pts++; H.badges[m.key] = 1;
+      hdraw({ circles: hCircles() }); hMark(x, y, true);
+      var left = H.found.indexOf(false);
+      if (left < 0) { H.phase = "wait"; hFindPanel("✅ Correct! You found all 3. Now trade the live pattern."); later(hDir, 1300); }
+      else { H.sel = H.chips.filter(function (c) { return !H.found[c]; })[0]; hFindPanel("✅ Correct! That is the <b>" + esc(m.name) + "</b>" + (first ? " (+1 point)" : "") + ". Now find the <b>" + esc(H.S.marks[H.sel].name) + "</b>."); }
+    } else {
+      H.wrong[k]++; hMark(x, y, false);
+      var msg = "❌ Wrong place. That is not the <b>" + esc(m.name) + "</b>. Try again" + (H.wrong[k] >= 3 ? " (hint shown)" : "") + ".";
+      hFindPanel(msg);
+      if (H.wrong[k] >= 3) { hdraw({ circles: hCircles([{ i: m.i0, i1: m.i1, h: R.hi, l: R.lo, c: "#ffd166", t: "Hint", dash: "5 4" }]) }); }
+    }
+  }
+  function hDir() {
+    tipOff(); H.phase = "dir"; var S = H.S, host = $("#pmChart"); host.classList.remove("tap"); host.onpointerdown = null; hdraw({ circles: hCircles() });
+    hPanel('<h3 class="qz-q">Trade the live pattern</h3><p class="pm-wait">The newest pattern at the right edge is the <b>' + esc(S.live.name) + '</b>. Which way will the market go next?</p><div class="pm-btns"><button type="button" class="pm-buy" data-side="1">Buy ▲</button><button type="button" class="pm-sell" data-side="-1">Sell ▼</button></div>');
+    $("#hPanel").querySelector(".pm-btns").addEventListener("click", function (e) { var b = e.target.closest("button"); if (b) hLines(+b.dataset.side); });
+    tip("h-dir", ".pm-btns", "<b>Step 2.</b> Tap <b>Buy</b> if you think price goes up, or <b>Sell</b> if you think it goes down.");
+  }
+  /* ---- set Entry / Take profit / Stop loss by dragging three lines ---- */
+  function hGeom() {
+    var L = H.ln, S = H.S, E$ = PM_BASE + L.E * PM_SCALE, units = H_MARGIN * H.lev / E$, liqD = E$ / H.lev / PM_SCALE, liq = L.E - H.side * liqD;
+    return { E$: E$, units: units, liqD: liqD, liq: liq };
+  }
+  function hLineSet(status) {
+    var L = H.ln, g = hGeom(), side = H.side;
+    return [{ y: L.TP, t: "TAKE PROFIT", c: "#089981", pill: 1 }, { y: L.E, t: status || "ENTRY", c: "#ffd166", pill: 1, d: status ? "" : "" }, { y: L.SL, t: "STOP LOSS", c: "#f23645", tc: "#fff", pill: 1 }, { y: g.liq, t: "LIQUIDATION", c: "#b388ff", pill: 1, d: "6 4" }];
+  }
+  function hValid() {
+    var L = H.ln, s = H.side, ok = s > 0 ? (L.SL < L.E && L.E < L.TP) : (L.TP < L.E && L.E < L.SL);
+    return ok;
+  }
+  function hRead() {
+    var L = H.ln, g = hGeom(), s = H.side, risk = Math.min(H_MARGIN, g.units * Math.abs(L.E - L.SL) * PM_SCALE), rew = g.units * Math.abs(L.TP - L.E) * PM_SCALE, beyond = Math.abs(L.SL - L.E) > g.liqD, valid = hValid();
+    var el = $("#hRead"); if (!el) return;
+    el.innerHTML = (valid ? '<div class="h-r"><span>If stop loss hits</span><b class="dn">-' + money(risk) + '</b></div><div class="h-r"><span>If take profit hits</span><b class="up">+' + money(rew) + '</b></div><div class="h-r"><span>Risk : reward</span><b>1 : ' + (rew / Math.max(1, risk)).toFixed(1) + "</b></div>"
+      : '<p class="h-warn">' + (s > 0 ? "For a Buy: Stop loss must be BELOW entry and Take profit ABOVE." : "For a Sell: Take profit must be BELOW entry and Stop loss ABOVE.") + "</p>") +
+      (beyond && valid ? '<p class="h-warn">⚠ Your stop loss is beyond the <b>liquidation line</b> (purple). With 1:' + H.lev + " leverage you would be liquidated before your stop triggers.</p>" : "") + '<div class="h-r"><span>Margin used</span><b>' + money(H_MARGIN) + " (controls " + money(H_MARGIN * H.lev) + ")</b></div>";
+    var b = $("#hPlace"); if (b) b.disabled = !valid;
+  }
+  function hLines(side) {
+    tipOff(); H.phase = "lines"; H.side = side; H.lev = 100; var S = H.S, p = lc(S.hist), a = S.atr;
+    H.ln = { E: p, TP: p + side * 3 * a, SL: p - side * 2 * a };
+    pm.rng = { lo: p - 4.8 * a, hi: p + 4.8 * a };
+    function redraw() { hdraw({ lines: hLineSet(), circles: hCircles() }); hRead(); }
+    hPanel('<h3 class="qz-q">Set your trade (' + (side > 0 ? "BUY" : "SELL") + ')</h3><p class="pm-wait">Drag the <b style="color:#ffd166">Entry</b>, <b style="color:#2ee59d">Take profit</b> and <b style="color:#ff8a9a">Stop loss</b> lines up or down on the chart.</p>' +
+      '<div class="h-lev"><span>Leverage</span>' + H_LEVS.map(function (l) { return '<button type="button" class="h-chip' + (l === 100 ? " sel" : "") + '" data-l="' + l + '">1:' + l + "</button>"; }).join("") + '</div><div id="hRead" class="h-read"></div><button type="button" class="qz-btn" id="hPlace">Place trade</button>');
+    redraw();
+    var host = $("#pmChart"), dragK = null, sc;
+    function py(v) { return sc.top + (sc.hi - v) / (sc.hi - sc.lo) * sc.plotH; }
+    host.classList.add("drag");
+    host.onpointerdown = function (e) {
+      sc = pm.sc; var r = host.getBoundingClientRect(), y = e.clientY - r.top, best = null, bd = 44;
+      ["E", "TP", "SL"].forEach(function (k) { var d = Math.abs(py(H.ln[k]) - y); if (d < bd) { bd = d; best = k; } });
+      if (!best) return; dragK = best; try { host.setPointerCapture(e.pointerId); } catch (x) {} e.preventDefault();
+    };
+    host.onpointermove = function (e) {
+      if (!dragK) return; var r = host.getBoundingClientRect(), y = e.clientY - r.top, v = sc.hi - (y - sc.top) / sc.plotH * (sc.hi - sc.lo);
+      v = Math.max(p - 4.5 * a, Math.min(p + 4.5 * a, v)); H.ln[dragK] = v; redraw();
+    };
+    host.onpointerup = host.onpointercancel = function () { dragK = null; };
+    $("#hPanel").querySelector(".h-lev").addEventListener("click", function (e) { var b = e.target.closest(".h-chip"); if (!b) return; H.lev = +b.dataset.l; Array.prototype.forEach.call(this.querySelectorAll(".h-chip"), function (x) { x.classList.toggle("sel", x === b); }); redraw(); });
+    $("#hPlace").addEventListener("click", function () { host.classList.remove("drag"); host.onpointerdown = host.onpointermove = host.onpointerup = host.onpointercancel = null; hPlay(); });
+    tip("h-lines", "#pmChart", "<b>Step 3.</b> Drag the three lines. <b>Entry</b> is where you want to buy/sell, <b>Take profit</b> is your target, <b>Stop loss</b> is where you accept being wrong.", function () {
+      tip("h-lev", ".h-lev", "<b>Leverage</b> multiplies profit AND loss. High leverage means a tiny move can wipe out your margin: that is <b>liquidation</b> (purple line).", function () { tip("h-place", "#hPlace", "Happy with your lines? Tap <b>Place trade</b> and watch the market move."); });
+    });
+  }
+  function hPlay() {
+    tipOff(); H.phase = "play"; var S = H.S, side = H.side, L = { E: H.ln.E, TP: H.ln.TP, SL: H.ln.SL }, g = hGeom(), liq = g.liq, seen = S.hist.slice(), cur = null, filled = false, fillIdx = -1, res = null, over = false, nBars = 0;
+    var mkt = Math.abs(L.E - lc(S.hist)) < .05 * S.atr;
+    function lines() { return [{ y: L.TP, t: "TAKE PROFIT", c: "#089981", pill: 1 }, { y: L.E, t: filled ? "ENTRY ✓" : "ENTRY (pending)", c: "#ffd166", pill: 1 }, { y: L.SL, t: "STOP LOSS", c: "#f23645", tc: "#fff", pill: 1 }, { y: liq, t: "LIQUIDATION", c: "#b388ff", pill: 1, d: "6 4" }]; }
+    function draw() { var all = cur ? seen.concat([cur]) : seen; $("#pmChart").innerHTML = pmChart(all, { lines: lines(), circles: hCircles(), slots: hSlots() }); }
+    function judge(idx, part) {
+      if (!filled) { if (part[2] <= L.E && part[1] >= L.E) { filled = true; fillIdx = idx; hPanel('<h3 class="qz-q">Trade filled ✓</h3><p class="pm-wait">Your ' + (side > 0 ? "buy" : "sell") + " order opened at " + fmtP(L.E) + ". Watch what price does near your lines…</p>" + '<button type="button" class="qz-btn alt" id="hSkip">Skip animation</button>'); bindSkip(); } else return null; }
+      var hi = part[1], lo = part[2], pr = part[3]; if (idx === fillIdx) { hi = pr; lo = pr; }
+      var hitLiq = side > 0 ? lo <= liq : hi >= liq, hitSL = side > 0 ? lo <= L.SL : hi >= L.SL, hitTP = side > 0 ? hi >= L.TP : lo <= L.TP;
+      if (hitLiq || hitSL) { return (hitLiq && (!hitSL || Math.abs(L.E - liq) <= Math.abs(L.E - L.SL))) ? "liq" : "sl"; }
+      return hitTP ? "tp" : null;
+    }
+    function bindSkip() { var b = $("#hSkip"); if (b) b.addEventListener("click", function () { pmStop(); var q = 0; seen = S.hist.slice(); cur = null; while (!res && q < S.fut.length) { var k = S.fut[q]; var r = judge(q, k); q++; seen.push(k); if (r) res = r; } draw(); finish(); }); }
+    function finish() {
+      if (over) return; over = true; pmStop(); if (cur) { seen.push(cur); cur = null; }
+      var exit, outcome = res, pnl = 0;
+      if (!filled) outcome = "nofill";
+      else if (!res) { outcome = "timeout"; exit = lc(seen); } else exit = res === "tp" ? L.TP : res === "sl" ? L.SL : liq;
+      if (outcome === "liq") pnl = -H_MARGIN; else if (outcome !== "nofill") pnl = Math.max(-H_MARGIN, g.units * side * (exit - L.E) * PM_SCALE);
+      var dirOk = side === S.dir; if (dirOk) { H.pts++; H.streak++; } else H.streak = 0; if (pnl > 0) H.pts++; H.bal += pnl;
+      H.log.push({ n: S.live.name, pnl: pnl, ok: dirOk });
+      hResult(outcome, pnl, dirOk, L, g, seen);
+    }
+    draw(); hPanel('<h3 class="qz-q">Order placed…</h3><p class="pm-wait" id="hSt">' + (mkt ? "Opening your trade at market price…" : "Waiting for price to reach your entry at " + fmtP(L.E) + "…") + '</p><button type="button" class="qz-btn alt" id="hSkip">Skip animation</button>'); bindSkip();
+    anim(S.fut, 700, function (idx, part) {
+      if (over) return false; seen = S.hist.concat(S.fut.slice(0, idx)); cur = part; draw();
+      var r = judge(idx, part); if (r) { res = r; later(finish, 600); return false; } return true;
+    }, function () { later(finish, 350); });
+  }
+  function hResult(outcome, pnl, dirOk, L, g, seen) {
+    var S = H.S, side = H.side, A = S.A, inf = influence(S), lastQ = H.r === HN - 1, a$ = S.atr * PM_SCALE, slA = Math.abs(L.E - L.SL) / S.atr;
+    $("#pmChart").innerHTML = pmChart(seen, { lines: inf.lines.concat([{ y: L.E, t: "ENTRY", c: "#ffd166", pill: 1 }]), circles: inf.circles.concat(hCircles()), slots: hSlots() });
+    var why = "", head = "";
+    if (outcome === "liq") { head = "💥 LIQUIDATED " + money(pnl); why = "Your leverage was 1:" + H.lev + ", so your " + money(H_MARGIN) + " margin controlled " + money(H_MARGIN * H.lev) + ". Price only had to move " + (g.liqD * PM_SCALE).toFixed(2) + " dollars (" + (g.liqD / S.atr).toFixed(1) + " ATR) against you to wipe out the margin, and the broker closes the trade automatically. " + (Math.abs(L.SL - L.E) > g.liqD ? "That happened BEFORE your stop loss (" + slA.toFixed(1) + " ATR away) could trigger. " : "") + "Fix: use lower leverage, or place the stop closer than the liquidation line."; }
+    else if (outcome === "sl") { head = "🛑 Stop loss hit " + money(pnl); why = dirOk ? "Your direction was right, but your stop was only " + slA.toFixed(1) + " ATR away. The market first " + behText(S) + " That is why stops need room beyond the pullback or the last swing. Try a wider stop with a smaller position (lower leverage)." : "The market went the other way, and your stop loss did its job: it capped the loss at " + money(pnl) + "."; }
+    else if (outcome === "tp") { head = "🎯 Take profit hit +" + money(pnl); why = (dirOk ? "You read it right. " : "") + "The market " + behText(S) + " Your stop survived and the target was reached."; }
+    else if (outcome === "nofill") { head = "⏳ Order not filled: $0"; why = "Price never came back to your entry at " + fmtP(L.E) + ", so no trade opened and nothing was lost. Waiting for a better entry (a limit order) can miss the move."; }
+    else { head = "Closed at market " + (pnl >= 0 ? "+" : "") + money(pnl); why = "Neither your stop nor target was hit in " + HFUT + " candles, so the trade was closed at the current price."; }
+    var rows = A.votes.map(function (v) { return '<li class="' + (v.v > 0 ? "up" : v.v < 0 ? "dn" : "") + '"><b>' + (v.v > 0 ? "+" : "") + v.v.toFixed(1) + "</b> " + esc(v.name) + "<br><span>" + esc(v.note) + "</span></li>"; }).join("");
+    hPanel('<p class="qz-verdict ' + (dirOk ? "ok" : "no") + '">' + (dirOk ? "✅ Correct direction! +1 point" : "❌ Wrong direction. You chose " + (side > 0 ? "Buy" : "Sell") + ", the market's calculation said " + (S.dir > 0 ? "BUY" : "SELL") + ".") + '</p><p class="pm-calc"><b>' + head + "</b>" + (pnl > 0 ? " (+1 point for a profit)" : "") + "<br>" + why + "</p>" +
+      '<h4 class="pm-inf">What influenced the market</h4><ul class="pm-votes">' + rows + '</ul><p class="pm-key">On the chart: <span style="color:#2ee59d">green circles</span> = patterns you found · <span style="color:#ffd166">yellow</span> = trend line / live pattern · <span style="color:#4de1ff">cyan</span> EMA 10 · <span style="color:#ff9f43">orange</span> EMA 30.</p><p class="cx-note">The market follows its own calculation, never your choice. Practice only.</p><button type="button" class="qz-btn" id="hNext">' + (lastQ ? "See my score" : "Next round") + "</button>");
+    $("#hunt .qz-top span:last-child").innerHTML = "Score <b>" + H.pts + "</b>" + (H.streak >= 2 ? " · 🔥" + H.streak : "") + " · Balance <b>" + money(H.bal) + "</b>";
+    $("#hNext").addEventListener("click", function () { if (lastQ) hEnd(); else { H.r++; hRound(); } });
+  }
+  function behText(S) {
+    var d = S.depth.toFixed(1);
+    return S.beh === "clean" ? "moved almost straight in its direction." : S.beh === "shallow" ? "pulled back about " + d + " ATR first (a normal breather) before continuing." : S.beh === "deep" ? "pulled back " + d + " ATR and hovered around that area for a few candles (testing weak stops) before continuing." : "spiked " + d + " ATR against the move in one sharp wick (a stop hunt) before recovering.";
+  }
+  function hEnd() {
+    pmStop(); tipOff(); var max = HN * 5, pct = H.pts / max, ret = (H.bal - PM_START) / PM_START * 100, prev = hBest(), isBest = H.pts > prev; hBest(H.pts);
+    var title = pct >= .8 ? "Candle Master" : pct >= .6 ? "Pattern Pro" : pct >= .4 ? "Rising Hunter" : "Rookie Hunter";
+    var found = Object.keys(H.badges).map(function (k) { return '<span class="ok">' + esc(PATS[k].n) + "</span>"; }).join("");
+    $("#hunt").innerHTML = '<div class="qz-end"><h2>Your results</h2><div class="qz-score"><b>' + H.pts + "</b><span>/ " + max + '</span></div><p class="h-title">🏆 ' + title + '</p><p class="qz-msg">Practice balance: <b style="color:' + (H.bal >= PM_START ? "#2ee59d" : "#ff8a9a") + '">' + money(H.bal) + "</b> (" + (ret >= 0 ? "+" : "") + ret.toFixed(1) + "%)</p>" + (isBest && H.pts > 0 ? '<p class="qz-best">New best score!</p>' : "") +
+      '<p class="pdf-sub">Patterns you spotted:</p><div class="pm-log">' + found + "</div>" +
+      '<div class="pm-log">' + H.log.map(function (l, i) { return '<span class="' + (l.pnl > 0 ? "ok" : "no") + '">' + (i + 1) + ". " + esc(l.n) + " " + (l.pnl > 0 ? "+" : "") + money(l.pnl) + "</span>"; }).join("") + "</div>" +
+      '<div class="qz-actions"><button type="button" class="qz-btn" id="hAgain">Hunt again (new random charts)</button><button type="button" class="qz-btn alt" id="hPred">Play Predict the Market</button><button type="button" class="qz-btn alt" id="hHome">More games</button></div><p class="cx-note">Practice money only. Not financial advice.</p></div>';
+    $("#hAgain").addEventListener("click", hShow); $("#hPred").addEventListener("click", function () { openView("predict"); }); $("#hHome").addEventListener("click", function () { openView("home"); });
+  }
+
+  if (/[?&]debug\b/.test(location.search)) window.__iu = { H: H, hRegion: hRegion };
   buildRoute(); buildExplorer(); buildCompare(); wireWindow();
 })();

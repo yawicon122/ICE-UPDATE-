@@ -1,0 +1,49 @@
+/* ===== LIQUID GLASS (Apple-style): clear frosted surfaces, bright curved rims, specular sheen, squishy touch ===== */
+:root{
+  --lg-fill:linear-gradient(135deg,rgba(255,255,255,.26) 0%,rgba(255,255,255,.08) 38%,rgba(255,255,255,.05) 62%,rgba(255,255,255,.18) 100%);
+  --lg-rim:inset 1.5px 1.5px 0 rgba(255,255,255,.62),inset -1.5px -1.5px 0 rgba(255,255,255,.22),inset 0 0 22px rgba(255,255,255,.10),inset 0 -10px 18px rgba(160,225,255,.08);
+  --lg-drop:0 14px 34px rgba(2,8,26,.34),0 2px 6px rgba(2,8,26,.25);
+  --lg-blur:blur(16px) saturate(190%) brightness(1.10);
+  --lg-spring:cubic-bezier(.34,1.56,.64,1)
+}
+.glass,.nav,.stats,.resource-card,.join-card,.pcard,.scard,.lcard,.hv-bar,.scroll-hint,.chip,.filters button,.tf button{
+  background:var(--lg-fill);
+  -webkit-backdrop-filter:var(--lg-blur);backdrop-filter:var(--lg-blur);
+  border:1px solid rgba(255,255,255,.30);
+  box-shadow:var(--lg-rim),var(--lg-drop)
+}
+/* curved specular sheen across the top-left, like light bending through thick glass */
+.glass::before{background:
+  radial-gradient(420px circle at var(--mx,28%) var(--my,0%),rgba(255,255,255,.30),transparent 55%),
+  linear-gradient(118deg,rgba(255,255,255,.30) 0%,rgba(255,255,255,.07) 22%,transparent 40%)}
+.glass::after{left:6%;right:6%;height:1.5px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.95),transparent)}
+/* floating glass pill navigation */
+.nav{border-radius:999px;border-color:rgba(255,255,255,.38)}
+.nav a{transition:transform .35s var(--lg-spring),background .25s}
+.nav nav a:hover,.nav nav a:active{background:rgba(255,255,255,.18);border-radius:999px;transform:scale(1.07)}
+/* buttons: gel lenses (coloured glass with a bright convex highlight) */
+.btn{border:1px solid rgba(255,255,255,.55);-webkit-backdrop-filter:var(--lg-blur);backdrop-filter:var(--lg-blur);
+  box-shadow:inset 0 2px 0 rgba(255,255,255,.7),inset 0 -8px 14px rgba(0,0,0,.14),inset 0 0 20px rgba(255,255,255,.14),0 12px 26px rgba(2,8,24,.32);
+  transition:transform .45s var(--lg-spring),box-shadow .3s}
+.btn::before{content:"";position:absolute;left:8%;right:8%;top:3px;height:46%;border-radius:999px;background:linear-gradient(180deg,rgba(255,255,255,.55),rgba(255,255,255,.04));pointer-events:none}
+.btn.wa{background:linear-gradient(135deg,rgba(37,211,102,.62),rgba(18,140,126,.42))}
+.btn.tg{background:linear-gradient(135deg,rgba(42,171,238,.62),rgba(34,120,200,.42))}
+.btn.start{background:linear-gradient(135deg,rgba(22,199,132,.66),rgba(14,159,110,.42))}
+.btn:hover{transform:translateY(-3px) scale(1.04)}
+.btn:active{transform:scale(.94,.9);transition-duration:.12s}
+/* liquid touch: cards squish and spring back */
+.resource-card,.join-card,.pcard,.scard,.lcard,.stats{transition:transform .5s var(--lg-spring),box-shadow .3s}
+.resource-card:active,.join-card:active,.pcard:active,.scard:active{transform:scale(.97)}
+.stats{border-radius:26px}
+.stats div{background:transparent!important}
+/* hero player + lesson cards keep their own look but get the glass rim */
+.hv{box-shadow:inset 1.5px 1.5px 0 rgba(255,255,255,.6),inset -1px -1px 0 rgba(255,255,255,.2),0 0 0 3px rgba(10,16,40,.55),2px 3px 0 4px #1b2c66,4px 6px 0 6px #121d46,14px 22px 50px rgba(0,0,0,.6),0 0 60px rgba(77,225,255,.35),0 0 120px rgba(139,123,255,.25)}
+.hv-bar{border-radius:999px}
+/* games window + popups: frosted glass instead of solid navy */
+.pdf-panel{background:linear-gradient(135deg,rgba(255,255,255,.16),rgba(14,22,56,.55) 45%,rgba(10,16,44,.6));-webkit-backdrop-filter:blur(26px) saturate(180%);backdrop-filter:blur(26px) saturate(180%);border-color:rgba(255,255,255,.34);box-shadow:var(--lg-rim),0 30px 80px rgba(0,0,0,.55)}
+/* the glass dock buttons / small round icons */
+.iu-dock button,.iu-dock a,.sd-btn{box-shadow:inset 1.5px 1.5px 0 rgba(255,255,255,.55),inset -1px -1px 0 rgba(255,255,255,.18),0 8px 20px rgba(0,0,0,.35)}
+/* lite mode (weak phones): no blur, keep the bright rim so it still reads as glass */
+html.iu-lite .glass,html.iu-lite .nav,html.iu-lite .stats,html.iu-lite .lcard,html.iu-lite .resource-card,html.iu-lite .join-card{background:linear-gradient(135deg,rgba(70,96,170,.55),rgba(18,30,72,.82) 55%,rgba(52,76,150,.6))}
+html.iu-lite .pdf-panel{background:#0a1030}
+@media(prefers-reduced-motion:reduce){.btn,.resource-card,.join-card,.lcard,.nav a{transition:none}}

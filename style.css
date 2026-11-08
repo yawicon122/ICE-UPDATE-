@@ -644,3 +644,32 @@ html.iu-pdfopen .iu-dock{visibility:hidden}
 .coach-tip:after{content:"";position:absolute;left:var(--ax,30px);border:8px solid transparent}
 .coach-tip.below:after{top:-16px;border-bottom-color:#fff}
 .coach-tip.above:after{bottom:-16px;border-top-color:#fff}
+
+/* ---- landing: video-style hero, four steps, lesson ---- */
+.hero{padding-top:92px}
+.hv{position:relative;width:100%;max-width:760px;aspect-ratio:16/9;border-radius:26px;overflow:hidden;background:#070b18;margin-bottom:18px;box-shadow:0 24px 60px rgba(0,0,0,.45)}
+.hv canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.hv::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(5,8,20,.55),transparent 32%,transparent 45%,rgba(5,8,20,.9));pointer-events:none}
+.hv-top{position:absolute;z-index:2;top:12px;left:14px;right:14px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.hv-live{display:inline-flex;align-items:center;gap:7px;padding:6px 12px;border-radius:999px;background:rgba(0,0,0,.5);font:800 .72rem Sora,Inter,sans-serif;letter-spacing:.08em;color:#fff}
+.hv-live i{width:8px;height:8px;border-radius:50%;background:#ff4d63;animation:hvp 1.2s infinite}
+@keyframes hvp{50%{opacity:.25}}
+.hv-note{font-size:.7rem;color:rgba(255,255,255,.7);font-weight:600}
+.hv-over{position:absolute;z-index:2;left:18px;right:18px;bottom:16px}
+.hv-over .hero-h1,.hero .hv-over .hero-h1{font-size:clamp(1.15rem,3.4vw,2rem);line-height:1.12;margin:0;background:none;-webkit-background-clip:initial;background-clip:initial;color:#fff;text-shadow:0 2px 14px rgba(0,0,0,.7)}
+.hv-over .h1-top{font-size:.62em;font-weight:700;color:#ffd166;margin-bottom:4px}
+.btn.start{background:linear-gradient(135deg,#16c784,#0e9f6e);color:#fff}
+.steps-sec h2,#lesson5 h2{max-width:760px}
+.steps{max-width:760px;padding:18px;border-radius:24px}
+.st-head{display:flex;align-items:center;gap:12px;padding:6px 6px 14px;border-bottom:1px solid rgba(255,255,255,.12)}
+.st-av{display:grid;place-items:center;width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--a1),var(--a2));font:800 .95rem Sora,sans-serif}
+.st-head b{display:block}.st-head small,.st-list small{display:block;color:var(--mut);font-weight:600;font-size:.82rem}
+.st-list{list-style:none;margin:0;padding:6px 0 0;display:grid;gap:4px}
+.st-list li{display:flex;align-items:center;gap:14px;padding:14px 8px;border-radius:14px}
+.st-list li:nth-child(4){background:rgba(22,199,132,.14);border:1px solid rgba(22,199,132,.45)}
+.st-list i{font:800 .8rem Sora,sans-serif;font-style:normal;color:#9fb0ff;min-width:26px}
+.st-list div{flex:1;min-width:0}.st-list b{font-size:1rem}
+.st-list a{padding:8px 16px;border-radius:999px;background:rgba(255,255,255,.12);font-weight:700;font-size:.85rem;white-space:nowrap}
+.lesson5-sub{color:var(--mut);margin:-6px 0 16px;font-weight:600}
+.l5{max-width:760px;border-radius:24px;overflow:hidden;padding:0}
+.l5 video{display:block;width:100%;aspect-ratio:16/9;background:#000}

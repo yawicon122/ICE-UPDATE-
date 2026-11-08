@@ -51,8 +51,11 @@
 (function(){
   var S=window.SITE||{},list=S.lessonVideos||[],rail=document.getElementById("vrail");if(!rail)return;
   var esc=function(s){return String(s||"").replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})};
-  rail.innerHTML=list.map(function(v,i){return '<article class="vcard glass'+(v.portrait?' portrait':'')+'"><video controls playsinline preload="metadata" aria-label="'+esc(v.title)+'"><source src="'+esc(v.file)+'#t=1" type="video/mp4">'+(v.fallback?'<source src="'+esc(v.fallback)+'#t=1" type="video/mp4">':'')+'</video><div class="vt">'+esc(v.title)+'<small>Lesson '+(i+1)+'</small></div></article>'}).join("")+
-   '<article class="vcard glass more"><div><b>More lessons coming</b><span>Join the channel to get them first</span></div></article>';
+  rail.innerHTML=list.map(function(v,i){return '<article class="lcard glass'+(v.portrait?' portrait':'')+'"><video controls playsinline preload="metadata" aria-label="'+esc(v.title)+'"><source src="'+esc(v.file)+'#t=1" type="video/mp4">'+(v.fallback?'<source src="'+esc(v.fallback)+'#t=1" type="video/mp4">':'')+'</video><div class="vt">'+esc(v.title)+'<small>Lesson '+(i+1)+'</small></div></article>'}).join("")+
+   '<article class="lcard glass more"><div><b>More lessons coming</b><span>Join the channel to get them first</span></div></article>';
+  rail.querySelectorAll("video").forEach(function(v){var fit=function(){if(v.videoWidth){v.style.aspectRatio=v.videoWidth+"/"+v.videoHeight;var c=v.closest(".lcard");if(c)c.classList.toggle("portrait",v.videoHeight>v.videoWidth)}};v.addEventListener("loadedmetadata",fit);fit()});
+  /* no classic video list? remove the empty "Video lessons" block and point the nav at the lesson row */
+  if(!(S.videos||[]).length){var ls=document.getElementById("lessons");if(ls)ls.remove();document.querySelectorAll('a[href="#lessons"]').forEach(function(a){a.setAttribute("href","#lesson5")})}
   var n=document.getElementById("stVideos");if(n)n.textContent=((S.videos||[]).length)+list.length;
   /* only one playing at a time */
   rail.addEventListener("play",function(e){rail.querySelectorAll("video").forEach(function(v){if(v!==e.target)v.pause()})},true);

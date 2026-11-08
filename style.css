@@ -692,3 +692,5 @@ html.iu-pdfopen .iu-dock{visibility:hidden}
 .lcard.more{display:grid;place-items:center;text-align:center;padding:24px;min-height:260px;border:1px dashed rgba(255,255,255,.3);background:rgba(255,255,255,.04)}
 .lcard.more b{display:block;font-size:1.15rem;margin-bottom:6px}.lcard.more span{color:var(--mut);font-weight:600}
 .vhint{color:var(--mut);font-weight:700;font-size:.85rem;margin:2px 4px 0}
+
+@media(max-width:620px){.hv{aspect-ratio:1/1}}

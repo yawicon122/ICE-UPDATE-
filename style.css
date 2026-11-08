@@ -660,7 +660,7 @@ html.iu-pdfopen .iu-dock{visibility:hidden}
 .hv-live i{width:8px;height:8px;border-radius:50%;background:#ff4d63;animation:hvp 1.2s infinite}
 @keyframes hvp{50%{opacity:.25}}
 .hv-hd{padding:4px 9px;border-radius:7px;background:rgba(255,255,255,.16);font:800 .68rem Sora,sans-serif;color:#fff;letter-spacing:.06em}
-.hv-over{position:absolute;z-index:2;left:18px;right:18px;bottom:54px}
+.hv-over{position:absolute;z-index:2;left:18px;right:18px;bottom:20px}
 .hv-over .hero-h1,.hero .hv-over .hero-h1{font-size:clamp(1.15rem,3.4vw,2rem);line-height:1.12;margin:0;background:none;-webkit-background-clip:initial;background-clip:initial;color:#fff;text-shadow:0 2px 14px rgba(0,0,0,.7)}
 .hv-over .h1-top{font-size:.62em;font-weight:700;color:#ffd166;margin-bottom:4px}
 .hv-bar{position:absolute;z-index:4;left:12px;right:12px;bottom:10px;height:34px;display:flex;align-items:center;gap:10px;padding:0 12px;border-radius:999px;background:rgba(6,10,26,.72);backdrop-filter:blur(8px);color:#fff;font-size:.78rem}

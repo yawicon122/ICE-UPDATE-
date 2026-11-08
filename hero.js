@@ -3,7 +3,7 @@
 (function(){
   var cv=document.getElementById("hvCanvas");if(!cv)return;var x=cv.getContext("2d"),W=960,H=540,s=1;
   var reduce=window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches;
-  var UP="#16c784",DN="#ff4d63",GOLD="#ffd166",CY="#4de1ff",V=44,TPC=14,CDUR=1.15;
+  var UP="#16c784",DN="#ff4d63",GOLD="#ffd166",CY="#4de1ff",V=34,TPC=14,CDUR=1.15;
   var R=Math.random;function gauss(){return(R()+R()+R()+R()-2)*1.2}
   var price=100,cs=[],base=0,cur=null,tk=0,acc=0,slide=0,reg=null,trade=null,fade=[],cool=3,bal=10000,balShow=10000,wins=0,losses=0,pops=[],coins=[],flash=0,lo=96,hi=106;
   function newReg(kind){var k=kind||(R()<.55?"trend":R()<.8?"range":"spike"),d=R()<.5?1:-1;

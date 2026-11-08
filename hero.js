@@ -90,14 +90,14 @@
   rail.innerHTML=list.map(function(v,i){return '<article class="lcard glass'+(v.portrait?' portrait':'')+'" style="--d:'+(i*-1.7)+'s"><div class="vbox"><video controls playsinline preload="metadata" aria-label="'+esc(v.title)+'"><source src="'+esc(v.file)+'#t=1" type="video/mp4">'+(v.fallback?'<source src="'+esc(v.fallback)+'#t=1" type="video/mp4">':'')+'</video><button class="vplay" aria-label="Play">&#9654;</button></div><div class="vt">'+esc(v.title)+'<small>Lesson '+(i+1)+'</small></div></article>'}).join("")+
    '<article class="lcard glass more" style="--d:-3.4s"><div><b>More lessons coming</b><span>Join the channel to get them first</span></div></article>';
   rail.querySelectorAll("video").forEach(function(v){
-    var fit=function(){if(v.videoWidth){v.style.aspectRatio=v.videoWidth+"/"+v.videoHeight;var c=v.closest(".lcard");if(c)c.classList.toggle("portrait",v.videoHeight>v.videoWidth)}};
+    var fit=function(){if(v.videoWidth){var c=v.closest(".lcard"),pt=v.videoHeight>v.videoWidth;if(!pt)v.style.aspectRatio=v.videoWidth+"/"+v.videoHeight;if(c)c.classList.toggle("portrait",pt)}};
     v.addEventListener("loadedmetadata",fit);fit();
     var box=v.closest(".vbox"),btn=box.querySelector(".vplay");
     btn.addEventListener("click",function(){v.play()});
-    v.addEventListener("play",function(){box.classList.add("playing");rail.querySelectorAll("video").forEach(function(o){if(o!==v)o.pause()})});
-    v.addEventListener("pause",function(){box.classList.remove("playing")});v.addEventListener("ended",function(){box.classList.remove("playing")})});
+    v.addEventListener("play",function(){box.classList.add("playing","open");rail.querySelectorAll("video").forEach(function(o){if(o!==v)o.pause()})});
+    v.addEventListener("pause",function(){box.classList.remove("playing")});v.addEventListener("ended",function(){box.classList.remove("playing","open")})});
   /* pause the moment a video scrolls out of view (up/down the page or swiped sideways) */
-  if("IntersectionObserver"in window){var io=new IntersectionObserver(function(es){es.forEach(function(e){if(!e.isIntersecting&&e.intersectionRatio<.4){var v=e.target.querySelector("video");if(v&&!v.paused)v.pause()}})},{threshold:[0,.4]});
+  if("IntersectionObserver"in window){var io=new IntersectionObserver(function(es){es.forEach(function(e){if(!e.isIntersecting&&e.intersectionRatio<.4){var v=e.target.querySelector("video");if(v&&!v.paused)v.pause();var bx=e.target.querySelector(".vbox");if(bx)bx.classList.remove("open")}})},{threshold:[0,.4]});
     rail.querySelectorAll(".lcard").forEach(function(c){io.observe(c)})}
   document.addEventListener("visibilitychange",function(){if(document.hidden)rail.querySelectorAll("video").forEach(function(v){v.pause()})});
   /* arrows (desktop) */

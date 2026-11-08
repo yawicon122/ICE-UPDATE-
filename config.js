@@ -53,7 +53,8 @@ window.SITE = {
      TO ADD A VIDEO: upload the .mp4 to the main folder of the repository, then add a line below with its file name.
      Add  portrait: true  for phone-shaped (tall) videos; leave it out for wide videos. */
   lessonVideos: [
-    { title: "Candlesticks, Support & Resistance", file: "yawice.mp4?v=2" }
+    { title: "Candlesticks, Support & Resistance", file: "yawice.mp4?v=2" },
+    { title: "Gold Sell Strategy: Retest & Multi-TP", file: "gold-sell-lesson.mp4", portrait: true }
     // { title: "Next lesson", file: "lesson2.mp4" },
   ],
 
@@ -94,16 +95,17 @@ window.SITE = {
   loader: { enabled: true, minMs: 1800 },
 
   gallery: [
+    { src: "gold-sell-strategy.jpg", caption: "Gold sell strategy: retest the red zone, multi-TP breakdown" },
     { src: "https://raw.githubusercontent.com/yawicon122/ICE-UPDATE-/main/a39e0c2cf1b85e1c798876f4526ac48f.jpg", caption: "Gold (XAUUSD) M1 – price falling, sell entries" },
     // { src: "assets/images/chart1.jpg", caption: "Hammer at support" },
   ],
 
   brokers: [
     { name: "Alchemy Markets",   logo: "alchemy-markets.png",   url: "https://account.alchemymarkets.com/register?brd=1&sidc=D037F675-FE13-4D23-9264-D6F46D9039B4", note: "Official broker" },
+    { name: "Exness",            logo: "exness.png",            url: "https://one.toexness.com/a/u7ri74yyki", note: "Official broker" },
     { name: "Ambitious Fincorp", logo: "ambitious-fincorp.png", url: "https://trade.ambitiousfincorp.com/register?refcode=R3142067", note: "Official broker" },
     { name: "CPT Markets",       logo: "cpt-markets.png",       url: "https://portal.cptmarkets.com/user/register?inviteid=jTc85GWUB-MT4&inviteType=1", note: "Official broker" },
-    { name: "MH Markets",        logo: "mh-markets.png",        url: "https://client.mhmarkets-asia.com/signup?partnerCode=A4CFMDIG", note: "Official broker" },
-    { name: "Exness",            logo: "exness.png",            url: "https://one.toexness.com/a/u7ri74yyki?platform=mobile", note: "Official broker" }
+    { name: "MH Markets",        logo: "mh-markets.png",        url: "https://client.mhmarkets-asia.com/signup?partnerCode=A4CFMDIG", note: "Official broker" }
   ],
 
   /* START HERE route (optional): change the five steps. Each step: id, title, desc, cta, and ONE of

@@ -49,6 +49,14 @@ window.SITE = {
   /* The tiny icon in the bottom-right corner pops these out, top to bottom. */
   dockSocials: ["tiktok", "instagram", "youtube", "facebook", "x"],
 
+  /* LESSON VIDEOS (the swipe-left row under "Watch the lesson").
+     TO ADD A VIDEO: upload the .mp4 to the main folder of the repository, then add a line below with its file name.
+     The first one uses "yawice.mp4" (your upload with audio). Until it is uploaded, the silent version plays. */
+  lessonVideos: [
+    { title: "Candlesticks, Support & Resistance (5 min)", file: "yawice.mp4", fallback: "assets/lesson-support-resistance.mp4" }
+    // { title: "Next lesson", file: "lesson2.mp4" },
+  ],
+
   videos: [
     // { title: "Hammer candlestick", desc: "Lesson 1", category: "Candlesticks",
     //   url: "https://www.youtube.com/watch?v=XXXXXXXXXXX", thumb: "" },

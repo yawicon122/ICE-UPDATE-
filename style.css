@@ -647,17 +647,29 @@ html.iu-pdfopen .iu-dock{visibility:hidden}
 
 /* ---- landing: video-style hero, four steps, lesson ---- */
 .hero{padding-top:92px}
-.hv{position:relative;width:100%;max-width:760px;aspect-ratio:16/9;border-radius:26px;overflow:hidden;background:#070b18;margin-bottom:18px;box-shadow:0 24px 60px rgba(0,0,0,.45)}
+.hv3d{position:relative;perspective:1100px;max-width:760px;margin:6px 0 34px}
+.hv{position:relative;width:100%;aspect-ratio:16/9;border-radius:24px;overflow:hidden;background:#070b18;transform-style:preserve-3d;transform:rotateX(9deg) rotateY(-13deg) rotateZ(.6deg);animation:hvFloat 7s ease-in-out infinite;border:1px solid rgba(160,225,255,.55);box-shadow:0 0 0 3px rgba(10,16,40,.9),1px 1px 0 3px #1b2c66,2px 2px 0 4px #162455,3px 3px 0 5px #121d46,5px 5px 0 7px #0e1738,14px 22px 50px rgba(0,0,0,.65),0 0 60px rgba(77,225,255,.35),0 0 120px rgba(139,123,255,.25);transition:transform .15s}
+@keyframes hvFloat{0%,100%{transform:rotateX(9deg) rotateY(-13deg) rotateZ(.6deg) translateY(0)}50%{transform:rotateX(5deg) rotateY(-5deg) rotateZ(-.4deg) translateY(-9px)}}
+.hv.is-tilt{animation:none}
+.hv-floor{position:absolute;left:8%;right:2%;bottom:-26px;height:34px;background:radial-gradient(ellipse at center,rgba(77,225,255,.55),transparent 70%);filter:blur(12px);opacity:.8;pointer-events:none}
 .hv canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
-.hv::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(5,8,20,.55),transparent 32%,transparent 45%,rgba(5,8,20,.9));pointer-events:none}
+.hv::before{content:"";position:absolute;inset:0;z-index:3;pointer-events:none;background:linear-gradient(115deg,rgba(255,255,255,.2) 0%,rgba(255,255,255,.04) 28%,transparent 42%);mix-blend-mode:screen}
+.hv::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(5,8,20,.5),transparent 30%,transparent 42%,rgba(5,8,20,.9));pointer-events:none}
 .hv-top{position:absolute;z-index:2;top:12px;left:14px;right:14px;display:flex;justify-content:space-between;align-items:center;gap:8px}
-.hv-live{display:inline-flex;align-items:center;gap:7px;padding:6px 12px;border-radius:999px;background:rgba(0,0,0,.5);font:800 .72rem Sora,Inter,sans-serif;letter-spacing:.08em;color:#fff}
+.hv-live{display:inline-flex;align-items:center;gap:7px;padding:6px 12px;border-radius:999px;background:rgba(0,0,0,.55);font:800 .72rem Sora,Inter,sans-serif;letter-spacing:.08em;color:#fff}
 .hv-live i{width:8px;height:8px;border-radius:50%;background:#ff4d63;animation:hvp 1.2s infinite}
 @keyframes hvp{50%{opacity:.25}}
-.hv-note{font-size:.7rem;color:rgba(255,255,255,.7);font-weight:600}
-.hv-over{position:absolute;z-index:2;left:18px;right:18px;bottom:16px}
+.hv-hd{padding:4px 9px;border-radius:7px;background:rgba(255,255,255,.16);font:800 .68rem Sora,sans-serif;color:#fff;letter-spacing:.06em}
+.hv-over{position:absolute;z-index:2;left:18px;right:18px;bottom:54px}
 .hv-over .hero-h1,.hero .hv-over .hero-h1{font-size:clamp(1.15rem,3.4vw,2rem);line-height:1.12;margin:0;background:none;-webkit-background-clip:initial;background-clip:initial;color:#fff;text-shadow:0 2px 14px rgba(0,0,0,.7)}
 .hv-over .h1-top{font-size:.62em;font-weight:700;color:#ffd166;margin-bottom:4px}
+.hv-bar{position:absolute;z-index:4;left:12px;right:12px;bottom:10px;height:34px;display:flex;align-items:center;gap:10px;padding:0 12px;border-radius:999px;background:rgba(6,10,26,.72);backdrop-filter:blur(8px);color:#fff;font-size:.78rem}
+.hv-play{display:grid;place-items:center;width:24px;height:24px;border-radius:50%;background:#ffd166;color:#241a00;font-size:.6rem;padding-left:2px}
+.hv-prog{flex:1;height:5px;border-radius:5px;background:rgba(255,255,255,.2);overflow:hidden}.hv-prog i{display:block;height:100%;width:0;background:linear-gradient(90deg,#4de1ff,#16c784);animation:hvbar 11s linear infinite}
+@keyframes hvbar{to{width:100%}}
+.hv-bar b{font-weight:800;white-space:nowrap}
+@media(max-width:520px){.hv-bar b{font-size:.7rem}.hv{transform:rotateX(7deg) rotateY(-9deg)}}
+@media(prefers-reduced-motion:reduce){.hv{animation:none}.hv-prog i{animation:none;width:60%}}
 .btn.start{background:linear-gradient(135deg,#16c784,#0e9f6e);color:#fff}
 .steps-sec h2,#lesson5 h2{max-width:760px}
 .steps{max-width:760px;padding:18px;border-radius:24px}
@@ -671,5 +683,10 @@ html.iu-pdfopen .iu-dock{visibility:hidden}
 .st-list div{flex:1;min-width:0}.st-list b{font-size:1rem}
 .st-list a{padding:8px 16px;border-radius:999px;background:rgba(255,255,255,.12);font-weight:700;font-size:.85rem;white-space:nowrap}
 .lesson5-sub{color:var(--mut);margin:-6px 0 16px;font-weight:600}
-.l5{max-width:760px;border-radius:24px;overflow:hidden;padding:0}
-.l5 video{display:block;width:100%;aspect-ratio:16/9;background:#000}
+.vrail{display:flex;gap:16px;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;padding:4px 2px 14px;scrollbar-width:thin}
+.vcard{flex:0 0 min(88vw,640px);scroll-snap-align:start;border-radius:22px;overflow:hidden;padding:0}
+.vcard video{display:block;width:100%;aspect-ratio:16/9;background:#000}
+.vcard .vt{padding:12px 16px 14px;font-weight:800}.vcard .vt small{display:block;color:var(--mut);font-weight:600;margin-top:2px}
+.vcard.more{display:grid;place-items:center;text-align:center;padding:24px;min-height:260px;border:1px dashed rgba(255,255,255,.3);background:rgba(255,255,255,.04)}
+.vcard.more b{display:block;font-size:1.15rem;margin-bottom:6px}.vcard.more span{color:var(--mut);font-weight:600}
+.vhint{color:var(--mut);font-weight:700;font-size:.85rem;margin:2px 4px 0}

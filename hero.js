@@ -46,3 +46,18 @@
   if("IntersectionObserver"in window)new IntersectionObserver(function(e){vis=e[0].isIntersecting}).observe(cv);
   if(reduce){frame(LOOP-1)}else requestAnimationFrame(loop);
 })();
+
+/* lesson video rail: reads SITE.lessonVideos; swipe left for more */
+(function(){
+  var S=window.SITE||{},list=S.lessonVideos||[],rail=document.getElementById("vrail");if(!rail)return;
+  var esc=function(s){return String(s||"").replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})};
+  rail.innerHTML=list.map(function(v,i){return '<article class="vcard glass"><video controls playsinline preload="metadata" aria-label="'+esc(v.title)+'"><source src="'+esc(v.file)+'#t=1" type="video/mp4">'+(v.fallback?'<source src="'+esc(v.fallback)+'#t=1" type="video/mp4">':'')+'</video><div class="vt">'+esc(v.title)+'<small>Lesson '+(i+1)+'</small></div></article>'}).join("")+
+   '<article class="vcard glass more"><div><b>More lessons coming</b><span>Join the channel to get them first</span></div></article>';
+  var n=document.getElementById("stVideos");if(n)n.textContent=((S.videos||[]).length)+list.length;
+  /* only one playing at a time */
+  rail.addEventListener("play",function(e){rail.querySelectorAll("video").forEach(function(v){if(v!==e.target)v.pause()})},true);
+  /* hero 3D tilt follows the pointer on desktop */
+  var hv=document.getElementById("heroVideo");if(hv&&matchMedia("(hover:hover)").matches){var box=hv.parentNode;
+    box.addEventListener("pointermove",function(e){var r=box.getBoundingClientRect(),px=(e.clientX-r.left)/r.width-.5,py=(e.clientY-r.top)/r.height-.5;hv.classList.add("is-tilt");hv.style.transform="rotateX("+(8-py*14)+"deg) rotateY("+(-8+px*20)+"deg)"});
+    box.addEventListener("pointerleave",function(){hv.classList.remove("is-tilt");hv.style.transform=""})}
+})();

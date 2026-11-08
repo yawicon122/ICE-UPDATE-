@@ -113,3 +113,10 @@
     box.addEventListener("pointermove",function(e){var r=box.getBoundingClientRect(),px=(e.clientX-r.left)/r.width-.5,py=(e.clientY-r.top)/r.height-.5;hv.classList.add("is-tilt");hv.style.transform="rotateX("+(8-py*14)+"deg) rotateY("+(-8+px*20)+"deg)"});
     box.addEventListener("pointerleave",function(){hv.classList.remove("is-tilt");hv.style.transform=""})}
 })();
+
+/* banner wallpaper video: silent, never interactive, pauses when off-screen */
+(function(){var v=document.querySelector(".hv-bg");if(!v)return;v.muted=true;v.defaultMuted=true;v.setAttribute("muted","");
+ function go(){var p=v.play();if(p&&p.catch)p.catch(function(){})}go();
+ if("IntersectionObserver"in window)new IntersectionObserver(function(e){e[0].isIntersecting?go():v.pause()},{threshold:.05}).observe(v);
+ document.addEventListener("visibilitychange",function(){document.hidden?v.pause():go()});
+ ["touchstart","click"].forEach(function(t){document.addEventListener(t,function(){if(v.paused)go()},{once:true,passive:true})})})();

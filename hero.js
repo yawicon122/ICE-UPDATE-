@@ -51,7 +51,7 @@
 (function(){
   var S=window.SITE||{},list=S.lessonVideos||[],rail=document.getElementById("vrail");if(!rail)return;
   var esc=function(s){return String(s||"").replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})};
-  rail.innerHTML=list.map(function(v,i){return '<article class="vcard glass"><video controls playsinline preload="metadata" aria-label="'+esc(v.title)+'"><source src="'+esc(v.file)+'#t=1" type="video/mp4">'+(v.fallback?'<source src="'+esc(v.fallback)+'#t=1" type="video/mp4">':'')+'</video><div class="vt">'+esc(v.title)+'<small>Lesson '+(i+1)+'</small></div></article>'}).join("")+
+  rail.innerHTML=list.map(function(v,i){return '<article class="vcard glass'+(v.portrait?' portrait':'')+'"><video controls playsinline preload="metadata" aria-label="'+esc(v.title)+'"><source src="'+esc(v.file)+'#t=1" type="video/mp4">'+(v.fallback?'<source src="'+esc(v.fallback)+'#t=1" type="video/mp4">':'')+'</video><div class="vt">'+esc(v.title)+'<small>Lesson '+(i+1)+'</small></div></article>'}).join("")+
    '<article class="vcard glass more"><div><b>More lessons coming</b><span>Join the channel to get them first</span></div></article>';
   var n=document.getElementById("stVideos");if(n)n.textContent=((S.videos||[]).length)+list.length;
   /* only one playing at a time */

@@ -51,9 +51,9 @@ window.SITE = {
 
   /* LESSON VIDEOS (the swipe-left row under "Watch the lesson").
      TO ADD A VIDEO: upload the .mp4 to the main folder of the repository, then add a line below with its file name.
-     The first one uses "yawice.mp4" (your upload with audio). Until it is uploaded, the silent version plays. */
+     Add  portrait: true  for phone-shaped (tall) videos; leave it out for wide videos. */
   lessonVideos: [
-    { title: "Candlesticks, Support & Resistance (5 min)", file: "yawice.mp4", fallback: "assets/lesson-support-resistance.mp4" }
+    { title: "Candlesticks, Support & Resistance", file: "yawice.mp4", portrait: true }
     // { title: "Next lesson", file: "lesson2.mp4" },
   ],
 

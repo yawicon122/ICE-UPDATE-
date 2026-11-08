@@ -56,7 +56,7 @@
     var sg=1;x.globalAlpha=alpha;tag("TP",yT,UP);tag(t.d>0?"BUY":"SELL",yE,CY);tag("SL",yS,DN,"#fff");
     x.fillStyle=CY;x.beginPath();var mx=x0+10;x.moveTo(mx,yE+(t.d>0?20:-20));x.lineTo(mx-10,yE+(t.d>0?2:-2));x.lineTo(mx+10,yE+(t.d>0?2:-2));x.fill();x.restore()}
   function draw(dt){
-    x.clearRect(0,0,W,H);var g=x.createLinearGradient(0,0,0,H);g.addColorStop(0,"#0a1230");g.addColorStop(1,"#070b18");x.fillStyle=g;x.fillRect(0,0,W,H);
+    x.clearRect(0,0,W,H);var g=x.createLinearGradient(0,0,0,H);g.addColorStop(0,"rgba(14,26,66,.55)");g.addColorStop(1,"rgba(6,10,26,.78)");x.fillStyle=g;x.fillRect(0,0,W,H);
     x.strokeStyle="rgba(255,255,255,.055)";x.lineWidth=1;for(var i=1;i<6;i++){var yy=132*s+(H-98*s-132*s)*i/6;x.beginPath();x.moveTo(0,yy);x.lineTo(W,yy);x.stroke()}
     var w=Math.max(3,(Rr-L)/V*.62),n=cs.length;
     for(var f=0;f<fade.length;f++){var t=fade[f];t.fadeT+=dt;if(t.fadeT>1.6){fade.splice(f--,1);continue}tradeDraw(t,Math.max(0,1-t.fadeT/1.6)*.9)}
@@ -66,7 +66,7 @@
     if(cur){x.strokeStyle="rgba(255,255,255,.4)";x.lineWidth=1.5;x.setLineDash([3,6]);x.beginPath();x.moveTo(X(V-1),Y(price));x.lineTo(Rr+8*s,Y(price));x.stroke();x.setLineDash([]);
       if(trade){var pl=(price-trade.e)*trade.d/(trade.e-trade.sl)/trade.d*trade.d;var r=(price-trade.e)*trade.d/Math.abs(trade.e-trade.sl),usd=Math.round(r*trade.risk);tag((usd>=0?"+$":"-$")+Math.abs(usd),Y(price),usd>=0?UP:DN,usd>=0?"#05151a":"#fff")}else tag(price.toFixed(2),Y(price),"rgba(255,255,255,.85)")}
     /* balance */
-    x.save();var sh=x.createLinearGradient(0,0,250*s,0);sh.addColorStop(0,"rgba(5,8,22,.7)");sh.addColorStop(1,"rgba(5,8,22,0)");x.fillStyle=sh;x.fillRect(0,70*s,250*s,62*s);
+    x.save();var sh=x.createLinearGradient(0,0,250*s,0);sh.addColorStop(0,"rgba(5,8,22,.7)");sh.addColorStop(1,"rgba(5,8,22,0)");
     x.textAlign="left";x.textBaseline="alphabetic";    x.fillStyle=flash>0?"#b8ffe3":UP;x.shadowColor=UP;x.shadowBlur=(flash>0?24:8)*s/2;x.font="900 "+Math.round(28*s)+"px Sora,Inter,sans-serif";x.fillText("$"+balShow.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}),16*s,106*s);x.shadowBlur=0;
     x.fillStyle="rgba(255,255,255,.8)";x.font="700 "+Math.round(11*s)+"px Sora,Inter,sans-serif";x.fillText((balShow>=10000?"\u25B2 +":"\u25BC ")+(((balShow-10000)/100).toFixed(1))+"%  \u00B7  "+wins+" wins  "+losses+" losses",16*s,124*s);x.restore();
     /* floating money */

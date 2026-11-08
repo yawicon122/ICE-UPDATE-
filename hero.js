@@ -66,10 +66,9 @@
     if(cur){x.strokeStyle="rgba(255,255,255,.4)";x.lineWidth=1.5;x.setLineDash([3,6]);x.beginPath();x.moveTo(X(V-1),Y(price));x.lineTo(Rr+8*s,Y(price));x.stroke();x.setLineDash([]);
       if(trade){var pl=(price-trade.e)*trade.d/(trade.e-trade.sl)/trade.d*trade.d;var r=(price-trade.e)*trade.d/Math.abs(trade.e-trade.sl),usd=Math.round(r*trade.risk);tag((usd>=0?"+$":"-$")+Math.abs(usd),Y(price),usd>=0?UP:DN,usd>=0?"#05151a":"#fff")}else tag(price.toFixed(2),Y(price),"rgba(255,255,255,.85)")}
     /* balance */
-    x.save();var sh=x.createLinearGradient(0,0,250*s,0);sh.addColorStop(0,"rgba(5,8,22,.7)");sh.addColorStop(1,"rgba(5,8,22,0)");x.fillStyle=sh;x.fillRect(0,48*s,250*s,70*s);
-    x.textAlign="left";x.textBaseline="alphabetic";x.fillStyle="rgba(255,255,255,.7)";x.font="800 "+Math.round(10*s)+"px Sora,Inter,sans-serif";x.fillText("DEMO ACCOUNT",16*s,62*s);
-    x.fillStyle=flash>0?"#b8ffe3":UP;x.shadowColor=UP;x.shadowBlur=(flash>0?24:8)*s/2;x.font="900 "+Math.round(28*s)+"px Sora,Inter,sans-serif";x.fillText("$"+balShow.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}),16*s,91*s);x.shadowBlur=0;
-    x.fillStyle="rgba(255,255,255,.8)";x.font="700 "+Math.round(11*s)+"px Sora,Inter,sans-serif";x.fillText((balShow>=10000?"\u25B2 +":"\u25BC ")+(((balShow-10000)/100).toFixed(1))+"%  \u00B7  "+wins+" wins  "+losses+" losses",16*s,108*s);x.restore();
+    x.save();var sh=x.createLinearGradient(0,0,250*s,0);sh.addColorStop(0,"rgba(5,8,22,.7)");sh.addColorStop(1,"rgba(5,8,22,0)");x.fillStyle=sh;x.fillRect(0,48*s,250*s,58*s);
+    x.textAlign="left";x.textBaseline="alphabetic";    x.fillStyle=flash>0?"#b8ffe3":UP;x.shadowColor=UP;x.shadowBlur=(flash>0?24:8)*s/2;x.font="900 "+Math.round(28*s)+"px Sora,Inter,sans-serif";x.fillText("$"+balShow.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}),16*s,80*s);x.shadowBlur=0;
+    x.fillStyle="rgba(255,255,255,.8)";x.font="700 "+Math.round(11*s)+"px Sora,Inter,sans-serif";x.fillText((balShow>=10000?"\u25B2 +":"\u25BC ")+(((balShow-10000)/100).toFixed(1))+"%  \u00B7  "+wins+" wins  "+losses+" losses",16*s,97*s);x.restore();
     /* floating money */
     pops.forEach(function(p,i){p.t+=dt;var a=Math.max(0,1-p.t/1.8);if(a<=0){pops.splice(i,1);return}x.save();x.globalAlpha=a;x.fillStyle=p.col;x.font="900 "+Math.round(28*s)+"px Sora,Inter,sans-serif";x.textAlign="center";x.shadowColor=p.col;x.shadowBlur=14;x.fillText(p.txt,W*.55,H*.45-p.t*50*s);x.restore()});
     coins.forEach(function(c,i){c.vy+=160*dt;c.x+=c.vx*dt;c.y+=c.vy*dt;c.a-=dt*.7;if(c.a<=0){coins.splice(i,1);return}x.save();x.globalAlpha=c.a;var gr=x.createRadialGradient(c.x-3,c.y-3,2,c.x,c.y,c.r);gr.addColorStop(0,"#fff6c8");gr.addColorStop(1,GOLD);x.fillStyle=gr;x.beginPath();x.arc(c.x,c.y,c.r,0,7);x.fill();x.fillStyle="#7a5a00";x.font="900 "+c.r+"px Sora,sans-serif";x.textAlign="center";x.textBaseline="middle";x.fillText("$",c.x,c.y+1);x.restore()});
@@ -84,18 +83,31 @@
   requestAnimationFrame(loop);
 })();
 
-/* lesson video rail: reads SITE.lessonVideos; swipe left for more */
+/* lesson video rail (inside Chart gallery): floating glass players, swipe left/right, pause when off-screen */
 (function(){
   var S=window.SITE||{},list=S.lessonVideos||[],rail=document.getElementById("vrail");if(!rail)return;
   var esc=function(s){return String(s||"").replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})};
-  rail.innerHTML=list.map(function(v,i){return '<article class="lcard glass'+(v.portrait?' portrait':'')+'"><video controls playsinline preload="metadata" aria-label="'+esc(v.title)+'"><source src="'+esc(v.file)+'#t=1" type="video/mp4">'+(v.fallback?'<source src="'+esc(v.fallback)+'#t=1" type="video/mp4">':'')+'</video><div class="vt">'+esc(v.title)+'<small>Lesson '+(i+1)+'</small></div></article>'}).join("")+
-   '<article class="lcard glass more"><div><b>More lessons coming</b><span>Join the channel to get them first</span></div></article>';
-  rail.querySelectorAll("video").forEach(function(v){var fit=function(){if(v.videoWidth){v.style.aspectRatio=v.videoWidth+"/"+v.videoHeight;var c=v.closest(".lcard");if(c)c.classList.toggle("portrait",v.videoHeight>v.videoWidth)}};v.addEventListener("loadedmetadata",fit);fit()});
-  /* no classic video list? remove the empty "Video lessons" block and point the nav at the lesson row */
+  rail.innerHTML=list.map(function(v,i){return '<article class="lcard glass'+(v.portrait?' portrait':'')+'" style="--d:'+(i*-1.7)+'s"><div class="vbox"><video controls playsinline preload="metadata" aria-label="'+esc(v.title)+'"><source src="'+esc(v.file)+'#t=1" type="video/mp4">'+(v.fallback?'<source src="'+esc(v.fallback)+'#t=1" type="video/mp4">':'')+'</video><button class="vplay" aria-label="Play">&#9654;</button></div><div class="vt">'+esc(v.title)+'<small>Lesson '+(i+1)+'</small></div></article>'}).join("")+
+   '<article class="lcard glass more" style="--d:-3.4s"><div><b>More lessons coming</b><span>Join the channel to get them first</span></div></article>';
+  rail.querySelectorAll("video").forEach(function(v){
+    var fit=function(){if(v.videoWidth){v.style.aspectRatio=v.videoWidth+"/"+v.videoHeight;var c=v.closest(".lcard");if(c)c.classList.toggle("portrait",v.videoHeight>v.videoWidth)}};
+    v.addEventListener("loadedmetadata",fit);fit();
+    var box=v.closest(".vbox"),btn=box.querySelector(".vplay");
+    btn.addEventListener("click",function(){v.play()});
+    v.addEventListener("play",function(){box.classList.add("playing");rail.querySelectorAll("video").forEach(function(o){if(o!==v)o.pause()})});
+    v.addEventListener("pause",function(){box.classList.remove("playing")});v.addEventListener("ended",function(){box.classList.remove("playing")})});
+  /* pause the moment a video scrolls out of view (up/down the page or swiped sideways) */
+  if("IntersectionObserver"in window){var io=new IntersectionObserver(function(es){es.forEach(function(e){if(!e.isIntersecting&&e.intersectionRatio<.4){var v=e.target.querySelector("video");if(v&&!v.paused)v.pause()}})},{threshold:[0,.4]});
+    rail.querySelectorAll(".lcard").forEach(function(c){io.observe(c)})}
+  document.addEventListener("visibilitychange",function(){if(document.hidden)rail.querySelectorAll("video").forEach(function(v){v.pause()})});
+  /* arrows (desktop) */
+  var wrap=rail.parentNode,pv=wrap.querySelector(".prev"),nx=wrap.querySelector(".next");
+  function step(d){var c=rail.querySelector(".lcard");rail.scrollBy({left:d*(c?c.offsetWidth+16:300),behavior:"smooth"})}
+  function arrows(){pv.hidden=rail.scrollLeft<20;nx.hidden=rail.scrollLeft>rail.scrollWidth-rail.clientWidth-20}
+  pv.addEventListener("click",function(){step(-1)});nx.addEventListener("click",function(){step(1)});rail.addEventListener("scroll",arrows,{passive:true});arrows();
+  /* classic video list empty? remove its empty block, point "Lessons" at the video row */
   if(!(S.videos||[]).length){var ls=document.getElementById("lessons");if(ls)ls.remove();document.querySelectorAll('a[href="#lessons"]').forEach(function(a){a.setAttribute("href","#lesson5")})}
   var n=document.getElementById("stVideos");if(n)n.textContent=((S.videos||[]).length)+list.length;
-  /* only one playing at a time */
-  rail.addEventListener("play",function(e){rail.querySelectorAll("video").forEach(function(v){if(v!==e.target)v.pause()})},true);
   /* hero 3D tilt follows the pointer on desktop */
   var hv=document.getElementById("heroVideo");if(hv&&matchMedia("(hover:hover)").matches){var box=hv.parentNode;
     box.addEventListener("pointermove",function(e){var r=box.getBoundingClientRect(),px=(e.clientX-r.left)/r.width-.5,py=(e.clientY-r.top)/r.height-.5;hv.classList.add("is-tilt");hv.style.transform="rotateX("+(8-py*14)+"deg) rotateY("+(-8+px*20)+"deg)"});

@@ -30,7 +30,7 @@
     if(win)reg=newReg("range");else reg=newReg("range")}
   function maybeEnter(){
     if(trade||cool>0||cs.length<12||tk!==Math.floor(TPC/2))return;
-    if(reg.k==="trend"&&reg.left>=6){var d=reg.d,r=2.3,will=(wins+losses<2)||R()<.8;
+    if(reg.k==="trend"&&reg.left>=6){var d=reg.d,r=2.3,will=(wins+losses<1)||R()<.7;
       trade={d:d,e:price,sl:price-d*r,tp:price+d*r*2,id:base,risk:[100,150,200,250][Math.floor(R()*4)],willWin:will,t:0,age:0};
       if(will){reg.left=Math.max(reg.left,12);reg.mu=d*(.7+R()*.4)}else{reg.left=3;trade.flip=true}}}
   function Y(p){var T=104*s,B=H-98*s;return B-(p-lo)/(hi-lo)*(B-T)}

@@ -193,3 +193,9 @@ html.iu-lite .nav,html.iu-lite .btn,html.iu-lite .scroll-hint,html.iu-lite .chip
 .hv #hvCanvas{z-index:1}.hv-top,.hv-over{z-index:2}
 .hv-bg::-webkit-media-controls{display:none!important}
 .hv-bg.on{opacity:.52}
+
+/* portrait lesson videos: small landscape thumbnail that matches the card on the left; grows to full phone size when opened */
+.lcard.portrait .vbox{aspect-ratio:16/9;transition:aspect-ratio .55s var(--lg-spring),width .55s var(--lg-spring);margin:0 auto;width:100%}
+.lcard.portrait video{aspect-ratio:auto!important;width:100%;height:100%;object-fit:cover}
+.lcard.portrait .vbox.open{aspect-ratio:9/16;width:min(100%,calc(68vh*9/16))}
+.lcard.portrait .vbox.open video{object-fit:contain}

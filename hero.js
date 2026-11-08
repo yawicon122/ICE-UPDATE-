@@ -56,7 +56,7 @@
     var sg=1;x.globalAlpha=alpha;tag("TP",yT,UP);tag(t.d>0?"BUY":"SELL",yE,CY);tag("SL",yS,DN,"#fff");
     x.fillStyle=CY;x.beginPath();var mx=x0+10;x.moveTo(mx,yE+(t.d>0?20:-20));x.lineTo(mx-10,yE+(t.d>0?2:-2));x.lineTo(mx+10,yE+(t.d>0?2:-2));x.fill();x.restore()}
   function draw(dt){
-    x.clearRect(0,0,W,H);var g=x.createLinearGradient(0,0,0,H);g.addColorStop(0,"rgba(14,26,66,.34)");g.addColorStop(1,"rgba(6,10,26,.58)");x.fillStyle=g;x.fillRect(0,0,W,H);
+    x.clearRect(0,0,W,H);var g=x.createLinearGradient(0,0,0,H);g.addColorStop(0,"rgba(12,22,58,.30)");g.addColorStop(1,"rgba(6,10,26,.55)");x.fillStyle=g;x.fillRect(0,0,W,H);
     x.strokeStyle="rgba(255,255,255,.055)";x.lineWidth=1;for(var i=1;i<6;i++){var yy=132*s+(H-98*s-132*s)*i/6;x.beginPath();x.moveTo(0,yy);x.lineTo(W,yy);x.stroke()}
     var w=Math.max(3,(Rr-L)/V*.62),n=cs.length;
     for(var f=0;f<fade.length;f++){var t=fade[f];t.fadeT+=dt;if(t.fadeT>1.6){fade.splice(f--,1);continue}tradeDraw(t,Math.max(0,1-t.fadeT/1.6)*.9)}

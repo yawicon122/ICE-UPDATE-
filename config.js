@@ -103,7 +103,7 @@ window.SITE = {
     { name: "Ambitious Fincorp", logo: "ambitious-fincorp.png", url: "https://trade.ambitiousfincorp.com/register?refcode=R3142067", note: "Official broker" },
     { name: "CPT Markets",       logo: "cpt-markets.png",       url: "https://portal.cptmarkets.com/user/register?inviteid=jTc85GWUB-MT4&inviteType=1", note: "Official broker" },
     { name: "MH Markets",        logo: "mh-markets.png",        url: "https://client.mhmarkets-asia.com/signup?partnerCode=A4CFMDIG", note: "Official broker" },
-    { name: "Exness",            logo: "exness.png",            url: "https://one.toexness.com/a/u7ri74yyki", note: "Official broker" }
+    { name: "Exness",            logo: "exness.png",            url: "https://one.toexness.com/a/u7ri74yyki?platform=mobile", note: "Official broker" }
   ],
 
   /* START HERE route (optional): change the five steps. Each step: id, title, desc, cta, and ONE of

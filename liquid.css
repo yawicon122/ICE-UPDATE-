@@ -71,7 +71,7 @@ html.iu-lite .nav{background:var(--lg-fill)}
 html.iu-lite .glass,html.iu-lite .stats,html.iu-lite .lcard,html.iu-lite .resource-card,html.iu-lite .join-card{background:linear-gradient(135deg,rgba(255,255,255,.17),rgba(16,28,70,.52) 45%,rgba(16,28,70,.50) 62%,rgba(255,255,255,.12))}
 /* REAL refraction: the background bends at the glass edge (Chrome / Android) */
 html.lg-refract .nav,html.lg-refract .btn,html.lg-refract .hv-bar,html.lg-refract .scroll-hint,html.lg-refract .chip,html.lg-refract .lg-lens{
-  -webkit-backdrop-filter:url(#lgRefract) saturate(190%) brightness(1.12)!important;backdrop-filter:url(#lgRefract) saturate(190%) brightness(1.12)!important}
+  -webkit-backdrop-filter:blur(8px) url(#lgRefract) saturate(190%) brightness(1.12)!important;backdrop-filter:blur(8px) url(#lgRefract) saturate(190%) brightness(1.12)!important}
 /* lens bubble */
 .nav{overflow:visible}
 .lg-lens{position:absolute;left:0;top:0;width:0;height:0;border-radius:999px;pointer-events:none;opacity:0;z-index:0;

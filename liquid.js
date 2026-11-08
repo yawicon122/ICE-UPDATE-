@@ -16,10 +16,9 @@
     x.putImageData(im,0,0);return c.toDataURL()}
   if(chromium){
     var svg='<svg xmlns="http://www.w3.org/2000/svg" width="0" height="0" style="position:absolute" aria-hidden="true"><defs>'+
-      '<filter id="lgRefract" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB">'+
-      '<feGaussianBlur in="SourceGraphic" stdDeviation="1.4" result="b"/>'+
-      '<feImage href="'+map()+'" x="0" y="0" width="100%" height="100%" preserveAspectRatio="none" result="m"/>'+
-      '<feDisplacementMap in="b" in2="m" scale="34" xChannelSelector="R" yChannelSelector="G"/></filter></defs></svg>';
+      '<filter id="lgRefract" filterUnits="objectBoundingBox" primitiveUnits="objectBoundingBox" x="0" y="0" width="1" height="1" color-interpolation-filters="sRGB">'+
+      '<feImage href="'+map()+'" x="0" y="0" width="1" height="1" preserveAspectRatio="none" result="m"/>'+
+      '<feDisplacementMap in="SourceGraphic" in2="m" scale="0.16" xChannelSelector="R" yChannelSelector="G"/></filter></defs></svg>';
     var w=document.createElement("div");w.innerHTML=svg;document.body.appendChild(w.firstChild);H.classList.add("lg-refract")}
   /* ---- lens bubble under nav links (like the glass slider thumb) ---- */
   var nav=document.querySelector(".nav"),box=nav&&nav.querySelector("nav");if(!box)return;

@@ -114,9 +114,16 @@
     box.addEventListener("pointerleave",function(){hv.classList.remove("is-tilt");hv.style.transform=""})}
 })();
 
-/* banner wallpaper video: silent, never interactive, pauses when off-screen */
-(function(){var v=document.querySelector(".hv-bg");if(!v)return;v.muted=true;v.defaultMuted=true;v.setAttribute("muted","");
- function go(){var p=v.play();if(p&&p.catch)p.catch(function(){})}go();
- if("IntersectionObserver"in window)new IntersectionObserver(function(e){e[0].isIntersecting?go():v.pause()},{threshold:.05}).observe(v);
- document.addEventListener("visibilitychange",function(){document.hidden?v.pause():go()});
- ["touchstart","click"].forEach(function(t){document.addEventListener(t,function(){if(v.paused)go()},{once:true,passive:true})})})();
+/* banner wallpaper videos: two clips that crossfade in a loop, silent, never interactive, pause off-screen */
+(function(){var vs=[].slice.call(document.querySelectorAll(".hv-bg"));if(!vs.length)return;var cur=0,vis=true,sw=false;
+ vs.forEach(function(v){v.muted=true;v.defaultMuted=true;v.setAttribute("muted","");v.loop=vs.length<2});
+ function play(v){var p=v.play();if(p&&p.catch)p.catch(function(){})}
+ function next(){if(sw||vs.length<2)return;sw=true;var n=(cur+1)%vs.length,a=vs[cur],b=vs[n];b.currentTime=0;play(b);b.classList.add("on");a.classList.remove("on");cur=n;
+  setTimeout(function(){vs.forEach(function(v,i){if(i!==cur)v.pause()});sw=false},1000)}
+ vs.forEach(function(v,i){
+  v.addEventListener("timeupdate",function(){if(i===cur&&v.duration&&v.duration-v.currentTime<.8)next()});
+  v.addEventListener("ended",function(){if(i===cur)next()})});
+ function go(){play(vs[cur])}go();
+ if("IntersectionObserver"in window)new IntersectionObserver(function(e){vis=e[0].isIntersecting;vis?go():vs.forEach(function(v){v.pause()})},{threshold:.05}).observe(vs[0]);
+ document.addEventListener("visibilitychange",function(){document.hidden?vs.forEach(function(v){v.pause()}):go()});
+ ["touchstart","click"].forEach(function(t){document.addEventListener(t,function(){if(vs[cur].paused&&vis)go()},{once:true,passive:true})})})();

@@ -115,3 +115,18 @@ html.lg-refract .nav,html.lg-refract .btn,html.lg-refract .hv-bar,html.lg-refrac
 .gitem img{border-radius:14px}.gitem p{font-size:.78rem;padding:6px 4px 1px}
 html.iu-lite .lcard,html.iu-lite .gitem{animation:none}
 @media(prefers-reduced-motion:reduce){.lcard,.gitem{animation:none}}
+
+
+/* ===== v3: one uniform glass (no patches). Sheen covers the whole surface; no SVG region effects. ===== */
+.btn::before{left:0;right:0;top:0;bottom:0;height:auto;border-radius:inherit;background:linear-gradient(165deg,rgba(255,255,255,.30) 0%,rgba(255,255,255,.07) 42%,rgba(255,255,255,0) 60%,rgba(255,255,255,.10) 100%)}
+.btn{-webkit-backdrop-filter:blur(14px) saturate(170%)!important;backdrop-filter:blur(14px) saturate(170%)!important}
+/* banner logo: realistic 3D ice-glass mark, top-left */
+.hv-top{justify-content:flex-start}
+.hv-logo{display:inline-flex;align-items:center;gap:12px;transform:translateZ(40px)}
+.hv-logo .logo-mark.cube{width:58px;height:58px;filter:drop-shadow(0 10px 14px rgba(0,0,0,.55)) drop-shadow(0 0 16px rgba(77,225,255,.6));animation:lgLogo 6s ease-in-out infinite}
+@keyframes lgLogo{0%,100%{transform:translateY(0) rotate(-3deg)}50%{transform:translateY(-4px) rotate(3deg)}}
+.hv-wm{display:flex;flex-direction:column;line-height:.95;font-family:Sora,Inter,sans-serif;text-transform:uppercase}
+.hv-wm b{font-weight:900;letter-spacing:.06em;background:linear-gradient(180deg,#fff 0%,#bfeeff 45%,#4de1ff 62%,#e8fbff 100%);-webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 1px 0 #2b6a8a) drop-shadow(0 2px 0 #1d4d69) drop-shadow(0 3px 0 #123a52) drop-shadow(0 8px 10px rgba(0,0,0,.6)) drop-shadow(0 0 12px rgba(77,225,255,.55))}
+.hv-wm b:first-child{font-size:1.5rem}.hv-wm b:last-child{font-size:.82rem;letter-spacing:.34em;margin-top:3px}
+@media(prefers-reduced-motion:reduce){.hv-logo .logo-mark.cube{animation:none}}

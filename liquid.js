@@ -3,7 +3,7 @@
 (function(){
   "use strict";
   var H=document.documentElement,UA=navigator.userAgent;
-  var chromium=/Chrome\/|CriOS|EdgA|SamsungBrowser/.test(UA)&&!/Firefox/.test(UA)&&window.CSS&&CSS.supports&&CSS.supports("backdrop-filter","url(#x)");
+  var chromium=false&&/Chrome\/|CriOS|EdgA|SamsungBrowser/.test(UA)&&!/Firefox/.test(UA)&&window.CSS&&CSS.supports&&CSS.supports("backdrop-filter","url(#x)");
   /* ---- displacement map: rounded-rect edge normal pushes the backdrop, centre stays flat ---- */
   function map(){
     var N=160,c=document.createElement("canvas");c.width=c.height=N;var x=c.getContext("2d"),im=x.createImageData(N,N),d=im.data;

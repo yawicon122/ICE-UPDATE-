@@ -53,7 +53,7 @@ window.SITE = {
      TO ADD A VIDEO: upload the .mp4 to the main folder of the repository, then add a line below with its file name.
      Add  portrait: true  for phone-shaped (tall) videos; leave it out for wide videos. */
   lessonVideos: [
-    { title: "Candlesticks, Support & Resistance", file: "yawice.mp4", portrait: true }
+    { title: "Candlesticks, Support & Resistance", file: "yawice.mp4?v=2" }
     // { title: "Next lesson", file: "lesson2.mp4" },
   ],
 

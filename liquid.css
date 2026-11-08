@@ -189,6 +189,7 @@ html.iu-lite .nav,html.iu-lite .btn,html.iu-lite .scroll-hint,html.iu-lite .chip
 .hv-name::after{background:linear-gradient(105deg,transparent 40%,rgba(255,255,255,.5) 49%,transparent 58%);background-size:260% 100%;-webkit-background-clip:text;background-clip:text}
 
 /* silent background wallpaper video inside the banner (no controls, no sound, no interaction) */
-.hv-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.52;filter:saturate(.95) blur(1px);pointer-events:none;z-index:0;border-radius:inherit}
+.hv-bg{opacity:0;transition:opacity .9s ease;position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:saturate(.95) blur(1px);pointer-events:none;z-index:0;border-radius:inherit}
 .hv #hvCanvas{z-index:1}.hv-top,.hv-over{z-index:2}
 .hv-bg::-webkit-media-controls{display:none!important}
+.hv-bg.on{opacity:.52}

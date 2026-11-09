@@ -54,7 +54,8 @@ window.SITE = {
      Add  portrait: true  for phone-shaped (tall) videos; leave it out for wide videos. */
   lessonVideos: [
     { title: "Candlesticks, Support & Resistance", file: "yawice.mp4?v=2" },
-    { title: "Gold Sell Strategy: Retest & Multi-TP", file: "gold-sell-lesson.mp4", portrait: true }
+    { title: "Gold Sell Strategy: Retest & Multi-TP", file: "gold-sell-lesson.mp4", portrait: true },
+    { title: "Trading Discipline & Mindset", file: "trading-discipline-lesson.mp4" }
     // { title: "Next lesson", file: "lesson2.mp4" },
   ],
 

@@ -206,3 +206,10 @@ html.iu-lite .nav,html.iu-lite .btn,html.iu-lite .scroll-hint,html.iu-lite .chip
 .btn,.lg-lens,.vplay,.vnav{box-shadow:inset 0 0 0 1px rgba(255,255,255,.16),0 8px 18px rgba(2,8,24,.28)!important}
 .hv{box-shadow:0 0 0 3px rgba(10,16,40,.45),2px 3px 0 4px #1b2c66,4px 6px 0 6px #121d46,14px 22px 46px rgba(0,0,0,.55)!important;border-color:rgba(255,255,255,.14)!important}
 .hv-name{-webkit-text-stroke:1px rgba(255,255,255,.35)!important}
+
+/* v9: flat, even clear glass — no gradient bands, no brightness boost, nothing that can read as a white streak */
+.glass,.nav,.stats,.resource-card,.join-card,.pcard,.scard,.lcard,.hv-bar,.scroll-hint,.chip{background:rgba(10,18,48,.20)!important;-webkit-backdrop-filter:blur(8px) saturate(140%)!important;backdrop-filter:blur(8px) saturate(140%)!important}
+html.iu-lite .glass,html.iu-lite .stats,html.iu-lite .lcard,html.iu-lite .resource-card,html.iu-lite .join-card,html.iu-lite .nav{background:rgba(10,18,48,.42)!important}
+.btn{-webkit-backdrop-filter:blur(8px) saturate(140%)!important;backdrop-filter:blur(8px) saturate(140%)!important}
+.btn.wa{background:rgba(37,211,102,.30)!important}.btn.tg{background:rgba(42,171,238,.30)!important}.btn.start{background:rgba(22,199,132,.32)!important}
+.vplay,.vnav,.lg-lens{background:rgba(255,255,255,.08)!important}

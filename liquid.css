@@ -221,3 +221,12 @@ html.iu-lite .glass,html.iu-lite .stats,html.iu-lite .lcard,html.iu-lite .resour
   background:linear-gradient(160deg,rgba(255,255,255,.16),rgba(10,18,50,.62) 45%,rgba(255,255,255,.10))!important}
 html.lg-refract:not(.iu-lite) .nav,html.lg-refract:not(.iu-lite) .scroll-hint{
   -webkit-backdrop-filter:blur(8px) saturate(1.6)!important;backdrop-filter:blur(8px) saturate(1.6)!important}
+
+/* ===== brokers: fully static + light (no float, no blur, no masked rim) so scrolling stays at full speed ===== */
+.broker,.broker.live{animation:none!important;will-change:auto;transform:none}
+.broker .tile.glass::before,.broker .tile.glass::after{display:none}
+.broker .tile.glass{box-shadow:inset 0 0 0 1px rgba(255,255,255,.18),0 6px 14px rgba(0,6,24,.35)!important}
+.broker .tile img{box-shadow:none}
+.broker{contain:layout style}
+/* the floating corner icon stops its ring pulse while the page is moving */
+html.iu-scrolling .iu-dock .ring,html.iu-scrolling .iu-dock .coin{animation-play-state:paused}

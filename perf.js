@@ -23,7 +23,8 @@
     if (raw[0] && Date.now() - (+raw[1] || 0) < WEEK) saved = raw[0];
   } catch (e) { if (m) saved = m[1]; }
 
-  var lite = saved ? saved === "lite" : !!weak;
+  var touch = !!(window.matchMedia && matchMedia("(pointer:coarse)").matches);   /* every phone/tablet gets the light look */
+  var lite = saved ? saved === "lite" : (!!weak || touch);
   if (lite) C.add("iu-lite");
   window.IU_LITE = function () { return C.contains("iu-lite"); };
 

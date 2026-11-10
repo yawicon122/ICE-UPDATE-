@@ -230,3 +230,12 @@ html.lg-refract:not(.iu-lite) .nav,html.lg-refract:not(.iu-lite) .scroll-hint{
 .broker{contain:layout style}
 /* the floating corner icon stops its ring pulse while the page is moving */
 html.iu-scrolling .iu-dock .ring,html.iu-scrolling .iu-dock .coin{animation-play-state:paused}
+
+/* ===== light mode, stricter: only the small top bar + scroll hint keep a live blur; everything else is a solid glass tint, and floating cards stand still ===== */
+html.iu-lite .stats,html.iu-lite .resource-card,html.iu-lite .join-card,html.iu-lite .hv-bar,html.iu-lite .btn,html.iu-lite .glass,html.iu-lite .lcard,html.iu-lite .pcard,html.iu-lite .scard,html.iu-lite .chip,html.iu-lite .hv,html.iu-lite .vplay,html.iu-lite .vnav,html.iu-lite .lg-lens{
+  -webkit-backdrop-filter:none!important;backdrop-filter:none!important}
+html.iu-lite .stats,html.iu-lite .resource-card,html.iu-lite .join-card,html.iu-lite .lcard,html.iu-lite .pcard,html.iu-lite .scard{
+  background:linear-gradient(160deg,rgba(255,255,255,.16),rgba(10,18,50,.66) 45%,rgba(255,255,255,.10))!important}
+html.iu-lite .lcard,html.iu-lite .gitem,html.iu-lite .broker{animation:none!important}
+html.iu-lite .glass::before,html.iu-lite .nav::before,html.iu-lite .btn::before,html.iu-lite .hv-bar::before,html.iu-lite .scroll-hint::before,html.iu-lite .stats::before{display:none}
+html.iu-lite .nav,html.iu-lite .scroll-hint{-webkit-backdrop-filter:blur(6px)!important;backdrop-filter:blur(6px)!important}

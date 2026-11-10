@@ -101,8 +101,9 @@ h2{font-size:clamp(2rem,4vw,2.9rem);font-weight:800;margin-bottom:18px;letter-sp
 .gitem p{padding:8px 6px 2px;font-size:.88rem;color:rgba(244,247,255,.78)}
 
 .brokers{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:30px 22px;padding-bottom:70px}
-.broker{display:block;text-align:center;animation:floaty 6s ease-in-out infinite;animation-delay:var(--d,0s);-webkit-box-reflect:below 10px linear-gradient(transparent 62%,rgba(255,255,255,.3));box-reflect:below 10px linear-gradient(transparent 62%,rgba(255,255,255,.3))}
-.broker:hover{filter:drop-shadow(0 0 26px rgba(77,225,255,.6))}
+.broker{display:block;text-align:center;animation:floaty 6s ease-in-out infinite;animation-delay:var(--d,0s);animation-play-state:paused;will-change:transform}
+.broker.live{animation-play-state:running}
+@media(hover:hover){.broker:hover{filter:drop-shadow(0 0 26px rgba(77,225,255,.6))}}
 .broker .tile{display:grid;place-items:center;padding:9px;border-radius:30px;min-height:150px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.12)}
 .broker .tile img{width:100%;max-width:190px;max-height:110px;object-fit:contain;border-radius:22px;display:block;box-shadow:0 8px 22px rgba(0,0,0,.12)}
 .broker .tile .fallback{min-height:110px;display:grid;place-items:center}
@@ -464,7 +465,7 @@ html.iu-lite .grain{display:none}
 html.iu-lite .broker{-webkit-box-reflect:none}
 html.iu-lite .glass{box-shadow:0 8px 22px rgba(0,0,0,.35)}
 /* while scrolling (all phones): the slow background drift and floating logos wait a moment */
-html.iu-scrolling .blob,html.iu-scrolling .broker{animation-play-state:paused}
+html.iu-scrolling .blob,html.iu-scrolling .broker,html.iu-scrolling .broker.live{animation-play-state:paused}
 
 /* ===== v4 — learning tools: Start here route, candle explorer, before/after slider ===== */
 .sub{max-width:62ch}

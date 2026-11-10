@@ -141,11 +141,15 @@ lb.onclick = () => lb.hidden = true;
 const bg = $("#brokerGrid");
 (S.brokers || []).forEach((b, i) => {
   const a = document.createElement("a"); a.className = "broker reveal"; a.href = safeUrl(b.url); a.target = "_blank"; a.rel = "noopener sponsored"; a.style.setProperty("--d", (i * -1.1) + "s"); a.dataset.track = "broker-" + (b.name || "");
-  a.innerHTML = `<div class="tile glass tilt"><img alt="${esc(b.name)}" style="display:none"><div class="fallback">${esc((b.name || "?").slice(0, 2))}</div></div><span>${esc(b.name)}</span><small>${esc(b.note || "")}</small>`;
+  a.innerHTML = `<div class="tile glass tilt"><img alt="${esc(b.name)}" decoding="async" loading="lazy" style="display:none"><div class="fallback">${esc((b.name || "?").slice(0, 2))}</div></div><span>${esc(b.name)}</span><small>${esc(b.note || "")}</small>`;
   const im = $("img", a), fb = $(".fallback", a);
   loadImg(b.logo, url => { im.src = url; im.style.display = "block"; fb.style.display = "none"; });
   bg.appendChild(a);
 });
+if ("IntersectionObserver" in window) {
+  const bio = new IntersectionObserver(es => es.forEach(en => en.target.classList.toggle("live", en.isIntersecting)), { rootMargin: "60px" });
+  bg.querySelectorAll(".broker").forEach(el => bio.observe(el));
+} else bg.querySelectorAll(".broker").forEach(el => el.classList.add("live"));
 
 /* ---------- socials: a neat row of round icons with their names (bottom of the page) ---------- */
 const sg = $("#socialGrid");

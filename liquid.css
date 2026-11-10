@@ -213,3 +213,11 @@ html.iu-lite .glass,html.iu-lite .stats,html.iu-lite .lcard,html.iu-lite .resour
 .btn{-webkit-backdrop-filter:blur(8px) saturate(140%)!important;backdrop-filter:blur(8px) saturate(140%)!important}
 .btn.wa{background:rgba(37,211,102,.30)!important}.btn.tg{background:rgba(42,171,238,.30)!important}.btn.start{background:rgba(22,199,132,.32)!important}
 .vplay,.vnav,.lg-lens{background:rgba(255,255,255,.08)!important}
+
+/* ===== speed fixes (brokers section lag) =====
+   - broker tiles float, so a live blur behind them is re-drawn every frame: use a solid glass tint instead
+   - the fixed top bar and scroll hint sit over scrolling content: plain blur instead of the SVG refraction filter */
+.broker .tile.glass{-webkit-backdrop-filter:none!important;backdrop-filter:none!important;
+  background:linear-gradient(160deg,rgba(255,255,255,.16),rgba(10,18,50,.62) 45%,rgba(255,255,255,.10))!important}
+html.lg-refract:not(.iu-lite) .nav,html.lg-refract:not(.iu-lite) .scroll-hint{
+  -webkit-backdrop-filter:blur(8px) saturate(1.6)!important;backdrop-filter:blur(8px) saturate(1.6)!important}

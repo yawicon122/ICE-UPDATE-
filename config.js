@@ -18,6 +18,20 @@ window.SITE = {
     telegram: "https://t.me/iceupdate100"
   },
 
+  /* WEBSITE ASSISTANT — the little penguin in the bottom-right corner.
+     It answers trading basics + "how do I use this site" on its own, and sends anyone asking for
+     live prices / signals to the WhatsApp + Telegram links above.
+     endpoint: leave "" for now. To let it answer ANY question with AI, follow worker/README.md
+               and paste your Worker address here, e.g. "https://ice-assistant.yourname.workers.dev".
+     enabled:  false hides the penguin everywhere. */
+  assistant: {
+    enabled: true,
+    endpoint: "",
+    title: "Website Assistant",
+    invite: "Hey! Need a hand?",
+    quickPrompts: ["Explain pips", "What is leverage?", "How do I join the community?", "What is a stop-loss?", "Where are the PDFs?"]
+  },
+
   /* TRACKING — see README. Fill ONE or BOTH. Leave "" to switch off. */
   analytics: {
     goatcounter: "",   // e.g. "iceupdate"  (free, from goatcounter.com)

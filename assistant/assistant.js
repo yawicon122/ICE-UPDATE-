@@ -202,7 +202,7 @@
   function pengHTML() { return '<span class="pa-mv"><canvas class="pa-bear" aria-hidden="true"></canvas></span>'; }
   function pengMini() { return '<canvas class="pa-bear pa-bear-mini" aria-hidden="true"></canvas>'; }
   var SH = { walk: { w: 130, h: 155, ax: 67, ay: 152, n: 8 }, push: { w: 186, h: 156, ax: 93, ay: 154, n: 12 },
-    happy: { w: 120, h: 157, ax: 61, ay: 155, n: 8 }, hello: { w: 173, h: 161, ax: 91, ay: 159, n: 11 }, fall: { w: 128, h: 153, ax: 65, ay: 151, n: 12 } };
+    happy: { w: 120, h: 157, ax: 61, ay: 155, n: 8 }, hello: { w: 173, h: 161, ax: 91, ay: 159, n: 11 }, fall: { w: 128, h: 153, ax: 65, ay: 151, n: 12 }, rain: { w: 166, h: 216, ax: 83, ay: 214, n: 15 } };
   var STAND = 150;
   Object.keys(SH).forEach(function (k) { var im = new Image(); im.decoding = "async"; im.src = BASE + "bear-" + k + ".webp"; SH[k].img = im; });
   var PI = Math.PI, TAU = 2 * PI;
@@ -270,6 +270,19 @@
       if (u < 3.6) return { sheet: "happy", f: 1, rot: .05 * Math.sin(u * 6) };   // wipes mouth
       var w = at(WAVE, u - 3.6); return w ? { sheet: "happy", f: w.f } : { sheet: "happy", f: 0 };
     },
+    rain: function (u, B, A) {   // sunglasses drop on, grabs cash and makes it rain (3 throws), glasses pop off again
+      if (!A.steps) {
+        var st = [[0, .1], [1, .1], [2, .1], [3, .1], [4, .18], [5, .3], [6, .45]];
+        for (var n = 0; n < 3; n++) st = st.concat([[7, .12], [8, .1], [9, .1], [10, .1, 1], [11, .12], [12, .12], [11, .12], [12, .12], [13, .16], [14, .28]]);
+        st = st.concat([[5, .35], [2, .08], [1, .08], [0, .12]]);
+        A.steps = st.map(function (x) { return { f: x[0], d: x[1], throwIt: x[2] }; }); A.done = -1;
+      }
+      var t = 0, i = 0; for (; i < A.steps.length; i++) { t += A.steps[i].d; if (u < t) break; }
+      if (i >= A.steps.length) { B.wob = .5; return null; }
+      var s = A.steps[i];
+      if (s.throwIt && A.done < i) { A.done = i; fxBills(B); B.wob = .5; }
+      return { sheet: "rain", f: s.f, flip: false };
+    },
     crash: function (u, B) {   // hits the ground after a big fall: belly flop, lies there, gets up
       var s = at(frames([5, 6, 7], 7).concat(frames([8, 9, 10, 11], 4.5)), u); return s && { sheet: "fall", f: s.f }; },
     bump: function (u, B) {    // small drop: knees bend on landing
@@ -298,6 +311,13 @@
     var m = mouth(B), sp = rnd(140, 320);
     FX.push({ k: "I", x: m.x, y: m.y, vx: B.face * Math.cos((Math.random() - .5) * .9) * sp, vy: -rnd(40, 200), t0: performance.now() / 1000, sz: rnd(4, 9), rot: Math.random() * 6, vr: rnd(-6, 6), ground: B.cv.getBoundingClientRect().bottom - 2 });
   }
+  function fxBills(B) {   // a burst of banknotes from both raised paws
+    var r = B.cv.getBoundingClientRect(), sc = B.cv.__scale || .43, cx = r.left + r.width / 2, top = r.bottom - 2 - 150 * sc, now = performance.now() / 1000;
+    for (var h = -1; h <= 1; h += 2) for (var j = 0; j < 13; j++) {
+      FX.push({ k: "B", x: cx + h * 40 * sc + rnd(-6, 6), y: top + rnd(-6, 6), vx: h * rnd(20, 190) + rnd(-60, 60), vy: -rnd(240, 560), t0: now, life: rnd(2.6, 3.8),
+        rot: Math.random() * 6, vr: rnd(-7, 7), ph: Math.random() * 6, sz: rnd(.8, 1.15), ground: r.bottom - 3 - Math.random() * 4 });
+    }
+  }
   function fxDraw(now, dt) {
     if (!FX.length) { if (fxCv && fxCv.__on) { fxCv.getContext("2d").clearRect(0, 0, fxCv.width, fxCv.height); fxCv.__on = 0; } return; }
     var cv = fxCanvas(), dpr = Math.min(2, window.devicePixelRatio || 1), W = Math.round(innerWidth * dpr), H = Math.round(innerHeight * dpr);
@@ -306,6 +326,20 @@
     c.setTransform(dpr, 0, 0, dpr, 0, 0); c.clearRect(0, 0, innerWidth, innerHeight);
     FX = FX.filter(function (p) {
       var age = now - p.t0;
+      if (p.k === "B") {   // banknote: shoots up, then flutters down and settles
+        if (age > p.life) return false;
+        if (p.y < p.ground || p.vy < 0) {
+          p.vy += 520 * dt; if (p.vy > 95) p.vy = 95;                       // air drag: slow fluttery fall
+          p.vx *= Math.exp(-dt * 1.6); p.x += (p.vx + 38 * Math.sin(age * 5 + p.ph)) * dt; p.y += p.vy * dt; p.rot += p.vr * dt;
+          if (p.y >= p.ground && p.vy > 0) { p.y = p.ground; p.vr = 0; p.rot = Math.round(p.rot / PI) * PI + rnd(-.25, .25); }
+        }
+        var flip = p.y < p.ground ? Math.cos(age * 7 + p.ph) : 1, w = 15 * p.sz, hh = 8.5 * p.sz;
+        c.save(); c.globalAlpha = Math.min(1, (p.life - age) / .5); c.translate(p.x, p.y); c.rotate(p.rot); c.scale(1, .35 + .65 * Math.abs(flip));
+        c.fillStyle = "#57b96a"; c.strokeStyle = "#1f5a2e"; c.lineWidth = 1.4;
+        c.beginPath(); c.roundRect ? c.roundRect(-w / 2, -hh / 2, w, hh, 1.5) : c.rect(-w / 2, -hh / 2, w, hh); c.fill(); c.stroke();
+        c.fillStyle = "#c9f2cf"; c.beginPath(); c.arc(0, 0, hh * .3, 0, 7); c.fill();
+        c.restore(); return true;
+      }
       if (p.k === "I") {   // ice cube: flies, falls, bounces, melts away
         if (age > 2.2) return false;
         p.vy += 700 * dt; p.x += p.vx * dt; p.y += p.vy * dt; p.rot += p.vr * dt;
@@ -352,7 +386,7 @@
     return Math.max(-20, Math.min(60, r.left + 6 - (mx + 80 * (cv.__scale || .43))));
   }
   /* the "brain": picks what to do next on its own, never repeats the same thing twice in a row */
-  var CHOICES = [["wander", 3], ["look", 2.2], ["dance", 1.6], ["stretch", 1.4], ["wave", 1.4], ["hello", 1.2], ["push", 1.5], ["spin", 1], ["nap", .6], ["spew", 1.3]];
+  var CHOICES = [["wander", 3], ["look", 2.2], ["dance", 1.6], ["stretch", 1.4], ["wave", 1.4], ["hello", 1.2], ["push", 1.5], ["spin", 1], ["nap", .6], ["spew", 1.3], ["rain", 1.4]];
   function think(cv, B, now) {
     if (document.documentElement.getAttribute("data-bear-idle") === "off") return;
     var bored = now - B.seen > 40, list = CHOICES.filter(function (c) { return c[0] !== B.last; }).map(function (c) {

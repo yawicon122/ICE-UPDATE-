@@ -198,47 +198,88 @@
   }
 
   /* ---------------------------------------------------------------- UI */
-  // the polar bear: flat cartoon with one clean outline, drawn live on a canvas by bear.js
+  // the polar bear: frame-by-frame sprite animation (assistant/bear-*.webp), played on a canvas
   function pengHTML() { return '<span class="pa-mv"><canvas class="pa-bear" aria-hidden="true"></canvas></span>'; }
   function pengMini() { return '<canvas class="pa-bear pa-bear-mini" aria-hidden="true"></canvas>'; }
-  /* ---- moves: wave · dance (happy bounce, arms up) · walk (steps forward, turns, walks back) ---- */
-  var MOVES = { wave: 2600, dance: 2400, walk: 5200 };
+  var SH = { walk: { w: 130, h: 155, ax: 67, ay: 152, n: 8 }, push: { w: 186, h: 156, ax: 93, ay: 154, n: 12 },
+    happy: { w: 120, h: 157, ax: 61, ay: 155, n: 8 }, hello: { w: 173, h: 161, ax: 91, ay: 159, n: 11 }, fall: { w: 128, h: 153, ax: 65, ay: 151, n: 12 } };
+  var STAND = 150;   // sprite px of a standing bear
+  Object.keys(SH).forEach(function (k) { var im = new Image(); im.decoding = "async"; im.src = BASE + "bear-" + k + ".webp"; SH[k].img = im; });
+  function frames(list, fps) { return list.map(function (f) { return { f: f, d: 1 / fps }; }); }
+  function at(steps, u) { var t = 0; for (var i = 0; i < steps.length; i++) { t += steps[i].d; if (u < t) return steps[i]; } return null; }
+  function total(steps) { return steps.reduce(function (s, x) { return s + x.d; }, 0); }
+  var easeIn = function (u) { return u * u; }, easeIO = function (u) { return u < .5 ? 2 * u * u : 1 - Math.pow(-2 * u + 2, 2) / 2; };
+  var SEQ = {
+    wave: { sheet: "happy", steps: frames([0, 1, 2, 3, 4, 5, 6, 7, 0], 5) },
+    hello: { sheet: "hello", steps: frames([0, 1, 2, 2, 3, 4, 5, 6, 7, 8, 9, 10], 6) },
+    walk: { custom: function (u) {            // walks left (flipped), turns, walks back
+      var L = 2.4, T = .35, D = 70;
+      if (u < L) return { sheet: "walk", f: Math.floor(u * 8) % 8, tx: -D * (u / L), flip: true };
+      if (u < L + T) return { sheet: "happy", f: 0, tx: -D };
+      if (u < 2 * L + T) { var v = u - L - T; return { sheet: "walk", f: Math.floor(v * 8) % 8, tx: -D * (1 - v / L) }; }
+      return null; }, dur: 5.15 },
+    push: { custom: function (u, ctx) {       // walks up to the Facebook button and pushes with all its might
+      var steps = frames([0, 1, 2, 3], 5).concat(frames([4, 5, 6, 7, 8, 4, 5, 6, 7, 8, 4, 5, 6, 7, 8], 6)).concat(frames([9, 10], 4)).concat([{ f: 11, d: .9 }]);
+      var st = at(steps, u); if (!st) return null;
+      var pushing = st.f >= 3 && st.f <= 8;
+      return { sheet: "push", f: st.f, tx: ctx.pushX * Math.min(1, u / .6), push: pushing, shove: pushing && st.f >= 4 }; }, dur: 0 },
+    fall: { custom: function (u) {            // drops in from the top of the screen, lands, gets back up
+      var F = .85, H = window.innerHeight + 140;
+      if (u < F) return { sheet: "fall", f: Math.floor(u * 10) % 5, ty: -H * (1 - easeIn(u / F)) };
+      var st = at(frames([5, 6, 7], 7).concat(frames([8, 9, 10, 11], 4.5)), u - F);
+      return st ? { sheet: "fall", f: st.f, land: u - F } : null; }, dur: 0 },
+    climb: { custom: function (u) {           // climbs up and out of sight as the page scrolls back to the top
+      var C = 1.6, H = window.innerHeight + 160;
+      if (u < C) return { sheet: "fall", f: (Math.floor(u * 6) % 2) ? 3 : 1, ty: -H * easeIO(u / C) - 4 * Math.abs(Math.sin(u * 12)) };
+      return { sheet: "fall", f: 1, ty: -H, hold: true }; }, dur: 0 }
+  };
+  SEQ.wave.dur = total(SEQ.wave.steps); SEQ.hello.dur = total(SEQ.hello.steps);
+  SEQ.push.dur = total(frames([0, 1, 2, 3], 5)) + 15 / 6 + .5 + .9; SEQ.fall.dur = .85 + 3 / 7 + 4 / 4.5;
+  var MOVES = { wave: 1, hello: 1, walk: 1, push: 1, fall: 1, climb: 1 };
   function play(el, name) {
-    if (reduce || !el || el.__act || !MOVES[name]) return false;
+    if (reduce || !el || !SEQ[name]) return false;
     var cv = el.querySelector(".pa-bear"); if (!cv) return false;
+    if (cv.__act && !(cv.__act.name === "climb" && name === "fall")) return false;
     cv.__act = { name: name, t0: performance.now() / 1000 };
-    el.__act = true;
-    setTimeout(function () { el.__act = false; }, MOVES[name] + 60);
     return true;
   }
-  function env(u, f) { // smooth in/out envelope over 0..1
-    var k = Math.min(u / f, (1 - u) / f); return k <= 0 ? 0 : k >= 1 ? 1 : k * k * (3 - 2 * k);
+  function pushTarget(cv) {   // how far right the bear must go so its paws touch the social button
+    var btn = document.querySelector("#iu-social .sd-btn"), mv = cv.parentNode;
+    if (!btn) return 0;
+    var r = btn.getBoundingClientRect(), m = mv.getBoundingClientRect(), mx = m.left + m.width / 2 - (mv.__tx || 0);
+    var scale = cv.__scale || .43;
+    return Math.max(-20, Math.min(60, r.left + 6 - (mx + 80 * scale)));
   }
-  var T0 = performance.now() / 1000;
   function drawBearCanvas(cv, now, opts) {
-    if (!window.IceBear) return;
     var w = cv.clientWidth, h = cv.clientHeight; if (!w || !h) return;
     var dpr = Math.min(2, window.devicePixelRatio || 1), W = Math.round(w * dpr), H = Math.round(h * dpr);
     if (cv.width !== W || cv.height !== H) { cv.width = W; cv.height = H; }
-    var A = { happy: 0, wave: 0, walk: 0, face: 0, ear: 0 }, travel = 0, a = cv.__act;
-    if (opts && opts.happy) A.happy = 1;
+    var standPx = (opts && opts.standPx) || h * .86;
+    cv.__scale = standPx / STAND;
+    var st = { sheet: "happy", f: 0 }, a = cv.__act;
+    if (opts && opts.happy) st = { sheet: "happy", f: [0, 3, 4, 5, 4, 3][Math.floor(now * 6) % 6] };
     if (a) {
-      var dur = MOVES[a.name] / 1000, u = (now - a.t0) / dur;
-      if (u >= 1) { cv.__act = null; }
-      else if (a.name === "wave") { A.wave = env(u, .15); A.ear = env(u, .1); }
-      else if (a.name === "dance") { A.happy = env(u, .12); }
-      else if (a.name === "walk") {
-        A.walk = env(u, .08);
-        A.face = u < .48 ? Math.min(1, u / .06) * -1 : (u < .56 ? -1 + 2 * (u - .48) / .08 : Math.min(1, (1 - u) / .06));
-        travel = u < .5 ? -Math.sin(u / .5 * Math.PI / 2) : -Math.cos((u - .5) / .5 * Math.PI / 2);
-      }
+      var q = SEQ[a.name], u = now - a.t0;
+      if (a.pushX === undefined) a.pushX = a.name === "push" ? pushTarget(cv) : 0;
+      var r = q.custom ? q.custom(u, a) : (function () { var s2 = at(q.steps, u); return s2 ? { sheet: q.sheet, f: s2.f } : null; })();
+      if (!r) { cv.__act = null; document.documentElement.classList.remove("iu-bear-push", "iu-bear-shove"); }
+      else { st = r; if (r.hold && !a.holding) a.holding = now; }
     }
+    document.documentElement.classList.toggle("iu-bear-push", !!st.push);
+    document.documentElement.classList.toggle("iu-bear-shove", !!st.shove);
     var mv = cv.parentNode;
-    if (mv && mv.classList.contains("pa-mv")) mv.style.transform = travel ? "translateX(" + (travel * 46).toFixed(1) + "px)" : "";
-    var c = cv.getContext("2d");
+    if (mv && mv.classList.contains("pa-mv")) {
+      var squash = st.land !== undefined && st.land < .25 ? Math.sin(st.land / .25 * Math.PI) * .08 : 0;
+      mv.__tx = st.tx || 0;
+      mv.style.transform = (st.tx || st.ty || squash) ? "translate(" + (st.tx || 0).toFixed(1) + "px," + (st.ty || 0).toFixed(1) + "px) scale(" + (1 + squash) + "," + (1 - squash) + ")" : "";
+    }
+    var S = SH[st.sheet]; if (!S || !S.img.complete || !S.img.naturalWidth) return;
+    var c = cv.getContext("2d"), k = cv.__scale * dpr;
     c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, W, H);
-    var s = H / 700; c.setTransform(s, 0, 0, s, W / 2 - 360 * s, 0);   // show x 60..660, y 0..700 of the bear's drawing space
-    window.IceBear.draw(c, reduce ? 0 : now - T0, A);
+    // soft ground shadow (hidden while high in the air)
+    if (!(st.ty < -30)) { c.fillStyle = "rgba(0,0,0,.22)"; c.beginPath(); c.ellipse(W / 2, H - 3 * dpr, 42 * k, 6 * k, 0, 0, 7); c.fill(); }
+    c.translate(W / 2, H - 2 * dpr); if (st.flip) c.scale(-1, 1);
+    c.drawImage(S.img, st.f * S.w, 0, S.w, S.h, -S.ax * k, -S.ay * k, S.w * k, S.h * k);
   }
   function bearLoop() {
     var now = performance.now() / 1000;
@@ -251,10 +292,25 @@
         drawBearCanvas(list[i], now, { happy: inHead && root.classList.contains("thinking") });
       }
       var minis = root.querySelectorAll(".pa-bear-mini:not([data-done])");
-      for (var j = 0; j < minis.length; j++) { drawBearCanvas(minis[j], T0 + 0.1, null); if (minis[j].clientWidth) minis[j].setAttribute("data-done", "1"); }
+      for (var j = 0; j < minis.length; j++) { var ok = SH.happy.img.complete; drawBearCanvas(minis[j], 0, null); if (ok && minis[j].clientWidth) minis[j].setAttribute("data-done", "1"); }
     }
     if (!reduce) requestAnimationFrame(bearLoop); else setTimeout(bearLoop, 500);
   }
+  /* scrolling: bear falls in when you scroll down, climbs away when you scroll back up to the top */
+  (function () {
+    if (reduce) return;
+    var lastY = window.scrollY, down = 0, stopT, lastFx = 0;
+    function lcv() { return document.querySelector("#iu-assistant .pa-launch .pa-bear"); }
+    window.addEventListener("scroll", function () {
+      var y = window.scrollY, dy = y - lastY; lastY = y;
+      var cv = lcv(); if (!cv || root.classList.contains("open")) return;
+      var now = performance.now() / 1000, busy = cv.__act;
+      if (dy > 0) { down += dy; if (!busy && down > 700 && now - lastFx > 5) { down = 0; lastFx = now; play(launch, "fall"); } }
+      else if (dy < 0) { down = 0; if (!busy && y < 260 && now - lastFx > 3) { lastFx = now; play(launch, "climb"); } }
+      clearTimeout(stopT);
+      stopT = setTimeout(function () { var c = lcv(); if (c && c.__act && c.__act.name === "climb") { c.__act = null; play(launch, "fall"); } }, 900);
+    }, { passive: true });
+  })();
   var root = document.createElement("div");
   root.className = "pa"; root.id = "iu-assistant";
   root.innerHTML =
@@ -399,13 +455,13 @@
   launch.addEventListener("mouseenter", function () { play(launch, "wave"); });
   var order = [], idleT;
   function nextMove() {
-    if (!order.length) order = ["dance", "walk", "wave"].sort(function () { return Math.random() - .5; });
+    if (!order.length) order = ["hello", "walk", "push", "wave", "push"].sort(function () { return Math.random() - .5; });
     return order.shift();
   }
   function idle() {
     clearTimeout(idleT);
     idleT = setTimeout(function () {
-      if (!document.hidden && !root.classList.contains("open") && !tip.classList.contains("show")) play(launch, nextMove());
+      if (!document.hidden && !root.classList.contains("open") && !tip.classList.contains("show") && document.documentElement.getAttribute("data-bear-idle") !== "off") play(launch, nextMove());
       idle();
     }, 8000 + Math.random() * 6000);
   }
@@ -439,5 +495,5 @@
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", mount); else mount();
 
   // tiny public API: window.IceAssistant.open() / .ask("text")
-  window.IceAssistant = { open: open, close: close, ask: function (q) { open(); ask(q); }, move: function (m) { if (MOVES[m]) { launch.__acting = false; play(launch, m); } } };
+  window.IceAssistant = { open: open, close: close, ask: function (q) { open(); ask(q); }, move: function (m) { var c = launch.querySelector(".pa-bear"); if (c && m !== "fall") c.__act = null; play(launch, m); } };
 })();

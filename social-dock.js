@@ -80,8 +80,16 @@
   var fEls = el.querySelectorAll(".sd-face"), fi = 0;
   if (fEls.length > 1 && !reduce) setInterval(function () {
     if (document.hidden) return;
+    if (document.documentElement.classList.contains("iu-bear-push")) return;
     fEls[fi].classList.remove("on"); fi = (fi + 1) % fEls.length; fEls[fi].classList.add("on");
   }, 1500);
+  // while the polar bear is pushing the button, show the Facebook icon
+  var fbI = faces.indexOf("facebook"), wasPush = false;
+  if (fbI > -1) setInterval(function () {
+    var p = document.documentElement.classList.contains("iu-bear-push");
+    if (p && !wasPush && fi !== fbI) { fEls[fi].classList.remove("on"); fi = fbI; fEls[fi].classList.add("on"); }
+    wasPush = p;
+  }, 120);
 
   /* first pop-out: wait until the opening intro (if any) is finished */
   var waited = 0, boot = setInterval(function () {

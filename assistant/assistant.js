@@ -255,18 +255,10 @@
       var s = at(steps, u - A.walk); if (!s) { B.wob = .8; return null; }
       var pushing = s.f >= 3 && s.f <= 8;
       return { sheet: "push", f: s.f, push: pushing, shove: pushing && s.f >= 4, sx: pushing ? 1 + .02 * Math.sin(u * 30) : 1 }; },
-    fall: function (u, B, A) {   // while the page is scrolling down the bear keeps falling near the top; when scrolling stops it drops to the ground
-      var H = window.innerHeight, top = -(H - 210), now = A.t0 + u;
-      if (A.dropAt === undefined) {
-        var inK = Math.min(1, u / .45), ty = -(H + 140) + (top + H + 140) * (1 - (1 - inK) * (1 - inK));
-        ty += 10 * Math.sin(u * 3.2) * inK;
-        if (inK >= 1 && now - (B.lastScroll || 0) > .32) { A.dropAt = u; A.dropFrom = ty; }
-        return { sheet: "fall", f: Math.floor(u * 10) % 5, ty: ty, noShadow: 1, rot: .12 * Math.sin(u * 4.1), dx: 14 * Math.sin(u * 1.7) };
-      }
-      var v = u - A.dropAt, D = .55;
-      if (v < D) return { sheet: "fall", f: Math.floor(u * 12) % 5, ty: A.dropFrom * (1 - (v / D) * (v / D)), noShadow: 1 };
-      if (!B.landed) { B.landed = 1; B.wob = 1.4; }
-      var s = at(frames([5, 6, 7], 7).concat(frames([8, 9, 10, 11], 4.5)), v - D); return s && { sheet: "fall", f: s.f };
+    crash: function (u, B) {   // hits the ground after a big fall: belly flop, lies there, gets up
+      var s = at(frames([5, 6, 7], 7).concat(frames([8, 9, 10, 11], 4.5)), u); return s && { sheet: "fall", f: s.f }; },
+    bump: function (u, B) {    // small drop: knees bend on landing
+      if (u > .45) return null; return { sheet: "hello", f: u < .2 ? 3 : 2, sy: 1 - .08 * Math.sin(Math.min(1, u / .45) * Math.PI) };
     }
   };
   function bstate(cv) { return cv.__b || (cv.__b = { x: 0, face: 1, act: null, wob: 0, next: performance.now() / 1000 + rnd(2, 4), last: "", seen: performance.now() / 1000 }); }
@@ -307,12 +299,30 @@
     var P = { sheet: "happy", f: 0, sx: 1 - .012 * br, sy: 1 + .022 * br, rot: .035 * sway, dx: 2.5 * shift, ty: -1.2 * Math.max(0, br) };
     var fid = (now % 7.3) / 7.3; if (fid > .82 && fid < .9) P.f = 1;          // little arm fidget
     if (opts && opts.happy) { P.f = [0, 3, 4, 5, 4, 3][Math.floor(now * 6) % 6]; P.ty = -5 * Math.abs(Math.sin(now * 5)); }
+    // ---- scroll physics: scrolling speed lifts the bear off the ground; when scrolling stops it falls back down
+    var air = 0;
+    if (isLaunch && !reduce) {
+      var sinceScroll = now - (B.lastScroll || 0);
+      if (sinceScroll > .09) B.sv = (B.sv || 0) * Math.exp(-dt * 9);
+      var sky = window.innerHeight + 160, target = Math.min(sky, Math.max(0, (B.sv || 0) - 120) * .5);
+      B.h = B.h || 0; B.vh = B.vh || 0;
+      if (target > B.h + 1) { B.h += (target - B.h) * Math.min(1, dt * 14); B.vh = 0; if (B.h > window.innerHeight - 150) B.gone = 1; }
+      else if (B.h > 0) {
+        if (B.gone) { B.gone = 0; B.h = sky; }
+        B.vh -= 2400 * dt; B.h += B.vh * dt;
+        if (B.h <= 0) { var hit = -B.vh; B.h = 0; B.vh = 0; B.act = null;
+          if (hit > 1100) { B.act = { name: "crash", t0: now }; B.wob = 1.4; } else if (hit > 250) { B.act = { name: "bump", t0: now }; B.wob = .9; } else B.wob = .4; }
+      }
+      if (B.gone) B.h = Math.max(B.h, sky);
+      if (B.h > 1) { air = B.h; if (B.act) B.act = null; }
+    }
     if (B.act) {
       var r = ACT[B.act.name](now - B.act.t0, B, B.act);
       if (!r) { B.act = null; B.next = now + rnd(1.2, 3.6); }
       else { P.sheet = r.sheet; P.f = r.f; P.flip = r.flip; P.push = r.push; P.shove = r.shove; P.noShadow = r.noShadow;
         P.sx *= (r.sx || 1); P.sy *= (r.sy || 1); P.rot = (r.rot || 0) + P.rot * .4; P.ty = (r.ty || 0) + P.ty * .5; P.dx *= .3; }
     } else if (isLaunch && !reduce && now > B.next && !root.classList.contains("open")) think(cv, B, now);
+    if (air) { P.sheet = "fall"; P.f = Math.floor(now * (air > 40 ? 10 : 6)) % 5; P.ty = -air; P.noShadow = air > 60; P.rot = .1 * Math.sin(now * 4.1) * Math.min(1, air / 80); P.sx = P.sy = 1; P.dx = 0; }
     if (P.flip === undefined) P.flip = B.face < 0;
     // ---- skin/fur jiggle after landings and big moves (decays)
     B.wob = Math.max(0, (B.wob || 0) - dt * 1.6);
@@ -347,20 +357,20 @@
     }
     if (!reduce) requestAnimationFrame(bearLoop); else setTimeout(bearLoop, 500);
   }
-  /* scrolling down: the bear falls from the top of the screen for as long as you keep scrolling, then lands when you stop */
+  /* scrolling down lifts the bear off the ground — the faster you scroll, the higher it goes; scroll fast enough and it
+     disappears off the top, then falls from the sky when you stop */
   (function () {
     if (reduce) return;
-    var lastY = window.scrollY, down = 0;
+    var lastY = window.scrollY, lastT = performance.now() / 1000;
     window.addEventListener("scroll", function () {
-      var y = window.scrollY, dy = y - lastY; lastY = y;
-      if (dy <= 0) { down = 0; return; }
+      var y = window.scrollY, now = performance.now() / 1000, dy = y - lastY, dt = Math.max(.008, now - lastT);
+      lastY = y; lastT = now;
       var cv = document.querySelector("#iu-assistant .pa-launch .pa-bear"); if (!cv || root.classList.contains("open")) return;
-      var now = performance.now() / 1000, B = bstate(cv);
-      B.lastScroll = now; down += dy;
-      var f = B.act && B.act.name === "fall";
-      if (f && B.act.dropAt === undefined) return;          // already falling: keep falling
-      if (f && now - B.act.t0 - B.act.dropAt < 1.4) return;  // still landing
-      if (down > 120) { down = 0; B.act = null; play(cv.closest(".pa-launch"), "fall"); }
+      var B = bstate(cv);
+      if (dy <= 0) return;
+      var v = Math.min(9000, dy / dt);
+      B.sv = Math.max((B.sv || 0) * .6, v * .5 + (B.sv || 0) * .5);
+      B.lastScroll = now;
     }, { passive: true });
     // it notices you: wave when the mouse comes close
     var lastSeen = 0;

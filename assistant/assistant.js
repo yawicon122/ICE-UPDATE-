@@ -255,33 +255,25 @@
       var s = at(steps, u - A.walk); if (!s) { B.wob = .8; return null; }
       var pushing = s.f >= 3 && s.f <= 8;
       return { sheet: "push", f: s.f, push: pushing, shove: pushing && s.f >= 4, sx: pushing ? 1 + .02 * Math.sin(u * 30) : 1 }; },
-    spew: function (u, B, A) {   // gags, then throws up "ICE UPDATE" (letters + ice cubes), wipes its mouth, happy
-      if (!A.init) { A.init = 1; B.face = -1; A.next = 0; }
-      if (u > 5.4) { B.wob = .6; return null; }
-      if (u < .9) {   // gag: tummy heaves
-        var g = Math.sin(u / .9 * PI * 3); return { sheet: "happy", f: 0, sy: 1 - .06 * Math.max(0, g), sx: 1 + .04 * Math.max(0, g), rot: -.08 * Math.max(0, g) };
+    spew: function (u, B, A) {   // holds its tummy, bends over and throws up a stream that spells "ICE UPDATE" on the ground
+      var R = 1.1, POUR = 2.25;
+      if (!A.init) {            // needs room on its left for the words: walk back toward its corner first if it wandered off
+        A.init = 1; A.from = B.x; A.to = Math.min(0, Math.max(B.x, B.x + (250 - (B.cv ? B.cv.getBoundingClientRect().left + 85 : 999))));
+        A.walk = Math.abs(A.to - A.from) / 40;
       }
-      if (u < 2.9) {  // spew
-        var v = u - .9;
-        while (A.next < 10 && v > A.next * .17) { fxSpew(B, A.next); A.next++; }
-        if (Math.random() < .5) fxIce(B);
-        return { sheet: "happy", f: 5, rot: .28 + .03 * Math.sin(u * 40), sx: 1 + .02 * Math.sin(u * 37), sy: 1 + .03 * Math.sin(u * 31) };
+      if (u < A.walk) { B.x = A.from + (A.to - A.from) * (u / A.walk); return { sheet: "walk", f: Math.floor(u * 8) % 8, flip: false }; }
+      u -= A.walk; B.x = A.to; B.face = -1;
+      if (u < R) {              // retching: paw on tummy, three heaves
+        var g = Math.max(0, Math.sin(u / R * PI * 3)); return { sheet: "hello", f: 1, flip: true, sy: 1 - .05 * g, sx: 1 + .03 * g, rot: -.13 * g };
       }
-      if (u < 3.6) return { sheet: "happy", f: 1, rot: .05 * Math.sin(u * 6) };   // wipes mouth
-      var w = at(WAVE, u - 3.6); return w ? { sheet: "happy", f: w.f } : { sheet: "happy", f: 0 };
-    },
-    rain: function (u, B, A) {   // sunglasses drop on, grabs cash and makes it rain (3 throws), glasses pop off again
-      if (!A.steps) {
-        var st = [[0, .1], [1, .1], [2, .1], [3, .1], [4, .18], [5, .3], [6, .45]];
-        for (var n = 0; n < 3; n++) st = st.concat([[7, .12], [8, .1], [9, .1], [10, .1, 1], [11, .12], [12, .12], [11, .12], [12, .12], [13, .16], [14, .28]]);
-        st = st.concat([[5, .35], [2, .08], [1, .08], [0, .12]]);
-        A.steps = st.map(function (x) { return { f: x[0], d: x[1], throwIt: x[2] }; }); A.done = -1;
-      }
-      var t = 0, i = 0; for (; i < A.steps.length; i++) { t += A.steps[i].d; if (u < t) break; }
-      if (i >= A.steps.length) { B.wob = .5; return null; }
-      var s = A.steps[i];
-      if (s.throwIt && A.done < i) { A.done = i; fxBills(B); B.wob = .5; }
-      return { sheet: "rain", f: s.f, flip: false };
+      if (!A.fx) { A.fx = { k: "S", B: B, act: A, t0: A.t0 + A.walk + R }; FX.push(A.fx); }
+      var v = u - R;
+      if (v < POUR) return { sheet: "hello", f: 3, flip: true, rot: -.1 - .03 * Math.sin(v * 9), sy: 1 + .025 * Math.sin(v * 13), sx: 1 - .012 * Math.sin(v * 13) };
+      if (v < POUR + .35) return { sheet: "hello", f: 1, flip: true };          // phew
+      if (v < POUR + .75) return { sheet: "happy", f: 1, rot: .05 * Math.sin(v * 6) };   // wipes its mouth
+      var w = at(WAVE, v - POUR - .75); if (w) return { sheet: "happy", f: w.f };
+      if (v < 5.6) return { sheet: "happy", f: 0 };
+      B.wob = .5; return null;
     },
     crash: function (u, B) {   // hits the ground after a big fall: belly flop, lies there, gets up
       var s = at(frames([5, 6, 7], 7).concat(frames([8, 9, 10, 11], 4.5)), u); return s && { sheet: "fall", f: s.f }; },
@@ -289,34 +281,121 @@
       if (u > .45) return null; return { sheet: "hello", f: u < .2 ? 3 : 2, sy: 1 - .08 * Math.sin(Math.min(1, u / .45) * Math.PI) };
     }
   };
-  /* ---- effects overlay: the letters and ice cubes the bear throws up ---- */
-  var FX = [], fxCv = null, WORD = "ICE UPDATE";
+  /* ---- effects overlay (drawn above the bear): the "ICE UPDATE" stream and the banknotes ---- */
+  var FX = [], fxNew = [], fxCv = null;
   function fxCanvas() {
     if (fxCv) return fxCv;
     fxCv = document.createElement("canvas"); fxCv.setAttribute("aria-hidden", "true");
-    fxCv.style.cssText = "position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:9990";
+    fxCv.style.cssText = "position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:9992";
     document.body.appendChild(fxCv); return fxCv;
   }
-  function mouth(B) {   // where the bear's mouth is on screen right now
-    var r = B.cv.getBoundingClientRect(), s = B.cv.__scale || .43;
-    return { x: r.left + r.width / 2 + B.face * 16 * s * 2.2, y: r.bottom - 2 - 118 * s };
+  // a point on the bear's drawing (sprite px from its feet-centre) -> where it is on screen in this very frame
+  function bearPt(B, px, py) {
+    var r = B.cv.getBoundingClientRect(), s = B.cv.__scale || .43, q = B.pose || { rot: 0, fx: 1, sy: 1 };
+    var x = q.fx * px * s, y = q.sy * py * s, cs = Math.cos(q.rot), sn = Math.sin(q.rot);
+    return { x: r.left + r.width / 2 + x * cs - y * sn, y: r.bottom - 2 + x * sn + y * cs, ground: r.bottom - 2 };
   }
-  function fxSpew(B, i) {
-    var ch = WORD[i]; if (ch === " ") return;
-    var m = mouth(B), n = WORD.length, gap = 25, sx = m.x - 150 - (n - 1) * gap;   // word lands to the bear's left
-    FX.push({ k: "L", ch: ch, x0: m.x, y0: m.y, x1: Math.max(14, sx) + i * gap, y1: m.y - 70 - 8 * Math.sin(i / (n - 1) * PI), t0: performance.now() / 1000, d: .55, rot: (Math.random() - .5) * 2 });
-    for (var j = 0; j < 3; j++) fxIce(B);
-  }
-  function fxIce(B) {
-    var m = mouth(B), sp = rnd(140, 320);
-    FX.push({ k: "I", x: m.x, y: m.y, vx: B.face * Math.cos((Math.random() - .5) * .9) * sp, vy: -rnd(40, 200), t0: performance.now() / 1000, sz: rnd(4, 9), rot: Math.random() * 6, vr: rnd(-6, 6), ground: B.cv.getBoundingClientRect().bottom - 2 });
-  }
+  var MOUTH = { x: 38, y: -92 };      // the mouth in the bent-over frame (hello #3)
   function fxBills(B) {   // a burst of banknotes from both raised paws
     var r = B.cv.getBoundingClientRect(), sc = B.cv.__scale || .43, cx = r.left + r.width / 2, top = r.bottom - 2 - 150 * sc, now = performance.now() / 1000;
     for (var h = -1; h <= 1; h += 2) for (var j = 0; j < 13; j++) {
       FX.push({ k: "B", x: cx + h * 40 * sc + rnd(-6, 6), y: top + rnd(-6, 6), vx: h * rnd(20, 190) + rnd(-60, 60), vy: -rnd(240, 560), t0: now, life: rnd(2.6, 3.8),
         rot: Math.random() * 6, vr: rnd(-7, 7), ph: Math.random() * 6, sz: rnd(.8, 1.15), ground: r.bottom - 3 - Math.random() * 4 });
     }
+  }
+  /* the stream: one smooth arc of icy liquid straight out of the mouth; the letters ride down it, land, and slide
+     along the ground into place to spell ICE UPDATE; then the word shines and melts back into the puddle */
+  var WORD = ["I", "C", "E", " ", "U", "P", "D", "A", "T", "E"], VX = 96, VY = -24, GR = 540;
+  function glyph(c, ch, fs, ice, hi) {      // one letter of the wordmark, standing on its baseline at (0,0)
+    c.font = "800 " + fs + "px Sora, Inter, system-ui, sans-serif"; c.textAlign = "center"; c.textBaseline = "alphabetic"; c.lineJoin = "round";
+    c.fillStyle = "#06183a"; c.strokeStyle = "#06183a"; c.lineWidth = fs * .26; c.strokeText(ch, 0, fs * .09); c.fillText(ch, 0, fs * .09);   // drop edge
+    c.lineWidth = fs * .22; c.strokeStyle = "#0b2a55"; c.strokeText(ch, 0, 0);
+    var g = c.createLinearGradient(0, -fs * .78, 0, 0);
+    if (ice) { g.addColorStop(0, "#ffffff"); g.addColorStop(.45, "#aeeeff"); g.addColorStop(1, "#35b6f2"); }
+    else { g.addColorStop(0, "#ffffff"); g.addColorStop(.6, "#eef9ff"); g.addColorStop(1, "#a9defa"); }
+    c.fillStyle = g; c.fillText(ch, 0, 0);
+    if (hi > .02) { c.globalAlpha *= Math.min(1, hi); c.fillStyle = "#ffffff"; c.fillText(ch, 0, 0); }
+  }
+  function drawSpew(c, p, now, dt) {
+    var B = p.B, u = now - p.t0, m = bearPt(B, MOUTH.x, MOUTH.y), dir = (B.pose && B.pose.fx < 0) ? -1 : 1, ground = m.ground;
+    if (!p.lay) {             // lay the word out once, on the ground in front of the bear
+      var hgt = ground - m.y, tl = (-VY + Math.sqrt(VY * VY + 2 * GR * hgt)) / GR, landX = m.x + dir * VX * tl;
+      var avail = dir < 0 ? landX - 22 : innerWidth - landX - 22, fs = 27, ws, W;
+      for (; fs >= 13; fs--) {
+        c.font = "800 " + fs + "px Sora, Inter, system-ui, sans-serif";
+        ws = WORD.map(function (ch) { return ch === " " ? fs * .36 : c.measureText(ch).width + fs * .05; });
+        W = ws.reduce(function (a, b) { return a + b; }, 0); if (W <= avail) break;
+      }
+      var x = dir < 0 ? landX - 12 - W : landX + 12, L = [], order = 0, n = WORD.filter(function (ch) { return ch !== " "; }).length;
+      WORD.forEach(function (ch, i) { if (ch !== " ") { L.push({ ch: ch, x: x + ws[i] / 2, ice: i < 3, idx: order++, slide: .3 + Math.abs(x + ws[i] / 2 - landX) / 430 }); } x += ws[i]; });
+      // the letter that must travel farthest leaves the mouth first, so letters never cross
+      L.forEach(function (l) { var k = dir < 0 ? l.idx : n - 1 - l.idx; l.emit = .15 + k * .2; });
+      p.lay = { L: L, fs: fs, x0: dir < 0 ? landX - 12 - W : landX + 12, W: W, pourEnd: .15 + (n - 1) * .2 + .4, dir: dir };
+    }
+    var lay = p.lay, fs = lay.fs, MELT = 5.0, END = 5.7;
+    if (B.act !== p.act && p.abort === undefined && u < lay.pourEnd) p.abort = u;      // bear got interrupted (e.g. scrolled into the air)
+    var stop = p.abort !== undefined ? p.abort : lay.pourEnd;
+    if (p.abort !== undefined) { MELT = Math.min(MELT, p.abort + .5); END = MELT + .7; }
+    if (u > END) return false;
+    var melt = u > MELT ? Math.min(1, (u - MELT) / (END - MELT)) : 0;
+    // the arc, measured from the mouth as it is right now
+    var hgt2 = Math.max(4, ground - m.y), TL = (-VY + Math.sqrt(VY * VY + 2 * GR * hgt2)) / GR;
+    var arc = function (t) { return { x: m.x + lay.dir * VX * t, y: m.y + VY * t + .5 * GR * t * t }; };
+    var land = arc(TL);
+    // ---- puddle under the word (grows as the letters arrive)
+    var far = land.x;
+    lay.L.forEach(function (l) { var a = u - l.emit - TL; if (a > 0 && l.emit < stop) { var e = 1 - Math.pow(1 - Math.min(1, a / l.slide), 3); far = lay.dir < 0 ? Math.min(far, land.x + (l.x - land.x) * e - fs * .5) : Math.max(far, land.x + (l.x - land.x) * e + fs * .5); } });
+    if (u > TL * .8) {
+      var pa = land.x + lay.dir * -10, pcx = (pa + far) / 2, prx = Math.abs(far - pa) / 2 + 6, k = (1 - melt) * Math.min(1, (u - TL * .8) / .3);
+      c.save(); c.globalAlpha = .55 * k; c.fillStyle = "#7fd8ff"; c.beginPath(); c.ellipse(pcx, ground + 1.5, prx, 4.2, 0, 0, 7); c.fill();
+      c.globalAlpha = .7 * k; c.strokeStyle = "#e9fbff"; c.lineWidth = 1.2; c.beginPath(); c.ellipse(pcx - prx * .15, ground + .6, prx * .7, 2, 0, PI * 1.05, PI * 1.9); c.stroke(); c.restore();
+    }
+    // ---- letters
+    c.save();
+    lay.L.forEach(function (l) {
+      if (l.emit >= stop) return;
+      var a = u - l.emit; if (a < 0) return;
+      c.save();
+      if (a < TL) {                    // riding down the stream
+        var q = arc(a); c.translate(q.x, q.y + fs * .18); c.rotate(lay.dir * a * 7); c.scale(.42, .42); c.translate(0, fs * .35);
+        glyph(c, l.ch, fs, l.ice, 0);
+      } else {                          // landed: slide along the ground to its place, stand up, settle with a wobble
+        var s2 = a - TL, e = 1 - Math.pow(1 - Math.min(1, s2 / l.slide), 3), x = land.x + (l.x - land.x) * e, sc = .42 + .58 * e;
+        var arr = s2 - l.slide, bounce = arr > 0 ? Math.exp(-arr * 6) * Math.sin(arr * 20) : 0;
+        var sweep = (u - 2.95) / .7, sx0 = lay.x0 - 20 + (lay.W + 40) * sweep, hi = sweep > 0 && sweep < 1 ? Math.exp(-Math.pow((x - sx0) / (fs * .6), 2)) : 0;
+        c.globalAlpha = 1 - melt;
+        c.translate(x, ground - 1.5 - 6 * hi); c.rotate(lay.dir * (1 - Math.min(1, s2 / .14)) * .9);
+        c.scale(sc * (1 - .16 * bounce), sc * (1 + .22 * bounce) * (1 - .82 * melt) * (1 + .1 * hi));
+        glyph(c, l.ch, fs, l.ice, hi * .85);
+      }
+      c.restore();
+    });
+    c.restore();
+    // sparkle at the end of the shine
+    var sp = (u - 3.6) / .5;
+    if (sp > 0 && sp < 1 && p.abort === undefined) {
+      var sx1 = lay.x0 + lay.W + 3, sy1 = ground - fs * .95, rr = 9 * Math.sin(sp * PI);
+      c.save(); c.translate(sx1, sy1); c.rotate(sp * 1.2); c.fillStyle = "#ffffff"; c.beginPath();
+      for (var i = 0; i < 8; i++) { var ang = i * PI / 4, rad = i % 2 ? rr * .28 : rr; c.lineTo(Math.cos(ang) * rad, Math.sin(ang) * rad); }
+      c.closePath(); c.fill(); c.restore();
+    }
+    // ---- the stream itself, from the mouth to the ground
+    var ta = Math.max(0, u - stop), tb = Math.min(u, TL);
+    if (tb > ta + .01) {
+      var N = 22, pts = [];
+      for (var j = 0; j <= N; j++) { var t = ta + (tb - ta) * j / N, q2 = arc(t), wv = 1.3 * Math.sin(t * 26 - u * 16) * Math.min(1, t * 8); pts.push({ x: q2.x, y: q2.y + wv, w: 6.2 + 5.5 * (t / TL) }); }
+      c.save(); c.lineCap = "round"; c.lineJoin = "round";
+      var pass = function (col, add, mul) { c.strokeStyle = col; for (var j2 = 1; j2 < pts.length; j2++) { c.lineWidth = pts[j2].w * mul + add; c.beginPath(); c.moveTo(pts[j2 - 1].x, pts[j2 - 1].y); c.lineTo(pts[j2].x, pts[j2].y); c.stroke(); } };
+      pass("#0b2a55", 3.6, 1); pass("#7fd8ff", 0, 1); pass("#c9f3ff", 0, .5);
+      c.strokeStyle = "rgba(255,255,255,.95)"; c.lineWidth = 1.6; c.setLineDash([5, 9]); c.lineDashOffset = -u * 150;        // flowing glints
+      c.beginPath(); pts.forEach(function (q3, j3) { j3 ? c.lineTo(q3.x, q3.y - q3.w * .22) : c.moveTo(q3.x, q3.y - q3.w * .22); }); c.stroke(); c.setLineDash([]);
+      if (ta === 0) { c.fillStyle = "#2a0f1c"; c.beginPath(); c.ellipse(m.x - lay.dir * 1.5, m.y, 3.4, 4.2, 0, 0, 7); c.fill();   // open mouth
+        c.fillStyle = "#7fd8ff"; c.beginPath(); c.arc(m.x, m.y, 3.1, 0, 7); c.fill(); }
+      c.restore();
+      if (tb >= TL - .01 && Math.random() < dt * 34)       // splashes where it hits the ground
+        fxNew.push({ k: "D", x: land.x + rnd(-4, 4), y: ground - 2, vx: rnd(-70, 70), vy: -rnd(60, 170), t0: now, life: rnd(.35, .6), r: rnd(1.2, 2.6), ground: ground });
+    }
+    return true;
   }
   function fxDraw(now, dt) {
     if (!FX.length) { if (fxCv && fxCv.__on) { fxCv.getContext("2d").clearRect(0, 0, fxCv.width, fxCv.height); fxCv.__on = 0; } return; }
@@ -326,47 +405,28 @@
     c.setTransform(dpr, 0, 0, dpr, 0, 0); c.clearRect(0, 0, innerWidth, innerHeight);
     FX = FX.filter(function (p) {
       var age = now - p.t0;
-      if (p.k === "B") {   // banknote: shoots up, then flutters down and settles
+      if (p.k === "S") return drawSpew(c, p, now, dt);
+      if (p.k === "D") {   // splash droplet
         if (age > p.life) return false;
-        if (p.y < p.ground || p.vy < 0) {
-          p.vy += 520 * dt; if (p.vy > 95) p.vy = 95;                       // air drag: slow fluttery fall
-          p.vx *= Math.exp(-dt * 1.6); p.x += (p.vx + 38 * Math.sin(age * 5 + p.ph)) * dt; p.y += p.vy * dt; p.rot += p.vr * dt;
-          if (p.y >= p.ground && p.vy > 0) { p.y = p.ground; p.vr = 0; p.rot = Math.round(p.rot / PI) * PI + rnd(-.25, .25); }
-        }
-        var flip = p.y < p.ground ? Math.cos(age * 7 + p.ph) : 1, w = 15 * p.sz, hh = 8.5 * p.sz;
-        c.save(); c.globalAlpha = Math.min(1, (p.life - age) / .5); c.translate(p.x, p.y); c.rotate(p.rot); c.scale(1, .35 + .65 * Math.abs(flip));
-        c.fillStyle = "#57b96a"; c.strokeStyle = "#1f5a2e"; c.lineWidth = 1.4;
-        c.beginPath(); c.roundRect ? c.roundRect(-w / 2, -hh / 2, w, hh, 1.5) : c.rect(-w / 2, -hh / 2, w, hh); c.fill(); c.stroke();
-        c.fillStyle = "#c9f2cf"; c.beginPath(); c.arc(0, 0, hh * .3, 0, 7); c.fill();
-        c.restore(); return true;
+        p.vy += 620 * dt; p.x += p.vx * dt; p.y += p.vy * dt; if (p.y > p.ground + 2) return false;
+        c.globalAlpha = Math.min(1, (p.life - age) / .2); c.fillStyle = "#bff0ff"; c.strokeStyle = "#0b2a55"; c.lineWidth = .8;
+        c.beginPath(); c.arc(p.x, p.y, p.r, 0, 7); c.fill(); c.stroke(); c.globalAlpha = 1; return true;
       }
-      if (p.k === "I") {   // ice cube: flies, falls, bounces, melts away
-        if (age > 2.2) return false;
-        p.vy += 700 * dt; p.x += p.vx * dt; p.y += p.vy * dt; p.rot += p.vr * dt;
-        if (p.y > p.ground) { p.y = p.ground; p.vy *= -.35; p.vx *= .6; p.vr *= .5; }
-        c.save(); c.globalAlpha = Math.min(1, (2.2 - age) / .6); c.translate(p.x, p.y); c.rotate(p.rot);
-        c.fillStyle = "rgba(205,240,255,.95)"; c.strokeStyle = "rgba(77,180,230,.9)"; c.lineWidth = 1.5;
-        c.beginPath(); c.roundRect ? c.roundRect(-p.sz / 2, -p.sz / 2, p.sz, p.sz, 2) : c.rect(-p.sz / 2, -p.sz / 2, p.sz, p.sz); c.fill(); c.stroke();
-        c.fillStyle = "rgba(255,255,255,.9)"; c.fillRect(-p.sz / 2 + 1.5, -p.sz / 2 + 1.5, p.sz / 3, p.sz / 3); c.restore();
-        return true;
+      // banknote: shoots up, then flutters down and settles
+      if (age > p.life) return false;
+      if (p.y < p.ground || p.vy < 0) {
+        p.vy += 520 * dt; if (p.vy > 95) p.vy = 95;                       // air drag: slow fluttery fall
+        p.vx *= Math.exp(-dt * 1.6); p.x += (p.vx + 38 * Math.sin(age * 5 + p.ph)) * dt; p.y += p.vy * dt; p.rot += p.vr * dt;
+        if (p.y >= p.ground && p.vy > 0) { p.y = p.ground; p.vr = 0; p.rot = Math.round(p.rot / PI) * PI + rnd(-.25, .25); }
       }
-      // letter: arcs out of the mouth, lands in its place in the word, wobbles, then shatters into ice
-      var LIFE = 4.6; if (age > LIFE) return false;
-      var u = Math.min(1, age / p.d), e = 1 - Math.pow(1 - u, 3);
-      var x = p.x0 + (p.x1 - p.x0) * e, y = p.y0 + (p.y1 - p.y0) * e - 90 * Math.sin(u * PI) * (1 - u * .3);
-      var settle = age > p.d ? Math.exp(-(age - p.d) * 5) * Math.sin((age - p.d) * 22) : 0;
-      var sc = (.4 + .6 * e) * (1 + .18 * settle), rot = p.rot * (1 - e) + .06 * settle;
-      var fade = age > LIFE - .45 ? (LIFE - age) / .45 : 1;
-      if (age > LIFE - .45 && !p.shat) { p.shat = 1; for (var q = 0; q < 3; q++) FX.push({ k: "I", x: x, y: y, vx: rnd(-90, 90), vy: rnd(-160, -40), t0: now, sz: rnd(3, 6), rot: 0, vr: rnd(-8, 8), ground: innerHeight - 8 }); }
-      c.save(); c.globalAlpha = fade; c.translate(x, y); c.rotate(rot); c.scale(sc, sc);
-      c.font = "900 30px Poppins, Inter, system-ui, sans-serif"; c.textAlign = "center"; c.textBaseline = "middle";
-      c.lineJoin = "round"; c.lineWidth = 7; c.strokeStyle = "#0b2a55"; c.strokeText(p.ch, 0, 0);
-      var g = c.createLinearGradient(0, -15, 0, 15); g.addColorStop(0, "#ffffff"); g.addColorStop(1, "#8fe3ff");
-      c.fillStyle = g; c.fillText(p.ch, 0, 0);
-      c.fillStyle = "rgba(255,255,255,.85)"; c.beginPath(); c.arc(-6, -8, 2.2, 0, 7); c.fill();
-      c.restore();
-      return true;
+      var flip = p.y < p.ground ? Math.cos(age * 7 + p.ph) : 1, w = 15 * p.sz, hh = 8.5 * p.sz;
+      c.save(); c.globalAlpha = Math.min(1, (p.life - age) / .5); c.translate(p.x, p.y); c.rotate(p.rot); c.scale(1, .35 + .65 * Math.abs(flip));
+      c.fillStyle = "#57b96a"; c.strokeStyle = "#1f5a2e"; c.lineWidth = 1.4;
+      c.beginPath(); c.roundRect ? c.roundRect(-w / 2, -hh / 2, w, hh, 1.5) : c.rect(-w / 2, -hh / 2, w, hh); c.fill(); c.stroke();
+      c.fillStyle = "#c9f2cf"; c.beginPath(); c.arc(0, 0, hh * .3, 0, 7); c.fill();
+      c.restore(); return true;
     });
+    if (fxNew.length) { FX = FX.concat(fxNew); fxNew = []; }
   }
   function bstate(cv) { return cv.__b || (cv.__b = { x: 0, face: 1, act: null, wob: 0, next: performance.now() / 1000 + rnd(2, 4), last: "", seen: performance.now() / 1000 }); }
   function play(el, name) {
@@ -449,6 +509,7 @@
       mv.__tx = tx;
       mv.style.transform = "translate(" + tx.toFixed(1) + "px," + (P.ty || 0).toFixed(1) + "px)";
     }
+    if (isLaunch) B.pose = { rot: P.rot || 0, fx: (P.flip ? -1 : 1) * (P.sx || 1), sy: P.sy || 1 };
     var S = SH[P.sheet]; if (!S || !S.img.complete || !S.img.naturalWidth) return;
     var c = cv.getContext("2d"), k = cv.__scale * dpr;
     c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, W, H);
@@ -465,7 +526,6 @@
   var fxPrev = 0;
   function bearLoop() {
     var now = performance.now() / 1000;
-    fxDraw(now, Math.min(.05, now - (fxPrev || now))); fxPrev = now;
     if (!document.hidden) {
       var list = root.querySelectorAll(".pa-bear:not(.pa-bear-mini)");
       for (var i = 0; i < list.length; i++) {
@@ -477,6 +537,7 @@
       var minis = root.querySelectorAll(".pa-bear-mini:not([data-done])");
       for (var j = 0; j < minis.length; j++) { var ok = SH.happy.img.complete; drawBearCanvas(minis[j], 0, null); if (ok && minis[j].clientWidth) minis[j].setAttribute("data-done", "1"); }
     }
+    fxDraw(now, Math.min(.05, now - (fxPrev || now))); fxPrev = now;   // after the bear, so the stream starts exactly at its mouth
     if (!reduce) requestAnimationFrame(bearLoop); else setTimeout(bearLoop, 500);
   }
   /* scrolling down lifts the bear off the ground — the faster you scroll, the higher it goes; scroll fast enough and it

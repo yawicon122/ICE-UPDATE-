@@ -255,12 +255,85 @@
       var s = at(steps, u - A.walk); if (!s) { B.wob = .8; return null; }
       var pushing = s.f >= 3 && s.f <= 8;
       return { sheet: "push", f: s.f, push: pushing, shove: pushing && s.f >= 4, sx: pushing ? 1 + .02 * Math.sin(u * 30) : 1 }; },
+    spew: function (u, B, A) {   // gags, then throws up "ICE UPDATE" (letters + ice cubes), wipes its mouth, happy
+      if (!A.init) { A.init = 1; B.face = -1; A.next = 0; }
+      if (u > 5.4) { B.wob = .6; return null; }
+      if (u < .9) {   // gag: tummy heaves
+        var g = Math.sin(u / .9 * PI * 3); return { sheet: "happy", f: 0, sy: 1 - .06 * Math.max(0, g), sx: 1 + .04 * Math.max(0, g), rot: -.08 * Math.max(0, g) };
+      }
+      if (u < 2.9) {  // spew
+        var v = u - .9;
+        while (A.next < 10 && v > A.next * .17) { fxSpew(B, A.next); A.next++; }
+        if (Math.random() < .5) fxIce(B);
+        return { sheet: "happy", f: 5, rot: .28 + .03 * Math.sin(u * 40), sx: 1 + .02 * Math.sin(u * 37), sy: 1 + .03 * Math.sin(u * 31) };
+      }
+      if (u < 3.6) return { sheet: "happy", f: 1, rot: .05 * Math.sin(u * 6) };   // wipes mouth
+      var w = at(WAVE, u - 3.6); return w ? { sheet: "happy", f: w.f } : { sheet: "happy", f: 0 };
+    },
     crash: function (u, B) {   // hits the ground after a big fall: belly flop, lies there, gets up
       var s = at(frames([5, 6, 7], 7).concat(frames([8, 9, 10, 11], 4.5)), u); return s && { sheet: "fall", f: s.f }; },
     bump: function (u, B) {    // small drop: knees bend on landing
       if (u > .45) return null; return { sheet: "hello", f: u < .2 ? 3 : 2, sy: 1 - .08 * Math.sin(Math.min(1, u / .45) * Math.PI) };
     }
   };
+  /* ---- effects overlay: the letters and ice cubes the bear throws up ---- */
+  var FX = [], fxCv = null, WORD = "ICE UPDATE";
+  function fxCanvas() {
+    if (fxCv) return fxCv;
+    fxCv = document.createElement("canvas"); fxCv.setAttribute("aria-hidden", "true");
+    fxCv.style.cssText = "position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:9990";
+    document.body.appendChild(fxCv); return fxCv;
+  }
+  function mouth(B) {   // where the bear's mouth is on screen right now
+    var r = B.cv.getBoundingClientRect(), s = B.cv.__scale || .43;
+    return { x: r.left + r.width / 2 + B.face * 16 * s * 2.2, y: r.bottom - 2 - 118 * s };
+  }
+  function fxSpew(B, i) {
+    var ch = WORD[i]; if (ch === " ") return;
+    var m = mouth(B), n = WORD.length, gap = 25, sx = m.x - 150 - (n - 1) * gap;   // word lands to the bear's left
+    FX.push({ k: "L", ch: ch, x0: m.x, y0: m.y, x1: Math.max(14, sx) + i * gap, y1: m.y - 70 - 8 * Math.sin(i / (n - 1) * PI), t0: performance.now() / 1000, d: .55, rot: (Math.random() - .5) * 2 });
+    for (var j = 0; j < 3; j++) fxIce(B);
+  }
+  function fxIce(B) {
+    var m = mouth(B), sp = rnd(140, 320);
+    FX.push({ k: "I", x: m.x, y: m.y, vx: B.face * Math.cos((Math.random() - .5) * .9) * sp, vy: -rnd(40, 200), t0: performance.now() / 1000, sz: rnd(4, 9), rot: Math.random() * 6, vr: rnd(-6, 6), ground: B.cv.getBoundingClientRect().bottom - 2 });
+  }
+  function fxDraw(now, dt) {
+    if (!FX.length) { if (fxCv && fxCv.__on) { fxCv.getContext("2d").clearRect(0, 0, fxCv.width, fxCv.height); fxCv.__on = 0; } return; }
+    var cv = fxCanvas(), dpr = Math.min(2, window.devicePixelRatio || 1), W = Math.round(innerWidth * dpr), H = Math.round(innerHeight * dpr);
+    if (cv.width !== W || cv.height !== H) { cv.width = W; cv.height = H; }
+    var c = cv.getContext("2d"); cv.__on = 1;
+    c.setTransform(dpr, 0, 0, dpr, 0, 0); c.clearRect(0, 0, innerWidth, innerHeight);
+    FX = FX.filter(function (p) {
+      var age = now - p.t0;
+      if (p.k === "I") {   // ice cube: flies, falls, bounces, melts away
+        if (age > 2.2) return false;
+        p.vy += 700 * dt; p.x += p.vx * dt; p.y += p.vy * dt; p.rot += p.vr * dt;
+        if (p.y > p.ground) { p.y = p.ground; p.vy *= -.35; p.vx *= .6; p.vr *= .5; }
+        c.save(); c.globalAlpha = Math.min(1, (2.2 - age) / .6); c.translate(p.x, p.y); c.rotate(p.rot);
+        c.fillStyle = "rgba(205,240,255,.95)"; c.strokeStyle = "rgba(77,180,230,.9)"; c.lineWidth = 1.5;
+        c.beginPath(); c.roundRect ? c.roundRect(-p.sz / 2, -p.sz / 2, p.sz, p.sz, 2) : c.rect(-p.sz / 2, -p.sz / 2, p.sz, p.sz); c.fill(); c.stroke();
+        c.fillStyle = "rgba(255,255,255,.9)"; c.fillRect(-p.sz / 2 + 1.5, -p.sz / 2 + 1.5, p.sz / 3, p.sz / 3); c.restore();
+        return true;
+      }
+      // letter: arcs out of the mouth, lands in its place in the word, wobbles, then shatters into ice
+      var LIFE = 4.6; if (age > LIFE) return false;
+      var u = Math.min(1, age / p.d), e = 1 - Math.pow(1 - u, 3);
+      var x = p.x0 + (p.x1 - p.x0) * e, y = p.y0 + (p.y1 - p.y0) * e - 90 * Math.sin(u * PI) * (1 - u * .3);
+      var settle = age > p.d ? Math.exp(-(age - p.d) * 5) * Math.sin((age - p.d) * 22) : 0;
+      var sc = (.4 + .6 * e) * (1 + .18 * settle), rot = p.rot * (1 - e) + .06 * settle;
+      var fade = age > LIFE - .45 ? (LIFE - age) / .45 : 1;
+      if (age > LIFE - .45 && !p.shat) { p.shat = 1; for (var q = 0; q < 3; q++) FX.push({ k: "I", x: x, y: y, vx: rnd(-90, 90), vy: rnd(-160, -40), t0: now, sz: rnd(3, 6), rot: 0, vr: rnd(-8, 8), ground: innerHeight - 8 }); }
+      c.save(); c.globalAlpha = fade; c.translate(x, y); c.rotate(rot); c.scale(sc, sc);
+      c.font = "900 30px Poppins, Inter, system-ui, sans-serif"; c.textAlign = "center"; c.textBaseline = "middle";
+      c.lineJoin = "round"; c.lineWidth = 7; c.strokeStyle = "#0b2a55"; c.strokeText(p.ch, 0, 0);
+      var g = c.createLinearGradient(0, -15, 0, 15); g.addColorStop(0, "#ffffff"); g.addColorStop(1, "#8fe3ff");
+      c.fillStyle = g; c.fillText(p.ch, 0, 0);
+      c.fillStyle = "rgba(255,255,255,.85)"; c.beginPath(); c.arc(-6, -8, 2.2, 0, 7); c.fill();
+      c.restore();
+      return true;
+    });
+  }
   function bstate(cv) { return cv.__b || (cv.__b = { x: 0, face: 1, act: null, wob: 0, next: performance.now() / 1000 + rnd(2, 4), last: "", seen: performance.now() / 1000 }); }
   function play(el, name) {
     if (reduce || !el || !ACT[name]) return false;
@@ -279,7 +352,7 @@
     return Math.max(-20, Math.min(60, r.left + 6 - (mx + 80 * (cv.__scale || .43))));
   }
   /* the "brain": picks what to do next on its own, never repeats the same thing twice in a row */
-  var CHOICES = [["wander", 3], ["look", 2.2], ["dance", 1.6], ["stretch", 1.4], ["wave", 1.4], ["hello", 1.2], ["push", 1.5], ["spin", 1], ["nap", .6]];
+  var CHOICES = [["wander", 3], ["look", 2.2], ["dance", 1.6], ["stretch", 1.4], ["wave", 1.4], ["hello", 1.2], ["push", 1.5], ["spin", 1], ["nap", .6], ["spew", 1.3]];
   function think(cv, B, now) {
     if (document.documentElement.getAttribute("data-bear-idle") === "off") return;
     var bored = now - B.seen > 40, list = CHOICES.filter(function (c) { return c[0] !== B.last; }).map(function (c) {
@@ -293,7 +366,7 @@
     if (cv.width !== W || cv.height !== H) { cv.width = W; cv.height = H; }
     var isLaunch = !!cv.closest(".pa-launch"), standPx = isLaunch ? 64 : h * .86;
     cv.__scale = standPx / STAND;
-    var B = bstate(cv), dt = Math.min(.1, now - (B.tPrev || now)); B.tPrev = now;
+    var B = bstate(cv), dt = Math.min(.1, now - (B.tPrev || now)); B.tPrev = now; B.cv = cv;
     // ---- base "alive" motion: breathing, swaying, weight shifts, fidgets (never stands still)
     var br = Math.sin(now * TAU / 2.4), sway = Math.sin(now * TAU / 4.1), shift = Math.sin(now * TAU / 6.3 + 1);
     var P = { sheet: "happy", f: 0, sx: 1 - .012 * br, sy: 1 + .022 * br, rot: .035 * sway, dx: 2.5 * shift, ty: -1.2 * Math.max(0, br) };
@@ -355,8 +428,10 @@
     else draw1(S, P.f, main);
     c.globalAlpha = 1;
   }
+  var fxPrev = 0;
   function bearLoop() {
     var now = performance.now() / 1000;
+    fxDraw(now, Math.min(.05, now - (fxPrev || now))); fxPrev = now;
     if (!document.hidden) {
       var list = root.querySelectorAll(".pa-bear:not(.pa-bear-mini)");
       for (var i = 0; i < list.length; i++) {

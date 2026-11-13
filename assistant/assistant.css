@@ -163,7 +163,7 @@ html.iu-lite .pa-launch:not([class*="act-"]) .pa-peng{animation:none}
 .pa-launch .pa-mv{filter:drop-shadow(0 3px 5px rgba(0,0,0,.35))}
 .pa-mini{position:relative}
 .pa-launch::before{display:none}
-.pa-launch .pa-bear{left:50%;bottom:0;top:auto;width:160px;height:100px;margin-left:-80px;pointer-events:none}
+.pa-launch .pa-bear{left:50%;bottom:0;top:auto;width:170px;height:112px;margin-left:-85px;pointer-events:none}
 .pa-launch .pa-mv{transform-origin:50% 100%;overflow:visible}
 .pa-launch .pa-mv{filter:none}
 /* the bear pushes the social button: it shows Facebook and shakes */

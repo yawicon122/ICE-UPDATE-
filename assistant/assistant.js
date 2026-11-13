@@ -198,88 +198,132 @@
   }
 
   /* ---------------------------------------------------------------- UI */
-  // the polar bear: frame-by-frame sprite animation (assistant/bear-*.webp), played on a canvas
+  // the polar bear: frame-by-frame sprites (assistant/bear-*.webp) + live body motion, with a little "brain"
   function pengHTML() { return '<span class="pa-mv"><canvas class="pa-bear" aria-hidden="true"></canvas></span>'; }
   function pengMini() { return '<canvas class="pa-bear pa-bear-mini" aria-hidden="true"></canvas>'; }
   var SH = { walk: { w: 130, h: 155, ax: 67, ay: 152, n: 8 }, push: { w: 186, h: 156, ax: 93, ay: 154, n: 12 },
     happy: { w: 120, h: 157, ax: 61, ay: 155, n: 8 }, hello: { w: 173, h: 161, ax: 91, ay: 159, n: 11 }, fall: { w: 128, h: 153, ax: 65, ay: 151, n: 12 } };
-  var STAND = 150;   // sprite px of a standing bear
+  var STAND = 150;
   Object.keys(SH).forEach(function (k) { var im = new Image(); im.decoding = "async"; im.src = BASE + "bear-" + k + ".webp"; SH[k].img = im; });
+  var PI = Math.PI, TAU = 2 * PI;
   function frames(list, fps) { return list.map(function (f) { return { f: f, d: 1 / fps }; }); }
   function at(steps, u) { var t = 0; for (var i = 0; i < steps.length; i++) { t += steps[i].d; if (u < t) return steps[i]; } return null; }
   function total(steps) { return steps.reduce(function (s, x) { return s + x.d; }, 0); }
-  var easeIn = function (u) { return u * u; }, easeIO = function (u) { return u < .5 ? 2 * u * u : 1 - Math.pow(-2 * u + 2, 2) / 2; };
-  var SEQ = {
-    wave: { sheet: "happy", steps: frames([0, 1, 2, 3, 4, 5, 6, 7, 0], 5) },
-    hello: { sheet: "hello", steps: frames([0, 1, 2, 2, 3, 4, 5, 6, 7, 8, 9, 10], 6) },
-    walk: { custom: function (u) {            // walks left (flipped), turns, walks back
-      var L = 2.4, T = .35, D = 70;
-      if (u < L) return { sheet: "walk", f: Math.floor(u * 8) % 8, tx: -D * (u / L), flip: true };
-      if (u < L + T) return { sheet: "happy", f: 0, tx: -D };
-      if (u < 2 * L + T) { var v = u - L - T; return { sheet: "walk", f: Math.floor(v * 8) % 8, tx: -D * (1 - v / L) }; }
-      return null; }, dur: 5.15 },
-    push: { custom: function (u, ctx) {       // walks up to the Facebook button and pushes with all its might
-      var steps = frames([0, 1, 2, 3], 5).concat(frames([4, 5, 6, 7, 8, 4, 5, 6, 7, 8, 4, 5, 6, 7, 8], 6)).concat(frames([9, 10], 4)).concat([{ f: 11, d: .9 }]);
-      var st = at(steps, u); if (!st) return null;
-      var pushing = st.f >= 3 && st.f <= 8;
-      return { sheet: "push", f: st.f, tx: ctx.pushX * Math.min(1, u / .6), push: pushing, shove: pushing && st.f >= 4 }; }, dur: 0 },
-    fall: { custom: function (u) {            // drops in from the top of the screen, lands, gets back up
+  function sm(u) { u = Math.max(0, Math.min(1, u)); return u * u * (3 - 2 * u); }
+  function rnd(a, b) { return a + Math.random() * (b - a); }
+  var HOME_MIN = -130, HOME_MAX = 0;     // how far left of its corner the bear may wander (px)
+
+  /* ---- actions: each returns a pose {sheet,f,dx,ty,flip,sx,sy,rot} for time u, or null when finished ---- */
+  var WAVE = frames([0, 1, 2, 3, 4, 5, 6, 7, 0], 5), HELLO = frames([0, 1, 2, 2, 3, 4, 5, 6, 7, 8, 9, 10], 6);
+  var ACT = {
+    wave: function (u, B) { var s = at(WAVE, u); return s && { sheet: "happy", f: s.f, rot: .03 * Math.sin(u * 5) }; },
+    hello: function (u, B) { var s = at(HELLO, u); if (!s) return null; if (s.f === 7 && !B.landed) { B.landed = 1; B.wob = 1; } return { sheet: "hello", f: s.f }; },
+    look: function (u, B) {   // glance the other way with a little hop
+      if (u > .9) return null; if (u > .35 && !B.flipped) { B.flipped = 1; B.face *= -1; B.wob = .6; }
+      return { sheet: "happy", f: 0, ty: -7 * Math.sin(Math.min(1, u / .7) * PI), sy: 1 - .06 * Math.max(0, Math.sin(u / .35 * PI)) }; },
+    wander: function (u, B, A) {   // waddle to a new spot
+      if (A.to === undefined) { A.from = B.x; var t; do { t = rnd(HOME_MIN, HOME_MAX); } while (Math.abs(t - B.x) < 35); A.to = t; A.dur = Math.abs(t - B.x) / 34; }
+      var dir = A.to > A.from ? 1 : -1;
+      if (u >= A.dur) { B.x = A.to; B.face = dir; B.wob = .4; return null; }
+      B.x = A.from + (A.to - A.from) * (u / A.dur);
+      return { sheet: "walk", f: Math.floor(u * 8) % 8, flip: dir < 0, rot: .03 * Math.sin(u * 8 * PI / 2) }; },
+    dance: function (u, B) {   // bouncy little dance, arms up, swaying to a beat
+      if (u > 3.2) { B.wob = 1; return null; }
+      var beat = u * 2.6 * TAU, b = (1 - Math.cos(beat)) / 2;
+      if (Math.floor(u * 1.3) !== B.lastFlip) { B.lastFlip = Math.floor(u * 1.3); B.face *= -1; }
+      return { sheet: "happy", f: [2, 3, 4, 5, 4, 3][Math.floor(u * 6) % 6], ty: -9 * b, sy: 1 - .07 * (1 - b) * (1 - b) + .03 * b, sx: 1 + .05 * (1 - b) * (1 - b), rot: .12 * Math.sin(beat / 2) }; },
+    stretch: function (u, B) {   // big stretch up, then a happy shake
+      if (u > 2.6) return null;
+      var k = sm(u / .7) * (1 - sm((u - 1.8) / .4));
+      if (u > 1.8 && !B.landed) { B.landed = 1; B.wob = 1; }
+      return { sheet: "happy", f: u < .25 ? 2 : u < 1.9 ? 4 : u < 2.2 ? 3 : 0, sy: 1 + .09 * k, sx: 1 - .04 * k, rot: .04 * k * Math.sin(u * 3) }; },
+    spin: function (u, B) {   // crouch, leap, turn around in the air, land
+      var s = at(frames([3, 4, 5, 6, 7, 8, 9], 7), u); if (!s) return null;
+      if (s.f >= 6 && !B.flipped) { B.flipped = 1; B.face *= -1; }
+      if (s.f === 7 && !B.landed) { B.landed = 1; B.wob = 1; }
+      return { sheet: "hello", f: s.f }; },
+    nap: function (u, B) {   // lies down for a little rest, breathing, then gets back up
+      var down = frames([11, 10, 9, 8, 7], 5), up = frames([8, 9, 10, 11], 4.5), D = total(down), L = 4.2, U = total(up);
+      if (u < D) return { sheet: "fall", f: at(down, u).f };
+      if (u < D + L) { var v = u - D; return { sheet: "fall", f: 7, sy: 1 + .035 * Math.sin(v * TAU / 1.8), sx: 1 - .015 * Math.sin(v * TAU / 1.8) }; }
+      var s = at(up, u - D - L); if (!s) { B.wob = 1; return null; } return { sheet: "fall", f: s.f }; },
+    push: function (u, B, A) {   // walks to the Facebook button and pushes with all its might
+      if (A.to === undefined) { A.from = B.x; A.to = A.pushX; A.walk = Math.abs(A.to - A.from) / 40; }
+      if (u < A.walk) { B.x = A.from + (A.to - A.from) * (u / A.walk); return { sheet: "walk", f: Math.floor(u * 8) % 8, flip: A.to < A.from }; }
+      B.x = A.to; B.face = 1;
+      var steps = frames([1, 2, 3], 5).concat(frames([4, 5, 6, 7, 8, 4, 5, 6, 7, 8, 4, 5, 6, 7, 8], 6)).concat(frames([9, 10], 4)).concat([{ f: 11, d: .9 }]);
+      var s = at(steps, u - A.walk); if (!s) { B.wob = .8; return null; }
+      var pushing = s.f >= 3 && s.f <= 8;
+      return { sheet: "push", f: s.f, push: pushing, shove: pushing && s.f >= 4, sx: pushing ? 1 + .02 * Math.sin(u * 30) : 1 }; },
+    fall: function (u, B) {   // drops in from the top of the screen when the page scrolls down
       var F = .85, H = window.innerHeight + 140;
-      if (u < F) return { sheet: "fall", f: Math.floor(u * 10) % 5, ty: -H * (1 - easeIn(u / F)) };
-      var st = at(frames([5, 6, 7], 7).concat(frames([8, 9, 10, 11], 4.5)), u - F);
-      return st ? { sheet: "fall", f: st.f, land: u - F } : null; }, dur: 0 },
-    climb: { custom: function (u) {           // climbs up and out of sight as the page scrolls back to the top
-      var C = 1.6, H = window.innerHeight + 160;
-      if (u < C) return { sheet: "fall", f: (Math.floor(u * 6) % 2) ? 3 : 1, ty: -H * easeIO(u / C) - 4 * Math.abs(Math.sin(u * 12)) };
-      return { sheet: "fall", f: 1, ty: -H, hold: true }; }, dur: 0 }
+      if (u < F) return { sheet: "fall", f: Math.floor(u * 10) % 5, ty: -H * (1 - (u / F) * (u / F)), noShadow: 1 };
+      if (!B.landed) { B.landed = 1; B.wob = 1.4; }
+      var s = at(frames([5, 6, 7], 7).concat(frames([8, 9, 10, 11], 4.5)), u - F); return s && { sheet: "fall", f: s.f };
+    }
   };
-  SEQ.wave.dur = total(SEQ.wave.steps); SEQ.hello.dur = total(SEQ.hello.steps);
-  SEQ.push.dur = total(frames([0, 1, 2, 3], 5)) + 15 / 6 + .5 + .9; SEQ.fall.dur = .85 + 3 / 7 + 4 / 4.5;
-  var MOVES = { wave: 1, hello: 1, walk: 1, push: 1, fall: 1, climb: 1 };
+  function bstate(cv) { return cv.__b || (cv.__b = { x: 0, face: 1, act: null, wob: 0, next: performance.now() / 1000 + rnd(2, 4), last: "", seen: performance.now() / 1000 }); }
   function play(el, name) {
-    if (reduce || !el || !SEQ[name]) return false;
-    var cv = el.querySelector(".pa-bear"); if (!cv) return false;
-    if (cv.__act && !(cv.__act.name === "climb" && name === "fall")) return false;
-    cv.__act = { name: name, t0: performance.now() / 1000 };
+    if (reduce || !el || !ACT[name]) return false;
+    var cv = el.querySelector ? el.querySelector(".pa-bear") : null; if (!cv) return false;
+    var B = bstate(cv);
+    if (B.act && B.act.name === "fall") return false;
+    if (B.act && name !== "fall" && B.act.name !== "wander" && B.act.name !== "look") return false;
+    B.act = { name: name, t0: performance.now() / 1000 }; B.flipped = 0; B.landed = 0; B.lastFlip = -1; B.last = name;
+    if (name === "push") B.act.pushX = pushTarget(cv);
     return true;
   }
-  function pushTarget(cv) {   // how far right the bear must go so its paws touch the social button
+  function pushTarget(cv) {   // where the bear must stand so its paws touch the social button
     var btn = document.querySelector("#iu-social .sd-btn"), mv = cv.parentNode;
     if (!btn) return 0;
     var r = btn.getBoundingClientRect(), m = mv.getBoundingClientRect(), mx = m.left + m.width / 2 - (mv.__tx || 0);
-    var scale = cv.__scale || .43;
-    return Math.max(-20, Math.min(60, r.left + 6 - (mx + 80 * scale)));
+    return Math.max(-20, Math.min(60, r.left + 6 - (mx + 80 * (cv.__scale || .43))));
+  }
+  /* the "brain": picks what to do next on its own, never repeats the same thing twice in a row */
+  var CHOICES = [["wander", 3], ["look", 2.2], ["dance", 1.6], ["stretch", 1.4], ["wave", 1.4], ["hello", 1.2], ["push", 1.5], ["spin", 1], ["nap", .6]];
+  function think(cv, B, now) {
+    if (document.documentElement.getAttribute("data-bear-idle") === "off") return;
+    var bored = now - B.seen > 40, list = CHOICES.filter(function (c) { return c[0] !== B.last; }).map(function (c) {
+      var w = c[1]; if (c[0] === "nap") w *= bored ? 5 : 1; if (c[0] === "push" && B.x < -60) w *= .5; return [c[0], w]; });
+    var sum = list.reduce(function (s, c) { return s + c[1]; }, 0), r = Math.random() * sum;
+    for (var i = 0; i < list.length; i++) { r -= list[i][1]; if (r <= 0) { play(cv.closest(".pa-launch"), list[i][0]); break; } }
   }
   function drawBearCanvas(cv, now, opts) {
     var w = cv.clientWidth, h = cv.clientHeight; if (!w || !h) return;
     var dpr = Math.min(2, window.devicePixelRatio || 1), W = Math.round(w * dpr), H = Math.round(h * dpr);
     if (cv.width !== W || cv.height !== H) { cv.width = W; cv.height = H; }
-    var standPx = (opts && opts.standPx) || h * .86;
+    var isLaunch = !!cv.closest(".pa-launch"), standPx = isLaunch ? 64 : h * .86;
     cv.__scale = standPx / STAND;
-    var st = { sheet: "happy", f: 0 }, a = cv.__act;
-    if (opts && opts.happy) st = { sheet: "happy", f: [0, 3, 4, 5, 4, 3][Math.floor(now * 6) % 6] };
-    if (a) {
-      var q = SEQ[a.name], u = now - a.t0;
-      if (a.pushX === undefined) a.pushX = a.name === "push" ? pushTarget(cv) : 0;
-      var r = q.custom ? q.custom(u, a) : (function () { var s2 = at(q.steps, u); return s2 ? { sheet: q.sheet, f: s2.f } : null; })();
-      if (!r) { cv.__act = null; document.documentElement.classList.remove("iu-bear-push", "iu-bear-shove"); }
-      else { st = r; if (r.hold && !a.holding) a.holding = now; }
+    var B = bstate(cv), dt = Math.min(.1, now - (B.tPrev || now)); B.tPrev = now;
+    // ---- base "alive" motion: breathing, swaying, weight shifts, fidgets (never stands still)
+    var br = Math.sin(now * TAU / 2.4), sway = Math.sin(now * TAU / 4.1), shift = Math.sin(now * TAU / 6.3 + 1);
+    var P = { sheet: "happy", f: 0, sx: 1 - .012 * br, sy: 1 + .022 * br, rot: .035 * sway, dx: 2.5 * shift, ty: -1.2 * Math.max(0, br) };
+    var fid = (now % 7.3) / 7.3; if (fid > .82 && fid < .9) P.f = 1;          // little arm fidget
+    if (opts && opts.happy) { P.f = [0, 3, 4, 5, 4, 3][Math.floor(now * 6) % 6]; P.ty = -5 * Math.abs(Math.sin(now * 5)); }
+    if (B.act) {
+      var r = ACT[B.act.name](now - B.act.t0, B, B.act);
+      if (!r) { B.act = null; B.next = now + rnd(1.2, 3.6); }
+      else { P.sheet = r.sheet; P.f = r.f; P.flip = r.flip; P.push = r.push; P.shove = r.shove; P.noShadow = r.noShadow;
+        P.sx *= (r.sx || 1); P.sy *= (r.sy || 1); P.rot = (r.rot || 0) + P.rot * .4; P.ty = (r.ty || 0) + P.ty * .5; P.dx *= .3; }
+    } else if (isLaunch && !reduce && now > B.next && !root.classList.contains("open")) think(cv, B, now);
+    if (P.flip === undefined) P.flip = B.face < 0;
+    // ---- skin/fur jiggle after landings and big moves (decays)
+    B.wob = Math.max(0, (B.wob || 0) - dt * 1.6);
+    var jig = B.wob * Math.sin(now * 26); P.sx *= 1 + .06 * jig; P.sy *= 1 - .06 * jig;
+    if (isLaunch) {
+      document.documentElement.classList.toggle("iu-bear-push", !!P.push);
+      document.documentElement.classList.toggle("iu-bear-shove", !!P.shove);
+      var mv = cv.parentNode, tx = B.x + (P.dx || 0);
+      mv.__tx = tx;
+      mv.style.transform = "translate(" + tx.toFixed(1) + "px," + (P.ty || 0).toFixed(1) + "px)";
     }
-    document.documentElement.classList.toggle("iu-bear-push", !!st.push);
-    document.documentElement.classList.toggle("iu-bear-shove", !!st.shove);
-    var mv = cv.parentNode;
-    if (mv && mv.classList.contains("pa-mv")) {
-      var squash = st.land !== undefined && st.land < .25 ? Math.sin(st.land / .25 * Math.PI) * .08 : 0;
-      mv.__tx = st.tx || 0;
-      mv.style.transform = (st.tx || st.ty || squash) ? "translate(" + (st.tx || 0).toFixed(1) + "px," + (st.ty || 0).toFixed(1) + "px) scale(" + (1 + squash) + "," + (1 - squash) + ")" : "";
-    }
-    var S = SH[st.sheet]; if (!S || !S.img.complete || !S.img.naturalWidth) return;
+    var S = SH[P.sheet]; if (!S || !S.img.complete || !S.img.naturalWidth) return;
     var c = cv.getContext("2d"), k = cv.__scale * dpr;
     c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, W, H);
-    // soft ground shadow (hidden while high in the air)
-    if (!(st.ty < -30)) { c.fillStyle = "rgba(0,0,0,.22)"; c.beginPath(); c.ellipse(W / 2, H - 3 * dpr, 42 * k, 6 * k, 0, 0, 7); c.fill(); }
-    c.translate(W / 2, H - 2 * dpr); if (st.flip) c.scale(-1, 1);
-    c.drawImage(S.img, st.f * S.w, 0, S.w, S.h, -S.ax * k, -S.ay * k, S.w * k, S.h * k);
+    if (!P.noShadow) { var lift = Math.min(1, Math.max(0, -(P.ty || 0)) / 30); c.fillStyle = "rgba(0,0,0," + (.22 * (1 - lift)) + ")"; c.beginPath(); c.ellipse(W / 2 - (isLaunch ? 0 : 0), H - 3 * dpr - (P.ty || 0) * dpr * (isLaunch ? -1 : 0), 42 * k * (1 - .4 * lift), 6 * k, 0, 0, 7); c.fill(); }
+    c.translate(W / 2, H - 2 * dpr);
+    c.rotate(P.rot || 0); c.scale((P.flip ? -1 : 1) * (P.sx || 1), P.sy || 1);
+    c.drawImage(S.img, P.f * S.w, 0, S.w, S.h, -S.ax * k, -S.ay * k, S.w * k, S.h * k);
   }
   function bearLoop() {
     var now = performance.now() / 1000;
@@ -296,19 +340,30 @@
     }
     if (!reduce) requestAnimationFrame(bearLoop); else setTimeout(bearLoop, 500);
   }
-  /* scrolling: bear falls in when you scroll down, climbs away when you scroll back up to the top */
+  /* scrolling down: the bear falls in from the top of the screen (only when scrolling down) */
   (function () {
     if (reduce) return;
-    var lastY = window.scrollY, down = 0, stopT, lastFx = 0;
-    function lcv() { return document.querySelector("#iu-assistant .pa-launch .pa-bear"); }
+    var lastY = window.scrollY, down = 0, lastFx = 0;
     window.addEventListener("scroll", function () {
       var y = window.scrollY, dy = y - lastY; lastY = y;
-      var cv = lcv(); if (!cv || root.classList.contains("open")) return;
-      var now = performance.now() / 1000, busy = cv.__act;
-      if (dy > 0) { down += dy; if (!busy && down > 700 && now - lastFx > 5) { down = 0; lastFx = now; play(launch, "fall"); } }
-      else if (dy < 0) { down = 0; if (!busy && y < 260 && now - lastFx > 3) { lastFx = now; play(launch, "climb"); } }
-      clearTimeout(stopT);
-      stopT = setTimeout(function () { var c = lcv(); if (c && c.__act && c.__act.name === "climb") { c.__act = null; play(launch, "fall"); } }, 900);
+      if (dy <= 0) { down = 0; return; }
+      var cv = document.querySelector("#iu-assistant .pa-launch .pa-bear"); if (!cv || root.classList.contains("open")) return;
+      var now = performance.now() / 1000, B = bstate(cv);
+      down += dy;
+      if (down > 700 && now - lastFx > 5 && !(B.act && B.act.name === "fall")) {
+        down = 0; lastFx = now; B.act = null; play(cv.closest(".pa-launch"), "fall");
+      }
+    }, { passive: true });
+    // it notices you: wave when the mouse comes close
+    var lastSeen = 0;
+    document.addEventListener("pointermove", function (e) {
+      var cv = document.querySelector("#iu-assistant .pa-launch .pa-bear"); if (!cv) return;
+      var B = bstate(cv), now = performance.now() / 1000; B.seen = now;
+      var r = cv.getBoundingClientRect(), d = Math.hypot(e.clientX - (r.left + r.width / 2), e.clientY - (r.top + r.height / 2));
+      if (d < 170 && now - lastSeen > 9 && (!B.act || B.act.name === "wander" || B.act.name === "look")) {
+        lastSeen = now; B.face = e.clientX < r.left + r.width / 2 ? -1 : 1; B.act = null;
+        play(cv.closest(".pa-launch"), Math.random() < .6 ? "wave" : "hello");
+      }
     }, { passive: true });
   })();
   var root = document.createElement("div");
@@ -452,19 +507,6 @@
 
   /* events */
   launch.addEventListener("click", open);
-  launch.addEventListener("mouseenter", function () { play(launch, "wave"); });
-  var order = [], idleT;
-  function nextMove() {
-    if (!order.length) order = ["hello", "walk", "push", "wave", "push"].sort(function () { return Math.random() - .5; });
-    return order.shift();
-  }
-  function idle() {
-    clearTimeout(idleT);
-    idleT = setTimeout(function () {
-      if (!document.hidden && !root.classList.contains("open") && !tip.classList.contains("show") && document.documentElement.getAttribute("data-bear-idle") !== "off") play(launch, nextMove());
-      idle();
-    }, 8000 + Math.random() * 6000);
-  }
   tip.addEventListener("click", function (e) { if (e.target.closest("button")) { hideTip(true); return; } open(); });
   $(".pa-x").addEventListener("click", close);
   $(".pa-clear").addEventListener("click", function () { history = []; save(); ss(KEY_COUNT, ss(KEY_COUNT) || "0"); renderAll(); input.focus(); });
@@ -490,10 +532,9 @@
     maybeTip();
     bearLoop();
     setTimeout(function () { play(launch, "wave"); }, 2500);
-    idle();
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", mount); else mount();
 
   // tiny public API: window.IceAssistant.open() / .ask("text")
-  window.IceAssistant = { open: open, close: close, ask: function (q) { open(); ask(q); }, move: function (m) { var c = launch.querySelector(".pa-bear"); if (c && m !== "fall") c.__act = null; play(launch, m); } };
+  window.IceAssistant = { open: open, close: close, ask: function (q) { open(); ask(q); }, move: function (m) { var c = launch.querySelector(".pa-bear"); if (c) bstate(c).act = null; return play(launch, m); } };
 })();

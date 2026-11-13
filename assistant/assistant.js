@@ -204,7 +204,9 @@
   var SH = { walk: { w: 130, h: 155, ax: 67, ay: 152, n: 8 }, push: { w: 186, h: 156, ax: 93, ay: 154, n: 12 },
     happy: { w: 120, h: 157, ax: 61, ay: 155, n: 8 }, hello: { w: 173, h: 161, ax: 91, ay: 159, n: 11 }, fall: { w: 128, h: 153, ax: 65, ay: 151, n: 12 }, rain: { w: 166, h: 216, ax: 83, ay: 214, n: 15 } };
   var STAND = 150;
-  Object.keys(SH).forEach(function (k) { var im = new Image(); im.decoding = "async"; im.src = BASE + "bear-" + k + ".webp"; SH[k].img = im; });
+  Object.keys(SH).forEach(function (k) { var im = new Image(); im.decoding = "async"; im.src = BASE + "bear-" + k + ".webp?v=chain1"; SH[k].img = im; });
+  var PEND = {"happy":[[62.0,68.2],[61.0,68.2],[60.0,68.2],[60.0,68.2],[58.0,65.2],[57.0,66.2],[58.0,65.2],[61.0,68.2]],"hello":[[93.0,73.2],[94.0,71.2],[92.0,72.2],[111.0,97.2],[104.0,71.2],[99.0,63.2],[96.0,67.2],[89.0,83.2],[93.0,74.2],[91.0,75.2],[90.0,73.2]],"walk":[[74.0,65.2],[76.0,65.2],[79.0,71.2],[80.0,74.2],[82.0,74.2],[75.0,69.2],[77.0,69.2],[77.0,69.2]],"push":[[91.0,71.2],[102.0,69.2],[105.0,81.2],[104.0,91.2],[113.0,88.2],[119.0,88.2],[120.0,88.2],[120.0,88.2],[106.0,83.2],[98.0,78.2],[97.0,71.2],[97.0,70.2]],"fall":[[65.0,78.2],[62.0,77.2],[63.0,77.2],[67.0,77.2],[59.0,78.2],null,null,null,null,[70.0,94.2],[66.0,59.2],[64.0,57.2]],"rain":[[84.0,132.2],[86.0,132.2],[84.0,132.2],[84.0,132.2],[84.0,132.2],[84.0,132.2],[84.0,131.2],[84.0,139.2],[86.0,137.2],[84.0,136.2],[92.0,123.2],[82.0,129.2],[84.0,127.2],[84.0,136.2],[84.0,141.2]]};   // where the chain's pendant sits in every frame (for the sparkle)
+
   var PI = Math.PI, TAU = 2 * PI;
   function frames(list, fps) { return list.map(function (f) { return { f: f, d: 1 / fps }; }); }
   function at(steps, u) { var t = 0; for (var i = 0; i < steps.length; i++) { t += steps[i].d; if (u < t) return steps[i]; } return null; }
@@ -274,6 +276,19 @@
       var w = at(WAVE, v - POUR - .75); if (w) return { sheet: "happy", f: w.f };
       if (v < 5.6) return { sheet: "happy", f: 0 };
       B.wob = .5; return null;
+    },
+    rain: function (u, B, A) {   // sunglasses drop on, grabs cash and makes it rain (3 throws), glasses pop off again
+      if (!A.steps) {
+        var st = [[0, .1], [1, .1], [2, .1], [3, .1], [4, .18], [5, .3], [6, .45]];
+        for (var n = 0; n < 3; n++) st = st.concat([[7, .12], [8, .1], [9, .1], [10, .1, 1], [11, .12], [12, .12], [11, .12], [12, .12], [13, .16], [14, .28]]);
+        st = st.concat([[5, .35], [2, .08], [1, .08], [0, .12]]);
+        A.steps = st.map(function (x) { return { f: x[0], d: x[1], throwIt: x[2] }; }); A.done = -1;
+      }
+      var t = 0, i = 0; for (; i < A.steps.length; i++) { t += A.steps[i].d; if (u < t) break; }
+      if (i >= A.steps.length) { B.wob = .5; return null; }
+      var s = A.steps[i];
+      if (s.throwIt && A.done < i) { A.done = i; fxBills(B); B.wob = .5; }
+      return { sheet: "rain", f: s.f, flip: false };
     },
     crash: function (u, B) {   // hits the ground after a big fall: belly flop, lies there, gets up
       var s = at(frames([5, 6, 7], 7).concat(frames([8, 9, 10, 11], 4.5)), u); return s && { sheet: "fall", f: s.f }; },
@@ -526,6 +541,13 @@
     if (P.f2 !== undefined && P.f2 !== P.f) { draw1(S, P.f, main * (1 - P.mix)); draw1(S, P.f2, main * P.mix); }
     else draw1(S, P.f, main);
     c.globalAlpha = 1;
+    var pd = PEND[P.sheet] && PEND[P.sheet][P.f], gl = ((now + 1.1) % 3.2) / .55;       // bling: the pendant twinkles
+    if (pd && gl < 1 && !reduce) {
+      var gx = (pd[0] - S.ax) * k - 2.2 * k, gy = (pd[1] - S.ay) * k - 2.4 * k, gr = 10 * k * Math.sin(gl * PI);
+      c.save(); c.translate(gx, gy); c.rotate(gl * 1.4); c.fillStyle = "#ffffff"; c.beginPath();
+      for (var gi = 0; gi < 8; gi++) { var ga = gi * PI / 4, gd = gi % 2 ? gr * .26 : gr; c.lineTo(Math.cos(ga) * gd, Math.sin(ga) * gd); }
+      c.closePath(); c.fill(); c.restore();
+    }
   }
   var fxPrev = 0;
   function bearLoop() {

@@ -1,6 +1,6 @@
 /* =====================================================================
-   ICE UPDATE — Website Assistant (penguin)
-   • Floating penguin bottom-right (next to the social icon). Tap → chat.
+   ICE UPDATE — Website Assistant (polar bear)
+   • Floating polar bear bottom-right (next to the social icon). Tap → chat.
    • Answers trading basics + "how do I use this site" instantly, offline.
    • Live prices / signals / news → points to the official WhatsApp & Telegram
      (links come from config.js → links, never typed here).
@@ -198,26 +198,62 @@
   }
 
   /* ---------------------------------------------------------------- UI */
-  // full animated penguin (launcher + header): wings behind body so they can flap
-  function pengHTML() {
-    return '<span class="pa-mv"><span class="pa-peng">' +
-      '<img class="pa-wl" src="' + BASE + 'penguin-wing-l.webp" alt="" decoding="async">' +
-      '<img class="pa-wr" src="' + BASE + 'penguin-wing-r.webp" alt="" decoding="async">' +
-      '<img class="pa-bd" src="' + BASE + 'penguin-body.webp" alt="" decoding="async">' +
-      '<i class="pa-lid l"></i><i class="pa-lid r"></i></span><i class="pa-cube"></i></span>';
-  }
-  // tiny static penguin next to chat bubbles
-  function pengMini() {
-    return '<span class="pa-peng"><picture><source srcset="' + esc(CFG.img) + '" type="image/webp"><img src="' + esc(CFG.imgFallback) + '" alt="" width="26" height="30" decoding="async"></picture></span>';
-  }
-  /* ---- moves (wave · dance · walk · slip · slide), copied from the reference clips ---- */
-  var MOVES = { wave: 1800, dance: 2600, walk: 4400, slip: 3800, slide: 3600 };
+  // the polar bear: flat cartoon with one clean outline, drawn live on a canvas by bear.js
+  function pengHTML() { return '<span class="pa-mv"><canvas class="pa-bear" aria-hidden="true"></canvas></span>'; }
+  function pengMini() { return '<canvas class="pa-bear pa-bear-mini" aria-hidden="true"></canvas>'; }
+  /* ---- moves: wave · dance (happy bounce, arms up) · walk (steps forward, turns, walks back) ---- */
+  var MOVES = { wave: 2600, dance: 2400, walk: 5200 };
   function play(el, name) {
-    if (reduce || !el || el.__acting) return false;
-    el.__acting = true;
-    el.classList.add("act-" + name);
-    setTimeout(function () { el.classList.remove("act-" + name); el.__acting = false; }, MOVES[name] + 60);
+    if (reduce || !el || el.__act || !MOVES[name]) return false;
+    var cv = el.querySelector(".pa-bear"); if (!cv) return false;
+    cv.__act = { name: name, t0: performance.now() / 1000 };
+    el.__act = true;
+    setTimeout(function () { el.__act = false; }, MOVES[name] + 60);
     return true;
+  }
+  function env(u, f) { // smooth in/out envelope over 0..1
+    var k = Math.min(u / f, (1 - u) / f); return k <= 0 ? 0 : k >= 1 ? 1 : k * k * (3 - 2 * k);
+  }
+  var T0 = performance.now() / 1000;
+  function drawBearCanvas(cv, now, opts) {
+    if (!window.IceBear) return;
+    var w = cv.clientWidth, h = cv.clientHeight; if (!w || !h) return;
+    var dpr = Math.min(2, window.devicePixelRatio || 1), W = Math.round(w * dpr), H = Math.round(h * dpr);
+    if (cv.width !== W || cv.height !== H) { cv.width = W; cv.height = H; }
+    var A = { happy: 0, wave: 0, walk: 0, face: 0, ear: 0 }, travel = 0, a = cv.__act;
+    if (opts && opts.happy) A.happy = 1;
+    if (a) {
+      var dur = MOVES[a.name] / 1000, u = (now - a.t0) / dur;
+      if (u >= 1) { cv.__act = null; }
+      else if (a.name === "wave") { A.wave = env(u, .15); A.ear = env(u, .1); }
+      else if (a.name === "dance") { A.happy = env(u, .12); }
+      else if (a.name === "walk") {
+        A.walk = env(u, .08);
+        A.face = u < .48 ? Math.min(1, u / .06) * -1 : (u < .56 ? -1 + 2 * (u - .48) / .08 : Math.min(1, (1 - u) / .06));
+        travel = u < .5 ? -Math.sin(u / .5 * Math.PI / 2) : -Math.cos((u - .5) / .5 * Math.PI / 2);
+      }
+    }
+    var mv = cv.parentNode;
+    if (mv && mv.classList.contains("pa-mv")) mv.style.transform = travel ? "translateX(" + (travel * 46).toFixed(1) + "px)" : "";
+    var c = cv.getContext("2d");
+    c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, W, H);
+    var s = H / 700; c.setTransform(s, 0, 0, s, W / 2 - 360 * s, 0);   // show x 60..660, y 0..700 of the bear's drawing space
+    window.IceBear.draw(c, reduce ? 0 : now - T0, A);
+  }
+  function bearLoop() {
+    var now = performance.now() / 1000;
+    if (!document.hidden) {
+      var list = root.querySelectorAll(".pa-bear:not(.pa-bear-mini)");
+      for (var i = 0; i < list.length; i++) {
+        var inHead = list[i].closest(".pa-head");
+        if (inHead && !root.classList.contains("open")) continue;
+        if (!inHead && root.classList.contains("open")) continue;
+        drawBearCanvas(list[i], now, { happy: inHead && root.classList.contains("thinking") });
+      }
+      var minis = root.querySelectorAll(".pa-bear-mini:not([data-done])");
+      for (var j = 0; j < minis.length; j++) { drawBearCanvas(minis[j], T0 + 0.1, null); if (minis[j].clientWidth) minis[j].setAttribute("data-done", "1"); }
+    }
+    if (!reduce) requestAnimationFrame(bearLoop); else setTimeout(bearLoop, 500);
   }
   var root = document.createElement("div");
   root.className = "pa"; root.id = "iu-assistant";
@@ -363,7 +399,7 @@
   launch.addEventListener("mouseenter", function () { play(launch, "wave"); });
   var order = [], idleT;
   function nextMove() {
-    if (!order.length) order = ["dance", "walk", "slip", "slide", "wave"].sort(function () { return Math.random() - .5; });
+    if (!order.length) order = ["dance", "walk", "wave"].sort(function () { return Math.random() - .5; });
     return order.shift();
   }
   function idle() {
@@ -396,6 +432,7 @@
     document.body.appendChild(root);
     requestAnimationFrame(function () { root.classList.add("ready"); });
     maybeTip();
+    bearLoop();
     setTimeout(function () { play(launch, "wave"); }, 2500);
     idle();
   }

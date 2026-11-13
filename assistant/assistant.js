@@ -198,8 +198,26 @@
   }
 
   /* ---------------------------------------------------------------- UI */
-  function pengHTML(cls) {
-    return '<span class="pa-peng ' + (cls || "") + '"><picture><source srcset="' + esc(CFG.img) + '" type="image/webp"><img src="' + esc(CFG.imgFallback) + '" alt="" width="62" height="73" decoding="async"></picture><i class="pa-lid l"></i><i class="pa-lid r"></i></span>';
+  // full animated penguin (launcher + header): wings behind body so they can flap
+  function pengHTML() {
+    return '<span class="pa-mv"><span class="pa-peng">' +
+      '<img class="pa-wl" src="' + BASE + 'penguin-wing-l.webp" alt="" decoding="async">' +
+      '<img class="pa-wr" src="' + BASE + 'penguin-wing-r.webp" alt="" decoding="async">' +
+      '<img class="pa-bd" src="' + BASE + 'penguin-body.webp" alt="" decoding="async">' +
+      '<i class="pa-lid l"></i><i class="pa-lid r"></i></span><i class="pa-cube"></i></span>';
+  }
+  // tiny static penguin next to chat bubbles
+  function pengMini() {
+    return '<span class="pa-peng"><picture><source srcset="' + esc(CFG.img) + '" type="image/webp"><img src="' + esc(CFG.imgFallback) + '" alt="" width="26" height="30" decoding="async"></picture></span>';
+  }
+  /* ---- moves (wave · dance · walk · slip · slide), copied from the reference clips ---- */
+  var MOVES = { wave: 1800, dance: 2600, walk: 4400, slip: 3800, slide: 3600 };
+  function play(el, name) {
+    if (reduce || !el || el.__acting) return false;
+    el.__acting = true;
+    el.classList.add("act-" + name);
+    setTimeout(function () { el.classList.remove("act-" + name); el.__acting = false; }, MOVES[name] + 60);
+    return true;
   }
   var root = document.createElement("div");
   root.className = "pa"; root.id = "iu-assistant";
@@ -221,6 +239,7 @@
   var $ = function (s) { return root.querySelector(s); };
   var launch = $(".pa-launch"), tip = $(".pa-tip"), panel = $(".pa-panel"), log = $(".pa-log"), quick = $(".pa-quick"),
       form = $(".pa-form"), input = $("#paIn"), send = $(".pa-send");
+  var headAv = $(".pa-av");
   var history = [];
   try { history = JSON.parse(ss(KEY_LOG) || "[]") || []; } catch (e) { history = []; }
   var busy = false;
@@ -233,7 +252,7 @@
     row.className = "pa-msg" + (m.r === "me" ? " me" : "");
     var inner = m.r === "me" ? "<p>" + esc(m.t) + "</p>" : md(m.t) + actsHtml(m.a);
     if (m.err) inner += '<button type="button" class="pa-retry">Try again</button>';
-    row.innerHTML = (m.r === "me" ? "" : '<span class="pa-mini">' + pengHTML() + "</span>") + '<div class="pa-b">' + inner + "</div>";
+    row.innerHTML = (m.r === "me" ? "" : '<span class="pa-mini">' + pengMini() + "</span>") + '<div class="pa-b">' + inner + "</div>";
     log.appendChild(row);
     if (!opts.noScroll) scroll();
     return row;
@@ -253,7 +272,7 @@
     var t = log.querySelector(".pa-think");
     if (on && !t) {
       t = document.createElement("div"); t.className = "pa-msg pa-think";
-      t.innerHTML = '<span class="pa-mini">' + pengHTML() + '</span><div class="pa-b" aria-label="Thinking"><i></i><i></i><i></i></div>';
+      t.innerHTML = '<span class="pa-mini">' + pengMini() + '</span><div class="pa-b" aria-label="Thinking"><i></i><i></i><i></i></div>';
       log.appendChild(t); scroll();
     } else if (!on && t) t.remove();
   }
@@ -290,7 +309,7 @@
     var started = Date.now();
     reply(q).then(function (res) {
       var wait = Math.max(0, (reduce ? 0 : 450) - (Date.now() - started));
-      setTimeout(function () { thinking(false); push({ r: "bot", t: res.t, a: res.a }); done(); }, wait);
+      setTimeout(function () { thinking(false); push({ r: "bot", t: res.t, a: res.a }); play(headAv, "wave"); done(); }, wait);
     }, function (err) {
       thinking(false);
       var offline = !navigator.onLine, msg;
@@ -316,6 +335,7 @@
     root.classList.add("open"); launch.setAttribute("aria-expanded", "true"); document.documentElement.classList.add("pa-open");
     if (isMobile()) document.documentElement.classList.add("pa-lock");
     if (!log.childElementCount) { renderQuick(); renderAll(); }
+    setTimeout(function () { play(headAv, "wave"); }, 200);
     setTimeout(function () { if (!isMobile()) input.focus(); else panel.focus && panel.setAttribute("tabindex", "-1"); }, 60);
     track("assistant-open");
   }
@@ -340,6 +360,19 @@
 
   /* events */
   launch.addEventListener("click", open);
+  launch.addEventListener("mouseenter", function () { play(launch, "wave"); });
+  var order = [], idleT;
+  function nextMove() {
+    if (!order.length) order = ["dance", "walk", "slip", "slide", "wave"].sort(function () { return Math.random() - .5; });
+    return order.shift();
+  }
+  function idle() {
+    clearTimeout(idleT);
+    idleT = setTimeout(function () {
+      if (!document.hidden && !root.classList.contains("open") && !tip.classList.contains("show")) play(launch, nextMove());
+      idle();
+    }, 8000 + Math.random() * 6000);
+  }
   tip.addEventListener("click", function (e) { if (e.target.closest("button")) { hideTip(true); return; } open(); });
   $(".pa-x").addEventListener("click", close);
   $(".pa-clear").addEventListener("click", function () { history = []; save(); ss(KEY_COUNT, ss(KEY_COUNT) || "0"); renderAll(); input.focus(); });
@@ -363,9 +396,11 @@
     document.body.appendChild(root);
     requestAnimationFrame(function () { root.classList.add("ready"); });
     maybeTip();
+    setTimeout(function () { play(launch, "wave"); }, 2500);
+    idle();
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", mount); else mount();
 
   // tiny public API: window.IceAssistant.open() / .ask("text")
-  window.IceAssistant = { open: open, close: close, ask: function (q) { open(); ask(q); } };
+  window.IceAssistant = { open: open, close: close, ask: function (q) { open(); ask(q); }, move: function (m) { if (MOVES[m]) { launch.__acting = false; play(launch, m); } } };
 })();

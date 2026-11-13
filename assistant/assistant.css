@@ -8,24 +8,70 @@
 html.iu-intro-on .pa,html.iu-intro-hold .pa,html.iu-pdfopen .pa{visibility:hidden}
 
 /* ---------- launcher (penguin) ---------- */
-.pa-launch{position:fixed;z-index:9991;right:calc(max(12px,env(safe-area-inset-right)) + 56px);bottom:calc(10px + env(safe-area-inset-bottom));width:62px;height:70px;padding:0;border:0;background:none;cursor:pointer;-webkit-tap-highlight-color:transparent;opacity:0;transform:translateY(12px);transition:opacity .4s,transform .4s}
+.pa-launch{position:fixed;z-index:9991;right:calc(max(12px,env(safe-area-inset-right)) + 56px);bottom:calc(10px + env(safe-area-inset-bottom));width:60px;height:70px;padding:0;border:0;background:none;cursor:pointer;-webkit-tap-highlight-color:transparent;opacity:0;transform:translateY(12px);transition:opacity .4s,transform .4s}
 .pa.ready .pa-launch{opacity:1;transform:none}
 .pa-launch::before{content:"";position:absolute;left:50%;bottom:2px;width:46px;height:9px;margin-left:-23px;border-radius:50%;background:radial-gradient(closest-side,rgba(77,225,255,.45),rgba(77,225,255,0));filter:blur(1px)}
 .pa-launch:focus-visible{outline:2px solid #fff;outline-offset:4px;border-radius:18px}
 .pa.open .pa-launch{opacity:0;pointer-events:none;transform:scale(.6)}
 
-/* the penguin itself (used in launcher and panel header) */
-.pa-peng{position:relative;display:block;width:100%;height:100%;transform-origin:50% 100%}
-.pa-peng img{display:block;width:100%;height:100%;object-fit:contain;pointer-events:none;user-select:none;-webkit-user-drag:none;filter:drop-shadow(0 4px 6px rgba(0,0,0,.45))}
-.pa-lid{position:absolute;top:26.3%;width:11.5%;height:13%;margin-left:-5.75%;border-radius:50%;background:#fff;border-bottom:2px solid #1c1030;transform:scaleY(0);transform-origin:50% 0;pointer-events:none}
-.pa-lid.l{left:39.4%}.pa-lid.r{left:61%}
+/* the penguin itself — 3 layers (body + 2 wings) so the flippers can move */
+.pa-mv{position:absolute;inset:0;transform-origin:50% 100%}
+.pa-peng{position:absolute;inset:0;display:block;transform-origin:50% 100%;filter:drop-shadow(0 4px 6px rgba(0,0,0,.45))}
+.pa-peng img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;pointer-events:none;user-select:none;-webkit-user-drag:none}
+.pa-wl{transform-origin:22.8% 41.8%}.pa-wr{transform-origin:77.7% 41.8%}
+.pa-mini .pa-peng,.pa-mini .pa-peng img{position:static;display:block;width:100%;height:100%;filter:none}
+.pa-lid{position:absolute;top:26.3%;width:11.5%;height:13%;margin-left:-5.75%;border-radius:50%;background:#fff;border-bottom:2px solid #1c1030;transform:scaleY(0);transform-origin:50% 0;pointer-events:none;animation:paBlink 5.5s infinite}
+.pa-lid.l{left:39.4%}.pa-lid.r{left:61%;animation-delay:.02s}
+.pa-cube{position:absolute;left:-20px;bottom:4px;width:17px;height:17px;border-radius:4px;background:linear-gradient(135deg,#f2fdff 0%,#9fe3ff 45%,#4cb8f0 100%);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.75),0 2px 4px rgba(0,0,0,.35);opacity:0;pointer-events:none}
+.pa-cube::after{content:"";position:absolute;left:3px;top:3px;width:5px;height:5px;border-radius:2px;background:rgba(255,255,255,.9)}
 .pa-launch .pa-peng{animation:paBob 3.2s ease-in-out infinite}
-.pa-lid{animation:paBlink 5.5s infinite}
-.pa-lid.r{animation-delay:.02s}
-.pa-launch:hover .pa-peng,.pa-launch:focus-visible .pa-peng{animation:paWave .9s ease-in-out 1}
 @keyframes paBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
 @keyframes paBlink{0%,92%,100%{transform:scaleY(0)}95%{transform:scaleY(1)}}
-@keyframes paWave{0%,100%{transform:rotate(0)}25%{transform:rotate(-9deg)}50%{transform:rotate(7deg)}75%{transform:rotate(-4deg)}}
+
+/* ---- moves (copied from the reference clips) ---- */
+/* 1) wave hello — flipper up, head tilt */
+.act-wave .pa-peng{animation:pkTilt 1.8s ease-in-out both}
+.act-wave .pa-wr{animation:pkWaveR 1.8s ease-in-out both}
+@keyframes pkTilt{0%,100%{transform:none}20%,80%{transform:rotate(-6deg)}}
+@keyframes pkWaveR{0%,100%{transform:none}15%,45%,75%{transform:rotate(-30deg)}30%,60%{transform:rotate(-8deg)}}
+/* 2) happy dance — hop, sway, squash, flappy wings */
+.act-dance .pa-peng{animation:pkDance 2.6s ease-in-out both}
+.act-dance .pa-wl{animation:pkFlapL .325s ease-in-out 8 alternate both}
+.act-dance .pa-wr{animation:pkFlapR .325s ease-in-out 8 alternate both}
+@keyframes pkDance{0%,100%{transform:none}10%{transform:translateY(-7px) rotate(-7deg)}20%{transform:scale(1.06,.94)}30%{transform:translateY(-7px) rotate(7deg)}40%{transform:scale(1.06,.94)}50%{transform:translateY(-9px) rotate(-8deg)}60%{transform:scale(1.06,.94)}70%{transform:translateY(-9px) rotate(8deg)}80%{transform:scale(1.06,.94)}90%{transform:translateY(-3px)}}
+@keyframes pkFlapL{from{transform:none}to{transform:rotate(24deg)}}
+@keyframes pkFlapR{from{transform:none}to{transform:rotate(-24deg)}}
+/* 3) waddle walk — rock side to side, walk off, turn round, walk back */
+.act-walk .pa-mv{animation:pkWalk 4.4s ease-in-out both}
+.act-walk .pa-peng{animation:pkRock .37s ease-in-out 12 alternate both}
+.act-walk .pa-wl{animation:pkFlapL .37s ease-in-out 12 alternate-reverse both}
+.act-walk .pa-wr{animation:pkFlapR .37s ease-in-out 12 alternate both}
+@keyframes pkWalk{0%{transform:none}45%{transform:translateX(-58px)}50%{transform:translateX(-58px) scaleX(-1)}95%{transform:scaleX(-1)}100%{transform:none}}
+@keyframes pkRock{from{transform:rotate(-8deg)}to{transform:rotate(8deg) translateY(-2px)}}
+/* 4) slippy — pushes an ice cube, slips, belly-flops, gets back up */
+.act-slip .pa-mv{animation:pkPushMv 3.8s ease-in-out both}
+.act-slip .pa-peng{animation:pkSlip 3.8s ease-in-out both}
+.act-slip .pa-wl{animation:pkSlipWing 3.8s ease-in-out both}
+.act-slip .pa-wr{animation:pkSlipWingR 3.8s ease-in-out both}
+.act-slip .pa-cube{animation:pkCube 3.8s ease-in-out both}
+@keyframes pkPushMv{0%,10%{transform:none}35%,88%{transform:translateX(-14px)}100%{transform:none}}
+@keyframes pkSlip{0%{transform:none}12%{transform:rotate(-14deg)}20%{transform:rotate(-9deg)}28%{transform:rotate(-15deg)}36%{transform:rotate(-11deg)}40%{transform:rotate(12deg) translateY(-5px)}48%{transform:translateY(-24px) rotate(-86deg)}53%{transform:translateY(-27px) rotate(-80deg)}58%,74%{transform:translateY(-24px) rotate(-86deg)}82%{transform:rotate(-20deg) translateY(-7px)}90%{transform:rotate(5deg)}95%{transform:rotate(-2deg)}100%{transform:none}}
+@keyframes pkSlipWing{0%,38%,100%{transform:none}44%,52%{transform:rotate(40deg)}60%,74%{transform:rotate(10deg)}}
+@keyframes pkSlipWingR{0%,38%,100%{transform:none}44%,52%{transform:rotate(-40deg)}60%,74%{transform:rotate(-10deg)}}
+@keyframes pkCube{0%{opacity:0;transform:translateX(6px)}8%{opacity:1;transform:translateX(6px)}35%{opacity:1;transform:translateX(-14px)}50%{transform:translateX(-36px) rotate(-20deg)}88%{opacity:1;transform:translateX(-36px) rotate(-20deg)}100%{opacity:0;transform:translateX(-36px) rotate(-20deg)}}
+/* 5) belly slide — tips over, slides across the ice, pops up, waddles back */
+.act-slide .pa-mv{animation:pkSlideMv 3.6s cubic-bezier(.3,.7,.4,1) both}
+.act-slide .pa-peng{animation:pkSlide 3.6s ease-in-out both}
+.act-slide .pa-wl{animation:pkSlideWingL 3.6s ease-in-out both}
+.act-slide .pa-wr{animation:pkSlideWingR 3.6s ease-in-out both}
+@keyframes pkSlideMv{0%,14%{transform:none}55%,64%{transform:translateX(-72px)}100%{transform:none}}
+@keyframes pkSlide{0%{transform:none}10%{transform:translateY(-6px) rotate(10deg)}16%,55%{transform:translateY(-24px) rotate(-82deg)}35%{transform:translateY(-25px) rotate(-80deg)}64%{transform:translateY(-24px) rotate(-82deg)}72%{transform:translateY(-10px) rotate(4deg)}78%{transform:none}84%{transform:rotate(-7deg)}90%{transform:rotate(7deg)}96%{transform:rotate(-4deg)}100%{transform:none}}
+@keyframes pkSlideWingL{0%,10%,78%,100%{transform:none}16%,64%{transform:rotate(-35deg)}}
+@keyframes pkSlideWingR{0%,10%,78%,100%{transform:none}16%,64%{transform:rotate(35deg)}}
+/* thinking = keep dancing; reply arrives = wave */
+.pa.thinking .pa-head .pa-peng{animation:pkDance 2.6s ease-in-out infinite}
+.pa.thinking .pa-head .pa-wl{animation:pkFlapL .325s ease-in-out infinite alternate}
+.pa.thinking .pa-head .pa-wr{animation:pkFlapR .325s ease-in-out infinite alternate}
 
 /* one-time invitation bubble */
 .pa-tip{position:fixed;z-index:9991;right:calc(max(12px,env(safe-area-inset-right)) + 126px);bottom:calc(36px + env(safe-area-inset-bottom));max-width:200px;padding:9px 30px 9px 14px;border-radius:16px 16px 4px 16px;background:#fff;color:#0b1433;font:700 .86rem/1.3 Inter,system-ui,sans-serif;box-shadow:0 10px 26px rgba(0,0,0,.4);opacity:0;transform:translateY(8px) scale(.96);transition:opacity .3s,transform .3s;pointer-events:none}
@@ -37,8 +83,7 @@ html.iu-intro-on .pa,html.iu-intro-hold .pa,html.iu-pdfopen .pa{visibility:hidde
 .pa-panel{position:fixed;z-index:9995;right:max(12px,env(safe-area-inset-right));bottom:calc(14px + env(safe-area-inset-bottom));width:min(380px,calc(100vw - 24px));height:min(580px,calc(100vh - 110px));display:flex;flex-direction:column;border-radius:22px;overflow:hidden;color:var(--pa-ink);background:linear-gradient(180deg,#0e1740,#080d27);border:1px solid rgba(191,238,255,.22);box-shadow:0 24px 60px rgba(0,0,0,.55),0 0 0 1px rgba(0,0,0,.2),0 0 40px rgba(77,225,255,.12);opacity:0;visibility:hidden;transform:translateY(16px) scale(.97);transform-origin:100% 100%;transition:opacity .25s,transform .25s,visibility 0s .25s}
 .pa.open .pa-panel{opacity:1;visibility:visible;transform:none;transition:opacity .25s,transform .25s,visibility 0s}
 .pa-head{display:flex;align-items:center;gap:10px;padding:12px 10px 12px 14px;border-bottom:1px solid rgba(191,238,255,.12);background:linear-gradient(90deg,rgba(77,225,255,.10),rgba(139,123,255,.06))}
-.pa-head .pa-av{flex:none;width:40px;height:46px}
-.pa.open .pa-head .pa-peng{animation:paWave .9s ease-in-out .15s 1}
+.pa-head .pa-av{position:relative;flex:none;width:40px;height:47px}
 .pa-head .pa-t{flex:1;min-width:0}
 .pa-head b{display:block;font:800 .98rem Sora,Inter,sans-serif;color:#fff}
 .pa-head small{display:flex;align-items:center;gap:6px;color:var(--pa-mute);font-size:.76rem}
@@ -72,9 +117,7 @@ html.iu-intro-on .pa,html.iu-intro-hold .pa,html.iu-pdfopen .pa{visibility:hidde
 .pa-think .pa-b{display:flex;gap:5px;align-items:center;padding:13px 15px}
 .pa-think i{width:7px;height:7px;border-radius:50%;background:var(--pa-ice);opacity:.4;animation:paDot 1s infinite}
 .pa-think i:nth-child(2){animation-delay:.15s}.pa-think i:nth-child(3){animation-delay:.3s}
-.pa.thinking .pa-head .pa-peng{animation:paThink 1.1s ease-in-out infinite}
 @keyframes paDot{0%,100%{opacity:.3;transform:translateY(0)}50%{opacity:1;transform:translateY(-3px)}}
-@keyframes paThink{0%,100%{transform:rotate(0) translateY(0)}50%{transform:rotate(-5deg) translateY(-2px)}}
 @keyframes paIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 
 /* quick prompts */
@@ -100,7 +143,7 @@ html.iu-intro-on .pa,html.iu-intro-hold .pa,html.iu-pdfopen .pa{visibility:hidde
 /* mobile: near full screen */
 @media (max-width:560px){
   .pa-panel{right:0;left:0;bottom:0;width:100%;height:calc(100% - 64px);max-height:none;border-radius:22px 22px 0 0;transform-origin:50% 100%}
-  .pa-launch{width:56px;height:64px}
+  .pa-launch{width:55px;height:64px}
   .pa-tip{right:calc(max(12px,env(safe-area-inset-right)) + 116px)}
 }
 html.pa-lock,html.pa-lock body{overflow:hidden}
@@ -108,7 +151,7 @@ html.pa-lock,html.pa-lock body{overflow:hidden}
 
 /* performance + motion */
 html.iu-lite .pa-panel{box-shadow:0 18px 40px rgba(0,0,0,.5)}
-html.iu-lite .pa-launch .pa-peng{animation:none}
+html.iu-lite .pa-launch:not([class*="act-"]) .pa-peng{animation:none}
 @media (prefers-reduced-motion:reduce){
   .pa *,.pa *::before{animation:none!important;transition:none!important}
   .pa-panel,.pa-launch,.pa-tip{transition:none!important}

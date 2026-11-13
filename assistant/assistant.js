@@ -255,11 +255,18 @@
       var s = at(steps, u - A.walk); if (!s) { B.wob = .8; return null; }
       var pushing = s.f >= 3 && s.f <= 8;
       return { sheet: "push", f: s.f, push: pushing, shove: pushing && s.f >= 4, sx: pushing ? 1 + .02 * Math.sin(u * 30) : 1 }; },
-    fall: function (u, B) {   // drops in from the top of the screen when the page scrolls down
-      var F = .85, H = window.innerHeight + 140;
-      if (u < F) return { sheet: "fall", f: Math.floor(u * 10) % 5, ty: -H * (1 - (u / F) * (u / F)), noShadow: 1 };
+    fall: function (u, B, A) {   // while the page is scrolling down the bear keeps falling near the top; when scrolling stops it drops to the ground
+      var H = window.innerHeight, top = -(H - 210), now = A.t0 + u;
+      if (A.dropAt === undefined) {
+        var inK = Math.min(1, u / .45), ty = -(H + 140) + (top + H + 140) * (1 - (1 - inK) * (1 - inK));
+        ty += 10 * Math.sin(u * 3.2) * inK;
+        if (inK >= 1 && now - (B.lastScroll || 0) > .32) { A.dropAt = u; A.dropFrom = ty; }
+        return { sheet: "fall", f: Math.floor(u * 10) % 5, ty: ty, noShadow: 1, rot: .12 * Math.sin(u * 4.1), dx: 14 * Math.sin(u * 1.7) };
+      }
+      var v = u - A.dropAt, D = .55;
+      if (v < D) return { sheet: "fall", f: Math.floor(u * 12) % 5, ty: A.dropFrom * (1 - (v / D) * (v / D)), noShadow: 1 };
       if (!B.landed) { B.landed = 1; B.wob = 1.4; }
-      var s = at(frames([5, 6, 7], 7).concat(frames([8, 9, 10, 11], 4.5)), u - F); return s && { sheet: "fall", f: s.f };
+      var s = at(frames([5, 6, 7], 7).concat(frames([8, 9, 10, 11], 4.5)), v - D); return s && { sheet: "fall", f: s.f };
     }
   };
   function bstate(cv) { return cv.__b || (cv.__b = { x: 0, face: 1, act: null, wob: 0, next: performance.now() / 1000 + rnd(2, 4), last: "", seen: performance.now() / 1000 }); }
@@ -340,19 +347,20 @@
     }
     if (!reduce) requestAnimationFrame(bearLoop); else setTimeout(bearLoop, 500);
   }
-  /* scrolling down: the bear falls in from the top of the screen (only when scrolling down) */
+  /* scrolling down: the bear falls from the top of the screen for as long as you keep scrolling, then lands when you stop */
   (function () {
     if (reduce) return;
-    var lastY = window.scrollY, down = 0, lastFx = 0;
+    var lastY = window.scrollY, down = 0;
     window.addEventListener("scroll", function () {
       var y = window.scrollY, dy = y - lastY; lastY = y;
       if (dy <= 0) { down = 0; return; }
       var cv = document.querySelector("#iu-assistant .pa-launch .pa-bear"); if (!cv || root.classList.contains("open")) return;
       var now = performance.now() / 1000, B = bstate(cv);
-      down += dy;
-      if (down > 700 && now - lastFx > 5 && !(B.act && B.act.name === "fall")) {
-        down = 0; lastFx = now; B.act = null; play(cv.closest(".pa-launch"), "fall");
-      }
+      B.lastScroll = now; down += dy;
+      var f = B.act && B.act.name === "fall";
+      if (f && B.act.dropAt === undefined) return;          // already falling: keep falling
+      if (f && now - B.act.t0 - B.act.dropAt < 1.4) return;  // still landing
+      if (down > 120) { down = 0; B.act = null; play(cv.closest(".pa-launch"), "fall"); }
     }, { passive: true });
     // it notices you: wave when the mouse comes close
     var lastSeen = 0;

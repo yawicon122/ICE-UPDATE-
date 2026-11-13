@@ -286,7 +286,7 @@
   function fxCanvas() {
     if (fxCv) return fxCv;
     fxCv = document.createElement("canvas"); fxCv.setAttribute("aria-hidden", "true");
-    fxCv.style.cssText = "position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:9992";
+    fxCv.id = "iu-bear-fx"; fxCv.style.cssText = "position:fixed;left:0;top:0;pointer-events:none;z-index:9992";
     document.body.appendChild(fxCv); return fxCv;
   }
   // a point on the bear's drawing (sprite px from its feet-centre) -> where it is on screen in this very frame
@@ -295,7 +295,7 @@
     var x = q.fx * px * s, y = q.sy * py * s, cs = Math.cos(q.rot), sn = Math.sin(q.rot);
     return { x: r.left + r.width / 2 + x * cs - y * sn, y: r.bottom - 2 + x * sn + y * cs, ground: r.bottom - 2 };
   }
-  var MOUTH = { x: 38, y: -92 };      // the mouth in the bent-over frame (hello #3)
+  var MOUTH = { x: 40, y: -89 };      // the mouth in the bent-over frame (hello #3)
   function fxBills(B) {   // a burst of banknotes from both raised paws
     var r = B.cv.getBoundingClientRect(), sc = B.cv.__scale || .43, cx = r.left + r.width / 2, top = r.bottom - 2 - 150 * sc, now = performance.now() / 1000;
     for (var h = -1; h <= 1; h += 2) for (var j = 0; j < 13; j++) {
@@ -357,7 +357,7 @@
       var a = u - l.emit; if (a < 0) return;
       c.save();
       if (a < TL) {                    // riding down the stream
-        var q = arc(a); c.translate(q.x, q.y + fs * .18); c.rotate(lay.dir * a * 7); c.scale(.42, .42); c.translate(0, fs * .35);
+        var q = arc(a); c.translate(q.x, q.y); c.rotate(lay.dir * a * 7); c.scale(.42, .42); c.translate(0, fs * .35);
         glyph(c, l.ch, fs, l.ice, 0);
       } else {                          // landed: slide along the ground to its place, stand up, settle with a wobble
         var s2 = a - TL, e = 1 - Math.pow(1 - Math.min(1, s2 / l.slide), 3), x = land.x + (l.x - land.x) * e, sc = .42 + .58 * e;
@@ -383,14 +383,14 @@
     var ta = Math.max(0, u - stop), tb = Math.min(u, TL);
     if (tb > ta + .01) {
       var N = 22, pts = [];
-      for (var j = 0; j <= N; j++) { var t = ta + (tb - ta) * j / N, q2 = arc(t), wv = 1.3 * Math.sin(t * 26 - u * 16) * Math.min(1, t * 8); pts.push({ x: q2.x, y: q2.y + wv, w: 6.2 + 5.5 * (t / TL) }); }
+      for (var j = 0; j <= N; j++) { var t = ta + (tb - ta) * j / N, q2 = arc(t), wv = 1.3 * Math.sin(t * 26 - u * 16) * Math.min(1, t * 8); pts.push({ x: q2.x, y: q2.y + wv, w: 4.4 + 7.2 * Math.min(1, t / (TL * .7)) }); }
       c.save(); c.lineCap = "round"; c.lineJoin = "round";
       var pass = function (col, add, mul) { c.strokeStyle = col; for (var j2 = 1; j2 < pts.length; j2++) { c.lineWidth = pts[j2].w * mul + add; c.beginPath(); c.moveTo(pts[j2 - 1].x, pts[j2 - 1].y); c.lineTo(pts[j2].x, pts[j2].y); c.stroke(); } };
       pass("#0b2a55", 3.6, 1); pass("#7fd8ff", 0, 1); pass("#c9f3ff", 0, .5);
       c.strokeStyle = "rgba(255,255,255,.95)"; c.lineWidth = 1.6; c.setLineDash([5, 9]); c.lineDashOffset = -u * 150;        // flowing glints
       c.beginPath(); pts.forEach(function (q3, j3) { j3 ? c.lineTo(q3.x, q3.y - q3.w * .22) : c.moveTo(q3.x, q3.y - q3.w * .22); }); c.stroke(); c.setLineDash([]);
-      if (ta === 0) { c.fillStyle = "#2a0f1c"; c.beginPath(); c.ellipse(m.x - lay.dir * 1.5, m.y, 3.4, 4.2, 0, 0, 7); c.fill();   // open mouth
-        c.fillStyle = "#7fd8ff"; c.beginPath(); c.arc(m.x, m.y, 3.1, 0, 7); c.fill(); }
+      if (ta === 0) { c.fillStyle = "#2a0f1c"; c.beginPath(); c.ellipse(m.x - lay.dir * 1.2, m.y + .3, 2.9, 3.3, 0, 0, 7); c.fill();   // open mouth
+        c.fillStyle = "#7fd8ff"; c.beginPath(); c.arc(m.x + lay.dir * .6, m.y + .3, 2.2, 0, 7); c.fill(); }
       c.restore();
       if (tb >= TL - .01 && Math.random() < dt * 34)       // splashes where it hits the ground
         fxNew.push({ k: "D", x: land.x + rnd(-4, 4), y: ground - 2, vx: rnd(-70, 70), vy: -rnd(60, 170), t0: now, life: rnd(.35, .6), r: rnd(1.2, 2.6), ground: ground });
@@ -400,9 +400,13 @@
   function fxDraw(now, dt) {
     if (!FX.length) { if (fxCv && fxCv.__on) { fxCv.getContext("2d").clearRect(0, 0, fxCv.width, fxCv.height); fxCv.__on = 0; } return; }
     var cv = fxCanvas(), dpr = Math.min(2, window.devicePixelRatio || 1), W = Math.round(innerWidth * dpr), H = Math.round(innerHeight * dpr);
-    if (cv.width !== W || cv.height !== H) { cv.width = W; cv.height = H; }
+    if (cv.width !== W || cv.height !== H) { cv.width = W; cv.height = H; cv.style.width = innerWidth + "px"; cv.style.height = innerHeight + "px"; }
     var c = cv.getContext("2d"); cv.__on = 1;
-    c.setTransform(dpr, 0, 0, dpr, 0, 0); c.clearRect(0, 0, innerWidth, innerHeight);
+    c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, W, H);
+    // draw in real screen coordinates, measured from where this canvas actually sits (phone browsers resize the
+    // viewport when the address bar hides, which used to push the effects below the bear's mouth)
+    var fr = cv.getBoundingClientRect(); if (!fr.width || !fr.height) return;
+    var kx = W / fr.width, ky = H / fr.height; c.setTransform(kx, 0, 0, ky, -fr.left * kx, -fr.top * ky);
     FX = FX.filter(function (p) {
       var age = now - p.t0;
       if (p.k === "S") return drawSpew(c, p, now, dt);

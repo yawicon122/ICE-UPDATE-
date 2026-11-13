@@ -303,10 +303,13 @@
     var air = 0;
     if (isLaunch && !reduce) {
       var sinceScroll = now - (B.lastScroll || 0);
-      if (sinceScroll > .09) B.sv = (B.sv || 0) * Math.exp(-dt * 9);
+      var want = sinceScroll < .12 ? (B.svRaw || 0) : 0;            // scroll speed, smoothed so the rise is never jerky
+      B.sv = (B.sv || 0) + (want - (B.sv || 0)) * Math.min(1, dt * (want > (B.sv || 0) ? 5 : 3));
       var sky = window.innerHeight + 160, target = Math.min(sky, Math.max(0, (B.sv || 0) - 120) * .5);
       B.h = B.h || 0; B.vh = B.vh || 0;
-      if (target > B.h + 1) { B.h += (target - B.h) * Math.min(1, dt * 14); B.vh = 0; if (B.h > window.innerHeight - 150) B.gone = 1; }
+      if (target > B.h + 1 || (B.vh > 0 && B.h < target + 40)) {     // rising: soft spring toward the target height
+        B.vh += (34 * (target - B.h) - 11.6 * B.vh) * dt; B.h = Math.max(0, B.h + B.vh * dt);
+        if (B.h > window.innerHeight + 40) B.gone = 1; }
       else if (B.h > 0) {
         if (B.gone) { B.gone = 0; B.h = sky; }
         B.vh -= 2400 * dt; B.h += B.vh * dt;
@@ -322,7 +325,12 @@
       else { P.sheet = r.sheet; P.f = r.f; P.flip = r.flip; P.push = r.push; P.shove = r.shove; P.noShadow = r.noShadow;
         P.sx *= (r.sx || 1); P.sy *= (r.sy || 1); P.rot = (r.rot || 0) + P.rot * .4; P.ty = (r.ty || 0) + P.ty * .5; P.dx *= .3; }
     } else if (isLaunch && !reduce && now > B.next && !root.classList.contains("open")) think(cv, B, now);
-    if (air) { P.sheet = "fall"; P.f = Math.floor(now * (air > 40 ? 10 : 6)) % 5; P.ty = -air; P.noShadow = air > 60; P.rot = .1 * Math.sin(now * 4.1) * Math.min(1, air / 80); P.sx = P.sy = 1; P.dx = 0; }
+    if (air) {
+      var seq = [0, 1, 2, 3, 4, 3, 2, 1], ph = now * 4.5, i0 = Math.floor(ph), fr = ph - i0, lift = Math.min(1, air / 34);
+      if (lift < 1) { P.blend = { sheet: P.sheet, f: P.f, a: 1 - lift }; }      // feet leave the ground gradually
+      P.sheet = "fall"; P.f = seq[i0 % 8]; P.f2 = seq[(i0 + 1) % 8]; P.mix = fr * fr * (3 - 2 * fr);
+      P.ty = -air; P.noShadow = air > 60; P.rot = .08 * Math.sin(now * 2.6) * lift; P.sx = P.sy = 1; P.dx *= (1 - lift);
+    }
     if (P.flip === undefined) P.flip = B.face < 0;
     // ---- skin/fur jiggle after landings and big moves (decays)
     B.wob = Math.max(0, (B.wob || 0) - dt * 1.6);
@@ -340,7 +348,12 @@
     if (!P.noShadow) { var lift = Math.min(1, Math.max(0, -(P.ty || 0)) / 30); c.fillStyle = "rgba(0,0,0," + (.22 * (1 - lift)) + ")"; c.beginPath(); c.ellipse(W / 2 - (isLaunch ? 0 : 0), H - 3 * dpr - (P.ty || 0) * dpr * (isLaunch ? -1 : 0), 42 * k * (1 - .4 * lift), 6 * k, 0, 0, 7); c.fill(); }
     c.translate(W / 2, H - 2 * dpr);
     c.rotate(P.rot || 0); c.scale((P.flip ? -1 : 1) * (P.sx || 1), P.sy || 1);
-    c.drawImage(S.img, P.f * S.w, 0, S.w, S.h, -S.ax * k, -S.ay * k, S.w * k, S.h * k);
+    var draw1 = function (Sx, f, a) { if (a <= .01 || !Sx || !Sx.img.complete) return; c.globalAlpha = a; c.drawImage(Sx.img, f * Sx.w, 0, Sx.w, Sx.h, -Sx.ax * k, -Sx.ay * k, Sx.w * k, Sx.h * k); };
+    var main = P.blend ? 1 - P.blend.a : 1;
+    if (P.blend) draw1(SH[P.blend.sheet], P.blend.f, P.blend.a);
+    if (P.f2 !== undefined && P.f2 !== P.f) { draw1(S, P.f, main * (1 - P.mix)); draw1(S, P.f2, main * P.mix); }
+    else draw1(S, P.f, main);
+    c.globalAlpha = 1;
   }
   function bearLoop() {
     var now = performance.now() / 1000;
@@ -369,7 +382,7 @@
       var B = bstate(cv);
       if (dy <= 0) return;
       var v = Math.min(9000, dy / dt);
-      B.sv = Math.max((B.sv || 0) * .6, v * .5 + (B.sv || 0) * .5);
+      B.svRaw = (B.svRaw && now - (B.lastScroll || 0) < .15) ? B.svRaw * .7 + v * .3 : v;
       B.lastScroll = now;
     }, { passive: true });
     // it notices you: wave when the mouse comes close

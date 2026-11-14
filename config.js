@@ -18,12 +18,14 @@ window.SITE = {
     telegram: "https://t.me/iceupdate100"
   },
 
-  /* WEBSITE ASSISTANT — the little penguin in the bottom-right corner.
-     It answers trading basics + "how do I use this site" on its own, and sends anyone asking for
-     live prices / signals to the WhatsApp + Telegram links above.
-     endpoint: leave "" for now. To let it answer ANY question with AI, follow worker/README.md
+  /* WEBSITE ASSISTANT — the little polar bear in the bottom-right corner.
+     On its own it answers trading basics + "how do I use this site" and sends live-price questions to the
+     WhatsApp + Telegram links above.
+     endpoint: leave "" for now. To let it answer ANY question with AI, fetch LIVE prices (forex, gold, crypto,
+               indices, stocks), analyse charts, do trading calculations and remember notes, follow worker/README.md
                and paste your Worker address here, e.g. "https://ice-assistant.yourname.workers.dev".
-     enabled:  false hides the penguin everywhere. */
+     liveData: false = even with the AI on, live-price questions go to your channels instead.
+     enabled:  false hides the bear everywhere. */
   assistant: {
     enabled: true,
     endpoint: "",

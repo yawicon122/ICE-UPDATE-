@@ -30,7 +30,8 @@
     tg: (S.links && S.links.telegram) || "",
     maxLen: 600,            // characters per message
     maxPerSession: 40,      // messages sent to the AI per tab session
-    timeoutMs: 25000
+    timeoutMs: 45000,       // the AI may look up prices and run calculations first
+    live: A.liveData !== false,
   };
   var KEY_LOG = "iu_pa_log_v1", KEY_SEEN = "iu_pa_seen_v1", KEY_COUNT = "iu_pa_n_v1";
   var reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -38,6 +39,7 @@
   function ls(k, v) { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (e) { return null; } }
   function safeUrl(u) { return /^https:\/\//i.test(u || "") ? u : ""; }
   CFG.wa = safeUrl(CFG.wa); CFG.tg = safeUrl(CFG.tg);
+  if (CFG.endpoint && CFG.live) CFG.prompts = CFG.prompts.slice(0, 3).concat(["Gold price now", "Analyze EURUSD"]);
 
   /* --------------------------------------------------------- KNOWLEDGE
      Short, education-only answers. Each: keys (phrases), text (mini-markdown), acts (buttons). */
@@ -182,10 +184,18 @@
   }
 
   /* --------------------------------------------------------------- API */
+  // a random private id kept in this browser; it is what keeps /remember notes separate for each visitor
+  function clientId() {
+    var id = ls("iu_pa_cid_v1");
+    if (id && /^[a-f0-9]{32}$/.test(id)) return id;
+    try { var b = new Uint8Array(16); (window.crypto || window.msCrypto).getRandomValues(b); id = Array.prototype.map.call(b, function (x) { return ("0" + x.toString(16)).slice(-2); }).join(""); }
+    catch (e) { id = ""; for (var i = 0; i < 32; i++) id += Math.floor(Math.random() * 16).toString(16); }
+    ls("iu_pa_cid_v1", id); return id;
+  }
   function askAI(history) {
     var ctrl = window.AbortController ? new AbortController() : null;
     var timer = setTimeout(function () { if (ctrl) ctrl.abort(); }, CFG.timeoutMs);
-    var body = { messages: history.slice(-12).map(function (m) { return { role: m.r === "me" ? "user" : "assistant", content: String(m.t).slice(0, 1500) }; }) };
+    var body = { clientId: clientId(), messages: history.slice(-12).map(function (m) { return { role: m.r === "me" ? "user" : "assistant", content: String(m.t).slice(0, 1500) }; }) };
     return fetch(CFG.endpoint, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body), signal: ctrl ? ctrl.signal : undefined })
       .then(function (r) {
         clearTimeout(timer);
@@ -821,7 +831,7 @@
       '<form class="pa-form" autocomplete="off"><label class="pa-sr" for="paIn">Type your question</label>' +
         '<textarea id="paIn" rows="1" maxlength="' + CFG.maxLen + '" placeholder="Ask me anything…"></textarea>' +
         '<button type="submit" class="pa-send" aria-label="Send" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.4 20.4 21 12 3.4 3.6 3.4 10l12.6 2-12.6 2z"/></svg></button></form>' +
-      '<div class="pa-foot">Education only, not financial advice. No live prices here.</div>' +
+      '<div class="pa-foot">' + (CFG.endpoint && CFG.live ? "Education only, not financial advice. Market data can be delayed or wrong, so always check it yourself." : "Education only, not financial advice. No live prices here.") + "</div>" +
     "</section>";
 
   var $ = function (s) { return root.querySelector(s); };
@@ -868,9 +878,11 @@
 
   function reply(q) {
     // 1) live data / signals → channels (always local, instant)
-    if (isLive(q)) { var lr = liveReply(); return Promise.resolve({ t: lr.t, a: lr.acts }); }
+    // (with the AI server on, live questions go to it, because it can fetch real prices; /commands always go to it)
+    var cmd = /^\//.test(q);
+    if (!cmd && isLive(q) && !(CFG.endpoint && CFG.live)) { var lr = liveReply(); return Promise.resolve({ t: lr.t, a: lr.acts }); }
     // 2) known topic → instant local answer
-    var hit = match(q);
+    var hit = (cmd || (isLive(q) && CFG.live)) && CFG.endpoint ? null : match(q);
     if (hit && (hit.score >= 2 || !CFG.endpoint)) {
       var e = hit.e; return Promise.resolve({ t: typeof e.t === "function" ? e.t() : e.t, a: e.acts });
     }

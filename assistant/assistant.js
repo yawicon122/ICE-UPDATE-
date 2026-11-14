@@ -198,104 +198,181 @@
   }
 
   /* ---------------------------------------------------------------- UI */
-  // the polar bear: frame-by-frame sprites (assistant/bear-*.webp) + live body motion, with a little "brain"
+  // the polar bear: the hand-drawn frames + computed in-between frames, a rigged walk cycle and a breathing idle loop
+  // (assistant/bear-*.webp), a live gold chain with physics, and a little "brain" that picks what to do next
   function pengHTML() { return '<span class="pa-mv"><canvas class="pa-bear" aria-hidden="true"></canvas></span>'; }
   function pengMini() { return '<canvas class="pa-bear pa-bear-mini" aria-hidden="true"></canvas>'; }
-  var SH = { walk: { w: 130, h: 155, ax: 67, ay: 152, n: 8 }, push: { w: 186, h: 156, ax: 93, ay: 154, n: 12 },
-    happy: { w: 120, h: 157, ax: 61, ay: 155, n: 8 }, hello: { w: 173, h: 161, ax: 91, ay: 159, n: 11 }, fall: { w: 128, h: 153, ax: 65, ay: 151, n: 12 }, rain: { w: 166, h: 216, ax: 83, ay: 214, n: 15 } };
-  var STAND = 150;
-  Object.keys(SH).forEach(function (k) { var im = new Image(); im.decoding = "async"; im.src = BASE + "bear-" + k + ".webp?v=chain1"; SH[k].img = im; });
-  var PEND = {"happy":[[62.0,68.2],[61.0,68.2],[60.0,68.2],[60.0,68.2],[58.0,65.2],[57.0,66.2],[58.0,65.2],[61.0,68.2]],"hello":[[93.0,73.2],[94.0,71.2],[92.0,72.2],[111.0,97.2],[104.0,71.2],[99.0,63.2],[96.0,67.2],[89.0,83.2],[93.0,74.2],[91.0,75.2],[90.0,73.2]],"walk":[[74.0,65.2],[76.0,65.2],[79.0,71.2],[80.0,74.2],[82.0,74.2],[75.0,69.2],[77.0,69.2],[77.0,69.2]],"push":[[91.0,71.2],[102.0,69.2],[105.0,81.2],[104.0,91.2],[113.0,88.2],[119.0,88.2],[120.0,88.2],[120.0,88.2],[106.0,83.2],[98.0,78.2],[97.0,71.2],[97.0,70.2]],"fall":[[65.0,78.2],[62.0,77.2],[63.0,77.2],[67.0,77.2],[59.0,78.2],null,null,null,null,[70.0,94.2],[66.0,59.2],[64.0,57.2]],"rain":[[84.0,132.2],[86.0,132.2],[84.0,132.2],[84.0,132.2],[84.0,132.2],[84.0,132.2],[84.0,131.2],[84.0,139.2],[86.0,137.2],[84.0,136.2],[92.0,123.2],[82.0,129.2],[84.0,127.2],[84.0,136.2],[84.0,141.2]]};   // where the chain's pendant sits in every frame (for the sparkle)
+  /*BEAR-DATA*/var BD = {"atlas":["bear-core.webp","bear-hello.webp","bear-push.webp","bear-fall.webp","bear-rain.webp"],"f":{"idle0":[0,1947,0,91,154,44,152,-17.6,-111.4,18.4,-110.8,1.1,-94.0],"idle1":[0,0,157,92,154,45,152,-17.4,-111.6,18.6,-111.0,1.3,-94.2],"idle2":[0,93,157,91,154,45,152,-17.2,-111.8,18.8,-111.1,1.5,-94.4],"idle3":[0,185,157,91,154,45,152,-17.0,-111.9,19.0,-111.1,1.7,-94.5],"idle4":[0,277,157,91,154,45,152,-16.9,-111.9,19.1,-111.1,1.9,-94.5],"idle5":[0,369,157,91,154,45,152,-16.8,-111.8,19.2,-111.1,2.0,-94.4],"idle6":[0,461,157,90,154,45,152,-16.8,-111.6,19.2,-111.0,2.1,-94.3],"idle7":[0,552,157,91,154,46,152,-16.8,-111.4,19.2,-110.8,2.1,-94.2],"idle8":[0,644,157,91,154,46,152,-16.8,-111.1,19.2,-110.6,2.1,-94.0],"idle9":[0,984,312,91,153,46,151,-16.9,-110.8,19.1,-110.5,2.1,-93.8],"idle10":[0,1076,312,91,153,46,151,-17.0,-110.6,19.0,-110.4,2.0,-93.6],"idle11":[0,1168,312,91,153,46,151,-17.1,-110.5,18.8,-110.4,1.9,-93.5],"idle12":[0,736,157,91,154,46,152,-17.3,-110.5,18.7,-110.4,1.7,-93.5],"idle13":[0,828,157,90,154,46,152,-17.5,-110.5,18.5,-110.5,1.6,-93.5],"idle14":[0,919,157,91,154,46,152,-17.7,-110.7,18.3,-110.7,1.4,-93.7],"idle15":[0,1011,157,91,154,46,152,-17.9,-110.8,18.1,-111.0,1.2,-93.8],"idle16":[0,1103,157,91,154,46,152,-18.2,-111.0,17.8,-111.2,0.9,-94.0],"idle17":[0,1195,157,91,154,46,152,-18.4,-111.2,17.6,-111.5,0.7,-94.2],"idle18":[0,474,0,91,155,46,153,-18.6,-111.3,17.4,-111.7,0.5,-94.4],"idle19":[0,566,0,91,155,46,153,-18.9,-111.3,17.1,-111.8,0.3,-94.5],"idle20":[0,658,0,92,155,46,153,-19.1,-111.3,16.9,-111.9,0.1,-94.5],"idle21":[0,751,0,91,155,45,153,-19.2,-111.2,16.8,-111.8,-0.0,-94.5],"idle22":[0,843,0,91,155,45,153,-19.3,-111.0,16.7,-111.7,-0.1,-94.3],"idle23":[0,1287,157,91,154,45,152,-19.4,-110.7,16.6,-111.5,-0.2,-94.2],"idle24":[0,1379,157,91,154,45,152,-19.4,-110.5,16.6,-111.3,-0.2,-94.0],"idle25":[0,1471,157,92,154,45,152,-19.3,-110.3,16.7,-111.0,-0.1,-93.8],"idle26":[0,1564,157,92,154,45,152,-19.2,-110.2,16.8,-110.8,-0.0,-93.6],"idle27":[0,1657,157,91,154,44,152,-19.0,-110.2,17.0,-110.7,0.1,-93.5],"idle28":[0,1749,157,91,154,44,152,-18.7,-110.3,17.2,-110.6,0.2,-93.5],"idle29":[0,1841,157,91,154,44,152,-18.5,-110.5,17.5,-110.6,0.4,-93.5],"idle30":[0,1933,157,91,154,44,152,-18.2,-110.8,17.8,-110.6,0.7,-93.7],"idle31":[0,0,312,91,154,44,152,-17.9,-111.1,18.1,-110.7,0.9,-93.8],"rw0":[0,1739,467,87,140,40,137,-10.3,-100.8,25.5,-95.5,12.0,-83.0],"rw1":[0,1552,467,87,141,40,138,-10.5,-102.0,25.4,-96.7,11.9,-84.2],"rw2":[0,1363,467,87,143,40,140,-10.9,-104.1,25.0,-99.1,11.6,-86.5],"rw3":[0,995,467,86,145,40,142,-11.3,-105.5,24.6,-100.7,11.3,-88.0],"rw4":[0,816,467,86,146,40,144,-11.7,-106.4,24.2,-101.8,11.0,-89.0],"rw5":[0,283,467,87,148,40,146,-11.9,-106.9,24.1,-102.4,10.9,-89.6],"rw6":[0,107,467,88,149,40,147,-11.7,-106.9,24.2,-102.2,11.0,-89.5],"rw7":[0,371,467,90,148,40,146,-11.3,-106.3,24.6,-101.5,11.3,-88.8],"rw8":[0,636,467,92,147,41,144,-10.9,-105.4,25.0,-100.4,11.6,-87.8],"rw9":[0,1082,467,94,145,43,142,-10.5,-104.4,25.4,-99.1,11.9,-86.6],"rw10":[0,1827,467,96,140,44,137,-10.3,-100.8,25.5,-95.5,12.0,-83.0],"rw11":[0,1640,467,98,141,47,138,-10.5,-102.0,25.4,-96.7,11.9,-84.2],"rw12":[0,1451,467,100,143,49,140,-10.9,-104.1,25.0,-99.1,11.6,-86.5],"rw13":[0,1177,467,97,145,47,142,-11.3,-105.5,24.6,-100.7,11.3,-88.0],"rw14":[0,903,467,91,146,43,144,-11.7,-106.4,24.2,-101.8,11.0,-89.0],"rw15":[0,462,467,87,148,40,146,-11.9,-106.9,24.1,-102.4,10.9,-89.6],"rw16":[0,196,467,86,149,40,147,-11.7,-106.9,24.2,-102.2,11.0,-89.5],"rw17":[0,550,467,85,148,40,146,-11.3,-106.3,24.6,-101.5,11.3,-88.8],"rw18":[0,729,467,86,147,40,144,-10.9,-105.4,25.0,-100.4,11.6,-87.8],"rw19":[0,1275,467,87,145,40,142,-10.5,-104.4,25.4,-99.1,11.9,-86.6],"happy0":[0,1260,312,90,153,45,151,-18.0,-111.0,18.0,-111.0,1.0,-94.0],"happy1":[0,1351,312,103,153,54,151,-18.0,-111.0,17.0,-111.0,0.0,-94.0],"happy2":[0,935,0,105,155,47,153,-18.0,-110.0,16.0,-111.0,-1.0,-94.0],"happy3":[0,1041,0,114,155,56,153,-18.0,-110.0,16.0,-111.0,-1.0,-94.0],"happy4":[0,0,0,114,156,58,155,-20.0,-113.0,14.0,-113.0,-3.0,-97.0],"happy5":[0,115,0,119,156,61,155,-21.0,-112.0,13.0,-112.0,-4.0,-96.0],"happy6":[0,92,312,106,154,51,153,-19.0,-113.0,14.0,-113.0,-3.0,-97.0],"happy7":[0,1455,312,88,153,45,152,-18.0,-111.0,17.0,-111.0,0.0,-94.0],"happy0-1.1":[0,1544,312,100,153,54,151,-18.0,-111.0,17.7,-111.0,0.7,-94.0],"happy0-1.2":[0,1645,312,101,153,54,151,-18.0,-111.0,17.3,-111.0,0.3,-94.0],"happy1-2.1":[0,199,312,112,154,54,152,-18.0,-110.7,16.7,-111.0,-0.3,-94.0],"happy1-2.2":[0,312,312,112,154,54,152,-18.0,-110.3,16.3,-111.0,-0.7,-94.0],"happy2-3.1":[0,1156,0,108,155,50,153,-18.0,-110.0,16.0,-111.0,-1.0,-94.0],"happy2-3.2":[0,1265,0,111,155,53,153,-18.0,-110.0,16.0,-111.0,-1.0,-94.0],"happy3-4.1":[0,425,312,116,154,58,153,-18.7,-111.0,15.3,-111.7,-1.7,-95.0],"happy3-4.2":[0,1377,0,116,155,58,154,-19.3,-112.0,14.7,-112.3,-2.3,-96.0],"happy4-5.1":[0,235,0,118,156,61,155,-20.3,-112.7,13.7,-112.7,-3.3,-96.7],"happy4-5.2":[0,354,0,119,156,61,155,-20.7,-112.3,13.3,-112.3,-3.7,-96.3],"happy5-6.1":[0,1494,0,119,155,61,154,-20.3,-112.3,13.3,-112.3,-3.7,-96.3],"happy5-6.2":[0,542,312,118,154,61,153,-19.7,-112.7,13.7,-112.7,-3.3,-96.7],"happy6-7.1":[0,661,312,103,154,48,153,-18.7,-112.3,15.0,-112.3,-2.0,-96.0],"happy6-7.2":[0,765,312,101,154,46,153,-18.3,-111.7,16.0,-111.7,-1.0,-95.0],"happy7-0.1":[0,1747,312,89,153,45,152,-18.0,-111.0,17.3,-111.0,0.3,-94.0],"happy7-0.2":[0,1837,312,89,153,45,152,-18.0,-111.0,17.7,-111.0,0.7,-94.0],"happy0-2.1":[0,1927,312,104,152,46,150,-18.0,-110.7,17.3,-111.0,0.3,-94.0],"happy0-2.2":[0,1614,0,104,155,46,153,-18.0,-110.3,16.7,-111.0,-0.3,-94.0],"happy2-4.1":[0,867,312,116,154,58,153,-18.7,-111.0,15.3,-111.7,-1.7,-95.0],"happy2-4.2":[0,1719,0,116,155,58,154,-19.3,-112.0,14.7,-112.3,-2.3,-96.0],"happy0-3.1":[0,0,467,106,152,48,150,-18.0,-110.7,17.3,-111.0,0.3,-94.0],"happy0-3.2":[0,1836,0,110,155,52,153,-18.0,-110.3,16.7,-111.0,-0.3,-94.0],"hello0":[1,1120,0,90,153,45,151,-23.0,-109.0,18.0,-107.0,2.0,-93.0],"hello1":[1,888,0,116,154,64,153,-21.0,-110.0,18.0,-108.0,3.0,-95.0],"hello2":[1,283,0,130,157,53,157,-23.0,-110.0,16.0,-108.0,1.0,-94.0],"hello3":[1,756,310,140,126,90,126,3.0,-95.0,32.0,-83.0,20.0,-69.0],"hello4":[1,0,159,142,150,74,150,-13.0,-112.0,31.0,-111.0,13.0,-95.0],"hello5":[1,697,159,127,148,65,157,-11.0,-119.0,25.0,-119.0,8.0,-103.0],"hello6":[1,301,310,165,137,83,157,-15.0,-115.0,27.0,-115.0,5.0,-99.0],"hello7":[1,166,310,134,138,74,140,-23.0,-97.0,19.0,-97.0,-2.0,-83.0],"hello8":[1,237,159,165,149,86,150,-19.0,-107.0,23.0,-107.0,2.0,-92.0],"hello9":[1,1451,159,127,146,65,148,-23.0,-106.0,22.0,-107.0,0.0,-91.0],"hello10":[1,143,159,93,150,49,151,-27.0,-109.0,17.0,-107.0,-1.0,-93.0],"hello0-1.1":[1,1211,0,112,153,64,151,-22.3,-109.3,18.0,-107.3,2.3,-93.7],"hello0-1.2":[1,1005,0,114,154,64,152,-21.7,-109.7,18.0,-107.7,2.7,-94.3],"hello1-2.1":[1,0,0,140,158,64,157,-21.7,-110.0,17.3,-108.0,2.3,-94.7],"hello1-2.2":[1,141,0,141,158,64,157,-22.3,-110.0,16.7,-108.0,1.7,-94.3],"hello2-3.1":[1,414,0,167,157,90,157,-14.3,-105.0,21.3,-99.7,7.3,-85.7],"hello2-3.2":[1,582,0,166,157,90,157,-5.7,-100.0,26.7,-91.3,13.7,-77.3],"hello3-4.1":[1,467,310,146,134,90,134,-2.3,-100.7,31.7,-92.3,17.7,-77.7],"hello3-4.2":[1,1887,159,152,142,90,142,-7.7,-106.3,31.3,-101.7,15.3,-86.3],"hello4-5.1":[1,1324,0,140,153,74,153,-12.3,-114.3,29.0,-113.7,11.3,-97.7],"hello4-5.2":[1,749,0,138,155,74,155,-11.7,-116.7,27.0,-116.3,9.7,-100.3],"hello5-6.1":[1,825,159,165,148,83,157,-12.3,-117.7,25.7,-117.7,7.0,-101.7],"hello5-6.2":[1,991,159,165,148,83,157,-13.7,-116.3,26.3,-116.3,6.0,-100.3],"hello6-7.1":[1,1465,0,165,153,83,157,-17.7,-109.0,24.3,-109.0,2.7,-93.7],"hello6-7.2":[1,1631,0,165,153,83,157,-20.3,-103.0,21.7,-103.0,0.3,-88.3],"hello7-8.1":[1,0,310,165,142,86,144,-21.7,-100.3,20.3,-100.3,-0.7,-86.0],"hello7-8.2":[1,1579,159,165,145,86,147,-20.3,-103.7,21.7,-103.7,0.7,-89.0],"hello8-9.1":[1,403,159,165,149,86,150,-20.3,-106.7,22.7,-107.0,1.3,-91.7],"hello8-9.2":[1,1157,159,165,147,86,149,-21.7,-106.3,22.3,-107.0,0.7,-91.3],"hello9-10.1":[1,1323,159,127,147,65,149,-24.3,-107.0,20.3,-107.0,-0.3,-91.7],"hello9-10.2":[1,569,159,127,149,65,150,-25.7,-108.0,18.7,-107.0,-0.7,-92.3],"hello10-0.1":[1,1890,0,92,151,48,151,-25.7,-109.0,17.3,-107.0,0.0,-93.0],"hello10-0.2":[1,1797,0,92,152,47,151,-24.3,-109.0,17.7,-107.0,1.0,-93.0],"hello1-3.1":[1,1745,159,141,145,90,144,-13.0,-105.0,22.7,-99.7,8.7,-86.3],"hello1-3.2":[1,614,310,141,134,90,134,-5.0,-100.0,27.3,-91.3,14.3,-77.7],"push2":[2,621,0,162,142,80,141,-17.0,-97.0,27.0,-96.0,12.0,-80.0],"push3":[2,1264,151,179,128,92,129,-13.0,-91.0,29.0,-84.0,11.0,-70.0],"push4":[2,1444,151,185,127,93,133,-5.0,-94.0,38.0,-87.0,20.0,-73.0],"push5":[2,369,288,184,126,93,133,1.0,-94.0,44.0,-87.0,26.0,-73.0],"push6":[2,920,288,182,125,93,133,2.0,-94.0,45.0,-87.0,27.0,-73.0],"push7":[2,1103,288,182,125,93,133,2.0,-94.0,45.0,-87.0,27.0,-73.0],"push8":[2,545,151,170,135,93,144,-13.0,-96.0,28.0,-94.0,13.0,-78.0],"push9":[2,1673,0,174,137,82,145,-25.0,-101.0,21.0,-99.0,5.0,-83.0],"push10":[2,489,0,131,144,58,149,-18.0,-106.0,26.0,-106.0,4.0,-90.0],"push11":[2,0,0,162,150,82,154,-18.0,-106.0,26.0,-106.0,4.0,-91.0],"push2-3.1":[2,1134,0,166,138,84,137,-15.7,-95.0,27.7,-92.0,11.7,-76.7],"push2-3.2":[2,716,151,175,134,88,133,-14.3,-93.0,28.3,-88.0,11.3,-73.3],"push3-4.1":[2,1078,151,185,129,93,130,-10.3,-92.0,32.0,-85.0,14.0,-71.0],"push3-4.2":[2,892,151,185,131,93,132,-7.7,-93.0,35.0,-86.0,17.0,-72.0],"push4-5.1":[2,1630,151,185,127,93,133,-3.0,-94.0,40.0,-87.0,22.0,-73.0],"push4-5.2":[2,1816,151,185,127,93,133,-1.0,-94.0,42.0,-87.0,24.0,-73.0],"push5-6.1":[2,0,288,184,127,93,134,1.3,-94.0,44.3,-87.0,26.3,-73.0],"push5-6.2":[2,185,288,183,127,93,134,1.7,-94.0,44.7,-87.0,26.7,-73.0],"push6-7.1":[2,554,288,182,126,93,134,2.0,-94.0,45.0,-87.0,27.0,-73.0],"push6-7.2":[2,737,288,182,126,93,134,2.0,-94.0,45.0,-87.0,27.0,-73.0],"push7-8.1":[2,1848,0,182,136,93,144,-3.0,-94.7,39.3,-89.3,22.3,-74.7],"push7-8.2":[2,0,151,182,136,93,144,-8.0,-95.3,33.7,-91.7,17.7,-76.3],"push8-4.1":[2,1301,0,185,138,93,144,-10.3,-95.3,31.3,-91.7,15.3,-76.3],"push8-4.2":[2,1487,0,185,138,93,144,-7.7,-94.7,34.7,-89.3,17.7,-74.7],"push8-9.1":[2,183,151,181,136,89,144,-17.0,-97.7,25.7,-95.7,10.3,-79.7],"push8-9.2":[2,365,151,179,136,87,144,-21.0,-99.3,23.3,-97.3,7.7,-81.3],"push9-10.1":[2,959,0,174,140,82,147,-22.7,-102.7,22.7,-101.3,4.7,-85.3],"push9-10.2":[2,784,0,174,142,82,148,-20.3,-104.3,24.3,-103.7,4.3,-87.7],"push10-11.1":[2,326,0,162,149,82,154,-18.0,-106.0,26.0,-106.0,4.0,-90.3],"push10-11.2":[2,163,0,162,150,82,154,-18.0,-106.0,26.0,-106.0,4.0,-90.7],"fall0":[3,771,0,84,125,42,124,-15.0,-94.0,15.0,-95.0,0.0,-80.0],"fall1":[3,325,0,91,126,45,124,-18.0,-95.0,12.0,-96.0,-3.0,-81.0],"fall2":[3,417,0,85,126,42,124,-17.0,-95.0,13.0,-96.0,-2.0,-81.0],"fall3":[3,856,0,85,125,42,124,-13.0,-95.0,16.0,-96.0,2.0,-81.0],"fall4":[3,942,0,103,125,51,124,-23.0,-93.0,7.0,-97.0,-6.0,-80.0],"fall5":[3,1872,0,87,83,43,94],"fall6":[3,409,152,109,66,51,69],"fall7":[3,997,152,127,46,65,48],"fall8":[3,110,152,112,76,61,84],"fall9":[3,1661,0,103,97,55,108,-14.0,-79.0,22.0,-78.0,5.0,-64.0],"fall10":[3,247,0,77,139,42,140,-17.0,-115.0,19.0,-115.0,1.0,-99.0],"fall11":[3,0,0,83,151,42,151,-19.0,-117.0,17.0,-117.0,-1.0,-101.0],"fall0-1.1":[3,1046,0,86,125,43,124,-16.0,-94.3,14.0,-95.3,-1.0,-80.3],"fall0-1.2":[3,503,0,89,126,44,124,-17.0,-94.7,13.0,-95.7,-2.0,-80.7],"fall1-2.1":[3,593,0,89,126,44,124,-17.7,-95.0,12.3,-96.0,-2.7,-81.0],"fall1-2.2":[3,683,0,87,126,43,124,-17.3,-95.0,12.7,-96.0,-2.3,-81.0],"fall2-3.1":[3,1133,0,86,125,43,124,-15.7,-95.0,14.0,-96.0,-0.7,-81.0],"fall2-3.2":[3,1220,0,84,125,42,124,-14.3,-95.0,15.0,-96.0,0.7,-81.0],"fall3-4.1":[3,1305,0,90,125,45,124,-16.3,-94.3,13.0,-96.3,-0.7,-80.7],"fall3-4.2":[3,1396,0,96,125,48,124,-19.7,-93.7,10.0,-96.7,-3.3,-80.3],"fall5-6.1":[3,223,152,88,75,43,84],"fall5-6.2":[3,312,152,96,68,44,75],"fall6-7.1":[3,636,152,115,57,56,61],"fall6-7.2":[3,875,152,121,50,61,53],"fall7-8.1":[3,752,152,122,56,64,60],"fall7-8.2":[3,519,152,116,66,62,72],"fall8-9.1":[3,0,152,109,83,59,92],"fall8-9.2":[3,1765,0,106,89,57,99],"fall9-10.1":[3,1571,0,89,110,48,118,-15.0,-91.0,21.0,-90.3,3.7,-75.7],"fall9-10.2":[3,1493,0,77,125,42,130,-16.0,-103.0,20.0,-102.7,2.3,-87.3],"fall10-11.1":[3,167,0,79,143,42,144,-17.7,-115.7,18.3,-115.7,0.3,-99.7],"fall10-11.2":[3,84,0,82,148,43,148,-18.3,-116.3,17.7,-116.3,-0.3,-100.3],"rain0":[4,1223,216,103,153,52,151,-23.0,-106.0,23.0,-106.0,1.0,-89.0],"rain1":[4,492,216,103,179,52,177,-21.0,-106.0,25.0,-106.0,3.0,-89.0],"rain2":[4,916,216,103,157,52,155,-23.0,-106.0,23.0,-106.0,1.0,-89.0],"rain3":[4,1739,216,101,147,50,146,-23.0,-106.0,23.0,-106.0,1.0,-89.0],"rain4":[4,1327,216,103,153,52,151,-23.0,-106.0,23.0,-106.0,1.0,-89.0],"rain5":[4,1431,216,103,153,52,151,-23.0,-106.0,23.0,-106.0,1.0,-89.0],"rain6":[4,1020,216,101,155,48,155,-23.0,-107.0,23.0,-107.0,1.0,-90.0],"rain7":[4,666,399,104,142,51,140,-23.0,-99.0,23.0,-99.0,1.0,-82.0],"rain8":[4,1841,216,143,147,68,149,-23.0,-101.0,25.0,-101.0,3.0,-84.0],"rain9":[4,771,399,142,142,66,144,-23.0,-102.0,23.0,-102.0,1.0,-85.0],"rain10":[4,166,216,159,181,80,181,-13.0,-114.0,31.0,-114.0,9.0,-98.0],"rain11":[4,1278,0,165,183,83,183,-23.0,-108.0,21.0,-108.0,-1.0,-92.0],"rain12":[4,326,216,165,180,83,180,-21.0,-110.0,23.0,-110.0,1.0,-94.0],"rain13":[4,970,0,141,199,66,201,-23.0,-102.0,25.0,-102.0,1.0,-85.0],"rain14":[4,0,0,106,215,50,214,-23.0,-96.0,23.0,-96.0,1.0,-80.0],"rain5-6.1":[4,1535,216,100,152,49,152,-23.0,-106.3,23.0,-106.3,1.0,-89.3],"rain5-6.2":[4,1122,216,100,154,48,154,-23.0,-106.7,23.0,-106.7,1.0,-89.7],"rain6-7.1":[4,1636,216,102,150,49,150,-23.0,-104.3,23.0,-104.3,1.0,-87.3],"rain6-7.2":[4,0,399,103,145,50,145,-23.0,-101.7,23.0,-101.7,1.0,-84.7],"rain7-8.1":[4,532,399,133,143,58,143,-23.0,-99.7,23.7,-99.7,1.7,-82.7],"rain7-8.2":[4,104,399,140,145,65,146,-23.0,-100.3,24.3,-100.3,2.3,-83.3],"rain8-9.1":[4,245,399,143,145,67,147,-23.0,-101.3,24.3,-101.3,2.3,-84.3],"rain8-9.2":[4,389,399,142,144,66,146,-23.0,-101.7,23.7,-101.7,1.7,-84.7],"rain9-10.1":[4,756,216,159,161,80,163,-19.7,-106.0,25.7,-106.0,3.7,-89.3],"rain9-10.2":[4,596,216,159,163,80,164,-16.3,-110.0,28.3,-110.0,6.3,-93.7],"rain10-11.1":[4,1776,0,165,182,83,183,-16.3,-112.0,27.7,-112.0,5.7,-96.0],"rain10-11.2":[4,1444,0,165,183,83,183,-19.7,-110.0,24.3,-110.0,2.3,-94.0],"rain11-12.1":[4,1610,0,165,183,83,183,-22.3,-108.7,21.7,-108.7,-0.3,-92.7],"rain11-12.2":[4,0,216,165,182,83,183,-21.7,-109.3,22.3,-109.3,0.3,-93.3],"rain12-13.1":[4,804,0,165,200,83,201,-21.7,-107.3,23.7,-107.3,1.0,-91.0],"rain12-13.2":[4,1112,0,165,199,83,201,-22.3,-104.7,24.3,-104.7,1.0,-88.0],"rain13-14.1":[4,107,0,135,215,60,214,-23.0,-100.0,24.3,-100.0,1.0,-83.3],"rain13-14.2":[4,243,0,133,215,58,214,-23.0,-98.0,23.7,-98.0,1.0,-81.7],"rain14-7.1":[4,377,0,106,215,50,214,-23.0,-97.0,23.0,-97.0,1.0,-80.7],"rain14-7.2":[4,484,0,106,215,50,214,-23.0,-98.0,23.0,-98.0,1.0,-81.3],"rain14-5.1":[4,591,0,106,215,50,214,-23.0,-99.3,23.0,-99.3,1.0,-83.0],"rain14-5.2":[4,698,0,105,215,49,214,-23.0,-102.7,23.0,-102.7,1.0,-86.0]},"tw":{"happy0-1":2,"happy1-2":2,"happy2-3":2,"happy3-4":2,"happy4-5":2,"happy5-6":2,"happy6-7":2,"happy7-0":2,"happy0-2":2,"happy2-4":2,"happy0-3":2,"hello0-1":2,"hello1-2":2,"hello2-3":2,"hello3-4":2,"hello4-5":2,"hello5-6":2,"hello6-7":2,"hello7-8":2,"hello8-9":2,"hello9-10":2,"hello10-0":2,"hello1-3":2,"push2-3":2,"push3-4":2,"push4-5":2,"push5-6":2,"push6-7":2,"push7-8":2,"push8-4":2,"push8-9":2,"push9-10":2,"push10-11":2,"fall0-1":2,"fall1-2":2,"fall2-3":2,"fall3-4":2,"fall5-6":2,"fall6-7":2,"fall7-8":2,"fall8-9":2,"fall9-10":2,"fall10-11":2,"rain5-6":2,"rain6-7":2,"rain7-8":2,"rain8-9":2,"rain9-10":2,"rain10-11":2,"rain11-12":2,"rain12-13":2,"rain13-14":2,"rain14-7":2,"rain14-5":2},"idle":[32,3.2],"rw":[20,58.62068965517242],"reach":{"push2":51,"push3":46,"push4":57,"push5":61,"push6":62,"push7":65,"push8":61,"push9":60,"push10":66,"push11":45}};/*END-BEAR-DATA*/
+  var STAND = 150, BV = "s1";
+  var ATL = BD.atlas.map(function (fn) { return { fn: fn, img: null, ok: false }; });
+  function loadAtlas(i) {
+    var a = ATL[i]; if (!a || a.img) return;
+    var im = new Image(); im.decoding = "async"; im.onload = function () { a.ok = true; }; im.src = BASE + a.fn + "?v=" + BV; a.img = im;
+  }
+  loadAtlas(0);                                                     // idle, walk, waving: needed straight away
+  setTimeout(function () { [3, 2, 1, 4].forEach(function (i, n) { setTimeout(function () { loadAtlas(i); }, n * 350); }); }, 1200);
+  function has(n) { var d = BD.f[n]; return !!(d && ATL[d[0]].ok); }
+  function sheetReady(sh) { return has(sh + (sh === "push" ? 4 : 0)); }
 
   var PI = Math.PI, TAU = 2 * PI;
-  function frames(list, fps) { return list.map(function (f) { return { f: f, d: 1 / fps }; }); }
-  function at(steps, u) { var t = 0; for (var i = 0; i < steps.length; i++) { t += steps[i].d; if (u < t) return steps[i]; } return null; }
-  function total(steps) { return steps.reduce(function (s, x) { return s + x.d; }, 0); }
   function sm(u) { u = Math.max(0, Math.min(1, u)); return u * u * (3 - 2 * u); }
   function rnd(a, b) { return a + Math.random() * (b - a); }
   var HOME_MIN = -130, HOME_MAX = 0;     // how far left of its corner the bear may wander (px)
+  var PARSE = {};
+  function key(n) { return PARSE[n] || (PARSE[n] = (/^([a-z]+)(\d+)$/.exec(n) || [0, n, "-1"]).slice(1)); }
+  // the frames for moving from drawing a to drawing b (fraction s): the in-betweens if there are any, else a quick dissolve
+  function seg(a, b, s) {
+    if (a === b || s <= 0) return { f: a };
+    if (s >= 1) return { f: b };
+    var ka = key(a), kb = key(b);
+    if (ka[0] === kb[0]) {
+      var nm = ka[0] + ka[1] + "-" + kb[1], K = BD.tw[nm], rev = false;
+      if (K === undefined) { nm = ka[0] + kb[1] + "-" + ka[1]; K = BD.tw[nm]; rev = true; }
+      if (K) {
+        var x = s * (K + 1), i = Math.floor(x);
+        var fr = function (j) { return j <= 0 ? a : j >= K + 1 ? b : nm + "." + (rev ? K + 1 - j : j); };
+        return { f: fr(i), f2: fr(i + 1), mix: x - i };
+      }
+    }
+    return { f: a, f2: b, mix: sm((s - .3) / .4) };
+  }
+  // a timeline of drawings [[frame, seconds, move]]: "move" = the part of the step spent gliding on to the next drawing
+  function tl(steps, u) {
+    var t = 0;
+    for (var i = 0; i < steps.length; i++) {
+      var st = steps[i], d = st[1];
+      if (u < t + d) {
+        var nx = steps[i + 1], mv = st[2] === undefined ? 1 : st[2];
+        if (!nx || mv <= 0) return { f: st[0] };
+        var s = ((u - t) / d - (1 - mv)) / mv;
+        return s <= 0 ? { f: st[0] } : seg(st[0], nx[0], mv < 1 ? sm(s) : s);
+      }
+      t += d;
+    }
+    return null;
+  }
+  function seq(sh, keys, fps) { return keys.map(function (k) { return [sh + k, 1 / fps]; }); }
+  function dur(steps) { return steps.reduce(function (s, x) { return s + x[1]; }, 0); }
+  function idlePose(now) { var N = BD.idle[0], x = (now / BD.idle[1] % 1) * N, i = Math.floor(x); return { f: "idle" + i, f2: "idle" + (i + 1) % N, mix: x - i }; }
+  function walkPose(ph) { var N = BD.rw[0], x = (((ph % 1) + 1) % 1) * N, i = Math.floor(x); return { f: "rw" + i, f2: "rw" + (i + 1) % N, mix: x - i }; }
+  var WALK_V = 30;    // walking speed, px per second
+  // walk to A.to with the rigged walk cycle: the legs advance exactly as far as the body moves, so the feet never slide.
+  // eases in, brakes into the stop. returns the pose while walking, null once there
+  function walkTo(B, A) {
+    var dt = B.dt === undefined ? .016 : B.dt, d = A.to - B.x, dist = Math.abs(d);
+    if (dist < .5) { B.x = A.to; return null; }
+    var dir = d > 0 ? 1 : -1, sc = B.cv.__scale || .43;
+    A.wt = (A.wt || 0) + dt;
+    var v = WALK_V * sm(A.wt / .4) * Math.min(1, Math.sqrt(dist / 16));
+    v = Math.max(v, 5); if (v * dt > dist) v = dist / Math.max(dt, 1e-3);
+    B.x += dir * v * dt; B.face = dir;
+    A.ph = (A.ph === undefined ? .2 : A.ph) + v * dt / (BD.rw[1] * sc);
+    var p = walkPose(A.ph); p.flip = dir < 0; p.walk = 1; return p;
+  }
+  function puff(B, dx, n, big) {     // little dust clouds at the bear's feet
+    if (!B.cv || reduce) return;
+    var r = B.cv.getBoundingClientRect(), sc = B.cv.__scale || .43, now = performance.now() / 1000, f = B.pose ? B.pose.fx < 0 ? -1 : 1 : 1;
+    for (var i = 0; i < n; i++) FX.push({ k: "P", x: r.left + r.width / 2 + f * dx * sc + rnd(-6, 6), y: r.bottom - 3, vx: rnd(-28, 28) + f * (dx < 0 ? -18 : 18) * (big ? 1.5 : .6), vy: -rnd(4, 18),
+      t0: now, life: rnd(.45, .8) * (big ? 1.3 : 1), r: rnd(3, 5.5) * (big ? 1.35 : 1) });
+  }
 
-  /* ---- actions: each returns a pose {sheet,f,dx,ty,flip,sx,sy,rot} for time u, or null when finished ---- */
-  var WAVE = frames([0, 1, 2, 3, 4, 5, 6, 7, 0], 5), HELLO = frames([0, 1, 2, 2, 3, 4, 5, 6, 7, 8, 9, 10], 6);
+  /* ---- actions: each returns a pose {f,f2,mix, flip,sx,sy,rot,ty} for time u, or null when finished ---- */
+  var WAVE = seq("happy", [0, 1, 2, 3, 4, 5, 6, 7, 0], 5), HELLO = seq("hello", [0, 1, 2, 2, 3, 4, 5, 6, 7, 8, 9, 10], 6);
+  var DANCE = seq("happy", [2, 3, 4, 5, 4, 3, 2, 3, 4, 5, 4, 3, 2, 3, 4, 5, 4, 3, 2, 3, 4, 5, 4, 3], 6);
+  var STRETCH = [["happy0", .14], ["happy2", .3], ["happy4", 1.5, .22], ["happy3", .3, .6], ["happy0", .36]];
+  var SPIN = seq("hello", [3, 4, 5, 6, 7, 8, 9, 10], 7);
+  var NAP = [["fall11", .2], ["fall10", .22], ["fall9", .22], ["fall8", .22], ["fall7", 4.4, .1], ["fall8", .24], ["fall9", .24], ["fall10", .24], ["fall11", .3]];
+  var CRASH = seq("fall", [5, 6, 7], 7).concat(seq("fall", [8, 9, 10, 11], 4.5)).concat([["fall11", .2]]);
+  var AIR = [0, 1, 2, 3, 4, 3, 2, 1];
+  var PUSH = [["push2", .2], ["push3", .2]];
+  [.3, .36, .44].forEach(function (h, n) { PUSH = PUSH.concat([["push4", .16], ["push5", .14], ["push6", .14], ["push7", h, .45], ["push6", .14], ["push5", .14]]); });
+  PUSH = PUSH.concat([["push4", .2], ["push5", .15], ["push6", .15], ["push7", .3, .5], ["push8", .5, .5], ["push9", .32, .6], ["push10", .4, .6], ["push11", 1, .25], ["push10", .3]]);
+  var STRAIN = { push3: .35, push4: .55, push5: .8, push6: 1, push7: 1.15 };
+  var T8 = (function () { var t = 0; for (var i = 0; i < PUSH.length; i++) { if (PUSH[i][0] === "push8") return t; t += PUSH[i][1]; } return t; })();
   var ACT = {
-    wave: function (u, B) { var s = at(WAVE, u); return s && { sheet: "happy", f: s.f, rot: .03 * Math.sin(u * 5) }; },
-    hello: function (u, B) { var s = at(HELLO, u); if (!s) return null; if (s.f === 7 && !B.landed) { B.landed = 1; B.wob = 1; } return { sheet: "hello", f: s.f }; },
+    wave: function (u, B) { var p = tl(WAVE, u); if (p) p.rot = .03 * Math.sin(u * 5); return p; },
+    hello: function (u, B) {
+      var p = tl(HELLO, u); if (!p) return null;
+      if (u > 8 / 6 && !B.landed) { B.landed = 1; B.wob = 1; puff(B, 0, 4); }
+      return p; },
     look: function (u, B) {   // glance the other way with a little hop
       if (u > .9) return null; if (u > .35 && !B.flipped) { B.flipped = 1; B.face *= -1; B.wob = .6; }
-      return { sheet: "happy", f: 0, ty: -7 * Math.sin(Math.min(1, u / .7) * PI), sy: 1 - .06 * Math.max(0, Math.sin(u / .35 * PI)) }; },
+      return { ty: -7 * Math.sin(Math.min(1, u / .7) * PI), sy: 1 - .06 * Math.max(0, Math.sin(u / .35 * PI)) }; },
     wander: function (u, B, A) {   // waddle to a new spot
-      if (A.to === undefined) { A.from = B.x; var t; do { t = rnd(HOME_MIN, HOME_MAX); } while (Math.abs(t - B.x) < 35); A.to = t; A.dur = Math.abs(t - B.x) / 34; }
-      var dir = A.to > A.from ? 1 : -1;
-      if (u >= A.dur) { B.x = A.to; B.face = dir; B.wob = .4; return null; }
-      B.x = A.from + (A.to - A.from) * (u / A.dur);
-      return { sheet: "walk", f: Math.floor(u * 8) % 8, flip: dir < 0, rot: .03 * Math.sin(u * 8 * PI / 2) }; },
+      if (A.to === undefined) { var t; do { t = rnd(HOME_MIN, HOME_MAX); } while (Math.abs(t - B.x) < 35); A.to = t; }
+      var p = walkTo(B, A); if (!p) { B.wob = .3; return null; } return p; },
     dance: function (u, B) {   // bouncy little dance, arms up, swaying to a beat
       if (u > 3.2) { B.wob = 1; return null; }
       var beat = u * 2.6 * TAU, b = (1 - Math.cos(beat)) / 2;
       if (Math.floor(u * 1.3) !== B.lastFlip) { B.lastFlip = Math.floor(u * 1.3); B.face *= -1; }
-      return { sheet: "happy", f: [2, 3, 4, 5, 4, 3][Math.floor(u * 6) % 6], ty: -9 * b, sy: 1 - .07 * (1 - b) * (1 - b) + .03 * b, sx: 1 + .05 * (1 - b) * (1 - b), rot: .12 * Math.sin(beat / 2) }; },
+      var p = tl(DANCE, u) || { f: "happy3" };
+      p.ty = -9 * b; p.sy = 1 - .07 * (1 - b) * (1 - b) + .03 * b; p.sx = 1 + .05 * (1 - b) * (1 - b); p.rot = .12 * Math.sin(beat / 2); return p; },
     stretch: function (u, B) {   // big stretch up, then a happy shake
-      if (u > 2.6) return null;
-      var k = sm(u / .7) * (1 - sm((u - 1.8) / .4));
-      if (u > 1.8 && !B.landed) { B.landed = 1; B.wob = 1; }
-      return { sheet: "happy", f: u < .25 ? 2 : u < 1.9 ? 4 : u < 2.2 ? 3 : 0, sy: 1 + .09 * k, sx: 1 - .04 * k, rot: .04 * k * Math.sin(u * 3) }; },
+      var p = tl(STRETCH, u); if (!p) return null;
+      var k = sm((u - .3) / .6) * (1 - sm((u - 1.9) / .4));
+      if (u > 1.9 && !B.landed) { B.landed = 1; B.wob = 1; }
+      p.sy = 1 + .07 * k; p.sx = 1 - .03 * k; p.rot = .04 * k * Math.sin(u * 3); return p; },
     spin: function (u, B) {   // crouch, leap, turn around in the air, land
-      var s = at(frames([3, 4, 5, 6, 7, 8, 9], 7), u); if (!s) return null;
-      if (s.f >= 6 && !B.flipped) { B.flipped = 1; B.face *= -1; }
-      if (s.f === 7 && !B.landed) { B.landed = 1; B.wob = 1; }
-      return { sheet: "hello", f: s.f }; },
+      var p = tl(SPIN, u); if (!p) return null;
+      if (u > 3 / 7 && !B.flipped) { B.flipped = 1; B.face *= -1; }
+      if (u > 4 / 7 && !B.landed) { B.landed = 1; B.wob = 1; puff(B, 0, 4); }
+      return p; },
     nap: function (u, B) {   // lies down for a little rest, breathing, then gets back up
-      var down = frames([11, 10, 9, 8, 7], 5), up = frames([8, 9, 10, 11], 4.5), D = total(down), L = 4.2, U = total(up);
-      if (u < D) return { sheet: "fall", f: at(down, u).f };
-      if (u < D + L) { var v = u - D; return { sheet: "fall", f: 7, sy: 1 + .035 * Math.sin(v * TAU / 1.8), sx: 1 - .015 * Math.sin(v * TAU / 1.8) }; }
-      var s = at(up, u - D - L); if (!s) { B.wob = 1; return null; } return { sheet: "fall", f: s.f }; },
-    push: function (u, B, A) {   // walks to the Facebook button and pushes with all its might
-      if (A.to === undefined) { A.from = B.x; A.to = A.pushX; A.walk = Math.abs(A.to - A.from) / 40; }
-      if (u < A.walk) { B.x = A.from + (A.to - A.from) * (u / A.walk); return { sheet: "walk", f: Math.floor(u * 8) % 8, flip: A.to < A.from }; }
-      B.x = A.to; B.face = 1;
-      var steps = frames([1, 2, 3], 5).concat(frames([4, 5, 6, 7, 8, 4, 5, 6, 7, 8, 4, 5, 6, 7, 8], 6)).concat(frames([9, 10], 4)).concat([{ f: 11, d: .9 }]);
-      var s = at(steps, u - A.walk); if (!s) { B.wob = .8; return null; }
-      var pushing = s.f >= 3 && s.f <= 8;
-      return { sheet: "push", f: s.f, push: pushing, shove: pushing && s.f >= 4, sx: pushing ? 1 + .02 * Math.sin(u * 30) : 1 }; },
+      var p = tl(NAP, u); if (!p) { B.wob = 1; return null; }
+      if (u > .86 && u < 5.1) { var v = u - .86; p.sy = 1 + .035 * Math.sin(v * TAU / 1.8); p.sx = 1 - .015 * Math.sin(v * TAU / 1.8); }
+      return p; },
+    push: function (u, B, A) {   // walks up to the Facebook button and pushes with all its might
+      if (A.to === undefined) A.to = A.pushX;
+      if (A.arrive === undefined) { var w = walkTo(B, A); if (w) return w; A.arrive = u; B.face = 1; }
+      var v = u - A.arrive, p = tl(PUSH, v); if (!p) { B.wob = .5; return null; }
+      B.x = A.to - 7 * sm((v - T8 + .2) / .7);                                                  // steps back from the button when it gives up
+      var s1 = STRAIN[p.f] || 0, s2 = p.f2 ? STRAIN[p.f2] || 0 : s1, strain = s1 + (s2 - s1) * (p.mix || 0);
+      p.push = 1; p.strain = strain; p.flip = false;
+      if (strain > .9) { p.sx = 1 + .025 * Math.sin(v * 31); p.rot = -.012 * Math.sin(v * 23); }       // trembling with effort
+      if (strain > .95 && (!A.lastPuff || v - A.lastPuff > .5)) { A.lastPuff = v; puff(B, -40, 2); }
+      return p; },
     spew: function (u, B, A) {   // holds its tummy, bends over and throws up a stream that spells "ICE UPDATE" on the ground
       var R = 1.1, POUR = 2.25;
       if (!A.init) {            // needs room on its left for the words: walk back toward its corner first if it wandered off
-        A.init = 1; A.from = B.x; A.to = Math.min(0, Math.max(B.x, B.x + (250 - (B.cv ? B.cv.getBoundingClientRect().left + 85 : 999))));
-        A.walk = Math.abs(A.to - A.from) / 40;
+        A.init = 1; A.to = Math.min(0, Math.max(B.x, B.x + (250 - (B.cv ? B.cv.getBoundingClientRect().left + 85 : 999))));
       }
-      if (u < A.walk) { B.x = A.from + (A.to - A.from) * (u / A.walk); return { sheet: "walk", f: Math.floor(u * 8) % 8, flip: false }; }
-      u -= A.walk; B.x = A.to; B.face = -1;
+      if (A.arrive === undefined) { var w = walkTo(B, A); if (w) return w; A.arrive = u; }
+      u -= A.arrive; B.face = -1;
       if (u < R) {              // retching: paw on tummy, three heaves
-        var g = Math.max(0, Math.sin(u / R * PI * 3)); return { sheet: "hello", f: 1, flip: true, sy: 1 - .05 * g, sx: 1 + .03 * g, rot: -.13 * g };
+        var g = Math.max(0, Math.sin(u / R * PI * 3)), q = u > R - .16 ? seg("hello1", "hello3", sm((u - R + .16) / .16)) : { f: "hello1" };
+        q.flip = true; q.sy = 1 - .05 * g; q.sx = 1 + .03 * g; q.rot = -.13 * g; return q;
       }
-      if (!A.fx) { A.fx = { k: "S", B: B, act: A, t0: A.t0 + A.walk + R }; FX.push(A.fx); }
+      if (!A.fx) { A.fx = { k: "S", B: B, act: A, t0: A.t0 + A.arrive + R }; FX.push(A.fx); }
       var v = u - R;
-      if (v < POUR) return { sheet: "hello", f: 3, flip: true, rot: -.1 - .03 * Math.sin(v * 9), sy: 1 + .025 * Math.sin(v * 13), sx: 1 - .012 * Math.sin(v * 13) };
-      if (v < POUR + .35) return { sheet: "hello", f: 1, flip: true };          // phew
-      if (v < POUR + .75) return { sheet: "happy", f: 1, rot: .05 * Math.sin(v * 6) };   // wipes its mouth
-      var w = at(WAVE, v - POUR - .75); if (w) return { sheet: "happy", f: w.f };
-      if (v < 5.6) return { sheet: "happy", f: 0 };
+      if (v < POUR) return { f: "hello3", flip: true, rot: -.1 - .03 * Math.sin(v * 9), sy: 1 + .025 * Math.sin(v * 13), sx: 1 - .012 * Math.sin(v * 13) };
+      if (v < POUR + .35) { var p1 = seg("hello3", "hello1", sm((v - POUR) / .25)); p1.flip = true; return p1; }   // phew
+      if (v < POUR + .75) { var p2 = seg("hello1", "happy1", sm((v - POUR - .35) / .2)); p2.rot = .05 * Math.sin(v * 6); return p2; }   // wipes its mouth
+      var wv = tl(WAVE, v - POUR - .75); if (wv) return wv;
+      if (v < 5.6) return {};
       B.wob = .5; return null;
     },
     rain: function (u, B, A) {   // sunglasses drop on, grabs cash and makes it rain (3 throws), glasses pop off again
       if (!A.steps) {
-        var st = [[0, .1], [1, .1], [2, .1], [3, .1], [4, .18], [5, .3], [6, .45]];
-        for (var n = 0; n < 3; n++) st = st.concat([[7, .12], [8, .1], [9, .1], [10, .1, 1], [11, .12], [12, .12], [11, .12], [12, .12], [13, .16], [14, .28]]);
-        st = st.concat([[5, .35], [2, .08], [1, .08], [0, .12]]);
-        A.steps = st.map(function (x) { return { f: x[0], d: x[1], throwIt: x[2] }; }); A.done = -1;
+        var st = [[0, .1, 0], [1, .1, 0], [2, .1, 0], [3, .1, 0], [4, .18, 0], [5, .3, .5], [6, .45]];
+        for (var n = 0; n < 3; n++) st = st.concat([[7, .12], [8, .1], [9, .1], [10, .1, 1, 1], [11, .12], [12, .12], [11, .12], [12, .12], [13, .16], [14, .28]]);
+        st = st.concat([[5, .35, 0], [2, .08, 0], [1, .08, 0], [0, .12, 0]]);
+        A.steps = st.map(function (x) { return ["rain" + x[0], x[1], x[2], x[3]]; }); A.done = -1;
       }
-      var t = 0, i = 0; for (; i < A.steps.length; i++) { t += A.steps[i].d; if (u < t) break; }
+      var t = 0, i = 0; for (; i < A.steps.length; i++) { t += A.steps[i][1]; if (u < t) break; }
       if (i >= A.steps.length) { B.wob = .5; return null; }
-      var s = A.steps[i];
-      if (s.throwIt && A.done < i) { A.done = i; fxBills(B); B.wob = .5; }
-      return { sheet: "rain", f: s.f, flip: false };
+      if (A.steps[i][3] && A.done < i) { A.done = i; fxBills(B); B.wob = .5; }
+      var p = tl(A.steps, u); if (p) p.flip = false; return p;
     },
     crash: function (u, B) {   // hits the ground after a big fall: belly flop, lies there, gets up
-      var s = at(frames([5, 6, 7], 7).concat(frames([8, 9, 10, 11], 4.5)), u); return s && { sheet: "fall", f: s.f }; },
+      if (!B.landed) { B.landed = 1; puff(B, 0, 7, 1); }
+      return tl(CRASH, u); },
     bump: function (u, B) {    // small drop: knees bend on landing
-      if (u > .45) return null; return { sheet: "hello", f: u < .2 ? 3 : 2, sy: 1 - .08 * Math.sin(Math.min(1, u / .45) * Math.PI) };
-    }
+      if (u > .5) return null;
+      if (!B.landed) { B.landed = 1; puff(B, 0, 3); }
+      var p = u < .22 ? { f: "hello3" } : seg("hello3", "hello2", sm((u - .22) / .2));
+      p.sy = 1 - .08 * Math.sin(Math.min(1, u / .5) * Math.PI); return p; }
   };
+  var NEEDS = { hello: "hello", spin: "hello", spew: "hello", bump: "hello", push: "push", nap: "fall", crash: "fall", rain: "rain" };
   /* ---- effects overlay (drawn above the bear): the "ICE UPDATE" stream and the banknotes ---- */
   var FX = [], fxNew = [], fxCv = null;
   function fxCanvas() {
@@ -425,6 +502,12 @@
     FX = FX.filter(function (p) {
       var age = now - p.t0;
       if (p.k === "S") return drawSpew(c, p, now, dt);
+      if (p.k === "P") {   // dust puff
+        if (age > p.life) return false;
+        var q = age / p.life; p.x += p.vx * dt; p.y += p.vy * dt; p.vx *= Math.exp(-dt * 3.5); p.vy *= Math.exp(-dt * 3.5);
+        c.globalAlpha = .7 * (1 - q * q) * Math.min(1, age / .05); c.fillStyle = "#f3f6f9"; c.strokeStyle = "rgba(60,72,92,.45)"; c.lineWidth = .9;
+        c.beginPath(); c.arc(p.x, p.y - p.r * q * .8, p.r * (.55 + .8 * q), 0, 7); c.fill(); c.stroke(); c.globalAlpha = 1; return true;
+      }
       if (p.k === "D") {   // splash droplet
         if (age > p.life) return false;
         p.vy += 620 * dt; p.x += p.vx * dt; p.y += p.vy * dt; if (p.y > p.ground + 2) return false;
@@ -450,6 +533,7 @@
   function bstate(cv) { return cv.__b || (cv.__b = { x: 0, face: 1, act: null, wob: 0, next: performance.now() / 1000 + rnd(2, 4), last: "", seen: performance.now() / 1000 }); }
   function play(el, name) {
     if (reduce || !el || !ACT[name]) return false;
+    if (NEEDS[name] && !sheetReady(NEEDS[name])) return false;
     var cv = el.querySelector ? el.querySelector(".pa-bear") : null; if (!cv) return false;
     var B = bstate(cv);
     if (B.act && B.act.name === "fall") return false;
@@ -458,33 +542,129 @@
     if (name === "push") B.act.pushX = pushTarget(cv);
     return true;
   }
-  function pushTarget(cv) {   // where the bear must stand so its paws touch the social button
+  function pushTarget(cv) {   // where the bear must stand so its paws just touch the social button
     var btn = document.querySelector("#iu-social .sd-btn"), mv = cv.parentNode;
     if (!btn) return 0;
     var r = btn.getBoundingClientRect(), m = mv.getBoundingClientRect(), mx = m.left + m.width / 2 - (mv.__tx || 0);
-    return Math.max(-20, Math.min(60, r.left + 6 - (mx + 80 * (cv.__scale || .43))));
+    return Math.max(-20, Math.min(60, r.left - BTN.x - (mx + BD.reach.push4 * (cv.__scale || .43))));
   }
+  /* the social button reacts to the push: it gets shoved by exactly as much as the paws press into it, squashes a
+     little, and springs back with a wobble when the bear lets go */
+  var BTN = { x: 0, v: 0, on: 0, el: null };
+  function btnStep(dt, target, held) {
+    var el = BTN.el && BTN.el.isConnected ? BTN.el : (BTN.el = document.querySelector("#iu-social .sd-btn")); if (!el) return;
+    var k = held ? 900 : 230, c = held ? 55 : 7.5, n = Math.ceil(dt / .006), h = dt / Math.max(1, n);
+    for (var i = 0; i < n; i++) { BTN.v += (k * (target - BTN.x) - c * BTN.v) * h; BTN.x += BTN.v * h; }        // small steps: stable on slow phones too
+    if (!(Math.abs(BTN.x) < 40)) { BTN.x = 0; BTN.v = 0; }
+    if (!held && Math.abs(BTN.x) < .03 && Math.abs(BTN.v) < .1) { if (BTN.on) { el.style.transform = ""; BTN.on = 0; } BTN.x = 0; BTN.v = 0; return; }
+    BTN.on = 1;
+    var x = BTN.x;
+    el.style.transform = "translateX(" + x.toFixed(2) + "px) rotate(" + (x * 1.9).toFixed(2) + "deg) scale(" + (1 - Math.max(0, x) * .014).toFixed(3) + "," + (1 + Math.max(0, x) * .008).toFixed(3) + ")";
+  }
+  function reachOf(n) { if (!n) return 0; var k = key(n); if (k[1] !== "-1") return BD.reach[n] || 0;
+    var m = /^push(\d+)-(\d+)\.(\d+)$/.exec(n); if (!m) return 0; var K = BD.tw["push" + m[1] + "-" + m[2]], t = m[3] / (K + 1);
+    return (BD.reach["push" + m[1]] || 0) * (1 - t) + (BD.reach["push" + m[2]] || 0) * t; }
   /* the "brain": picks what to do next on its own, never repeats the same thing twice in a row */
   var CHOICES = [["wander", 3], ["look", 2.2], ["dance", 1.6], ["stretch", 1.4], ["wave", 1.4], ["hello", 1.2], ["push", 1.5], ["spin", 1], ["nap", .6], ["spew", 1.3], ["rain", 1.4]];
   function think(cv, B, now) {
     if (document.documentElement.getAttribute("data-bear-idle") === "off") return;
-    var bored = now - B.seen > 40, list = CHOICES.filter(function (c) { return c[0] !== B.last; }).map(function (c) {
+    var bored = now - B.seen > 40, list = CHOICES.filter(function (c) { return c[0] !== B.last && (!NEEDS[c[0]] || sheetReady(NEEDS[c[0]])); }).map(function (c) {
       var w = c[1]; if (c[0] === "nap") w *= bored ? 5 : 1; if (c[0] === "push" && B.x < -60) w *= .5; return [c[0], w]; });
     var sum = list.reduce(function (s, c) { return s + c[1]; }, 0), r = Math.random() * sum;
     for (var i = 0; i < list.length; i++) { r -= list[i][1]; if (r <= 0) { play(cv.closest(".pa-launch"), list[i][0]); break; } }
   }
+  /* ---- drawing ---- */
+  function frameChain(n) { var d = n && BD.f[n]; return d && d.length > 7 ? d.slice(7) : null; }
+  // one pose = up to two neighbouring frames, dissolved in premultiplied space ("lighter"), so the body never goes see-through
+  function drawPose(c, P, wgt, k) {
+    var parts = [[P.f, 1 - (P.f2 ? P.mix : 0)]]; if (P.f2) parts.push([P.f2, P.mix]);
+    for (var i = 0; i < parts.length; i++) {
+      var d = BD.f[parts[i][0]], a = parts[i][1] * wgt; if (!d || a <= .003) continue;
+      var at = ATL[d[0]]; if (!at.ok) { d = BD.f["idle0"]; at = ATL[0]; if (!at.ok) continue; }
+      c.globalAlpha = Math.min(1, a);
+      c.drawImage(at.img, d[1], d[2], d[3], d[4], -d[5] * k, -d[6] * k, d[3] * k, d[4] * k);
+    }
+  }
+  function poseChain(P) {
+    var a = frameChain(P.f), b = P.f2 ? frameChain(P.f2) : a;
+    if (!a || !b) return a && (!P.f2 || P.mix < .5) ? a : b && P.mix >= .5 ? b : null;
+    var m = P.f2 ? P.mix : 0; return a.map(function (v, i) { return v + (b[i] - v) * m; });
+  }
+  function xform(c, P, W, H, dpr, isLaunch) {
+    c.setTransform(1, 0, 0, 1, 0, 0);
+    c.translate(W / 2, H - 2 * dpr);
+    c.rotate(P.rot || 0); c.scale((P.flip ? -1 : 1) * (P.sx || 1), P.sy || 1);
+  }
+  /* the chain: drawn live on the bear in the same ink and shading as the drawing, ends tucked into the neck fur,
+     the pendant swings with every step, jump and fall */
+  function drawChain(c, k, ch, B, dt, alpha) {
+    var S = B.chs || (B.chs = { x: ch[4], y: ch[5], vx: 0, vy: 0 });
+    var acc = B.acc || [0, 0], sc = B.cv.__scale || .43, f = B.pose && B.pose.fx < 0 ? -1 : 1;
+    if (dt > 0) {
+      var K = 95, C = 8.5, ax = -acc[0] / sc * f * .6, ay = -acc[1] / sc * .6, n = Math.ceil(dt / .008), h = dt / n;
+      for (var i0 = 0; i0 < n; i0++) { S.vx += (K * (ch[4] - S.x) - C * S.vx + ax) * h; S.vy += (K * (ch[5] - S.y) - C * S.vy + ay) * h; S.x += S.vx * h; S.y += S.vy * h; }
+      if (!(Math.abs(S.x - ch[4]) < 50 && Math.abs(S.y - ch[5]) < 50)) { S.x = ch[4]; S.y = ch[5]; S.vx = S.vy = 0; }
+      var ox = S.x - ch[4], oy = S.y - ch[5], d = Math.hypot(ox, oy); if (d > 6) { S.x = ch[4] + ox / d * 6; S.y = ch[5] + oy / d * 6; S.vx *= .5; S.vy *= .5; }
+      if (S.y < ch[5] - 3.5) { S.y = ch[5] - 3.5; S.vy = Math.max(0, S.vy); }
+    }
+    var A = [ch[0], ch[1]], Bp = [ch[2], ch[3]], P = [S.x, S.y];
+    // the chain hangs as a soft U from each side of the neck down to the pendant
+    var path = [];
+    var q = function (p0, p1, p2, n) { for (var i = 0; i <= n; i++) { var t = i / n, u = 1 - t; path.push([u * u * p0[0] + 2 * u * t * p1[0] + t * t * p2[0], u * u * p0[1] + 2 * u * t * p1[1] + t * t * p2[1]]); } };
+    q(A, [A[0] + (P[0] - A[0]) * .15, P[1] + 1], [P[0], P[1] - 1.5], 14); path.pop();
+    q([P[0], P[1] - 1.5], [Bp[0] + (P[0] - Bp[0]) * .15, P[1] + 1], Bp, 14);
+    var L = [0]; for (var i = 1; i < path.length; i++) L.push(L[i - 1] + Math.hypot(path[i][0] - path[i - 1][0], path[i][1] - path[i - 1][1]));
+    var tot = L[L.length - 1]; if (tot < 4) return;
+    c.save(); c.globalCompositeOperation = "source-atop"; c.lineCap = "round";
+    var STEP = 2.5, j = 0;
+    for (var s = 1.2; s < tot - 1; s += STEP, j++) {
+      var ii = 1; while (ii < L.length - 1 && L[ii] < s) ii++;
+      var t2 = (s - L[ii - 1]) / Math.max(.001, L[ii] - L[ii - 1]), x = path[ii - 1][0] + (path[ii][0] - path[ii - 1][0]) * t2, y = path[ii - 1][1] + (path[ii][1] - path[ii - 1][1]) * t2;
+      var ang = Math.atan2(path[ii][1] - path[ii - 1][1], path[ii][0] - path[ii - 1][0]), fade = Math.min(1, Math.min(s, tot - s) / 7);
+      c.globalAlpha = alpha * fade;
+      c.save(); c.translate(x * k, y * k); c.rotate(ang);
+      if (j % 2) {   // link seen flat: a little oval ring
+        c.beginPath(); c.ellipse(0, 0, 1.75 * k, 1.15 * k, 0, 0, TAU); c.fillStyle = "#2a1d0c"; c.fill();
+        c.beginPath(); c.ellipse(0, 0, 1.3 * k, .72 * k, 0, 0, TAU); c.fillStyle = "#d9a93f"; c.fill();
+        c.beginPath(); c.ellipse(-.25 * k, -.28 * k, .62 * k, .28 * k, 0, 0, TAU); c.fillStyle = "#fbe7a6"; c.fill();
+        c.beginPath(); c.ellipse(0, .05 * k, .55 * k, .2 * k, 0, 0, TAU); c.fillStyle = "#2a1d0c"; c.fill();
+      } else {       // link seen edge-on: a short bar
+        c.lineWidth = 1.5 * k; c.strokeStyle = "#2a1d0c"; c.beginPath(); c.moveTo(-1.6 * k, 0); c.lineTo(1.6 * k, 0); c.stroke();
+        c.lineWidth = .8 * k; c.strokeStyle = "#e4b84a"; c.beginPath(); c.moveTo(-1.25 * k, -.1 * k); c.lineTo(1.25 * k, -.1 * k); c.stroke();
+      }
+      c.restore();
+    }
+    c.restore();
+    // the pendant: a small gold medallion with an ice-blue stone, hanging from the lowest link
+    var tilt = Math.max(-.6, Math.min(.6, (S.x - ch[4]) * .09 + S.vx * .004));
+    c.save(); c.globalAlpha = alpha; c.translate(P[0] * k, (P[1] + .4) * k); c.rotate(tilt);
+    c.beginPath(); c.arc(0, 3.6 * k, 3.35 * k, 0, TAU); c.fillStyle = "#2a1d0c"; c.fill();
+    var g = c.createLinearGradient(0, 1 * k, 0, 6.6 * k); g.addColorStop(0, "#f6d77a"); g.addColorStop(1, "#c0912f");
+    c.beginPath(); c.arc(0, 3.6 * k, 2.55 * k, 0, TAU); c.fillStyle = g; c.fill();
+    c.beginPath(); c.arc(0, 3.7 * k, 1.45 * k, 0, TAU); c.fillStyle = "#1c5f86"; c.fill();
+    c.beginPath(); c.arc(0, 3.6 * k, 1.05 * k, 0, TAU); c.fillStyle = "#8fe3ff"; c.fill();
+    c.beginPath(); c.arc(-.4 * k, 3.15 * k, .42 * k, 0, TAU); c.fillStyle = "#ffffff"; c.fill();
+    c.beginPath(); c.arc(0, .6 * k, .75 * k, 0, TAU); c.lineWidth = .55 * k; c.strokeStyle = "#2a1d0c"; c.stroke();
+    var gl = ((performance.now() / 1000 + 1.1) % 3.4) / .5;     // bling: the stone catches the light now and then
+    if (gl < 1 && !reduce) {
+      var gr = 4.2 * k * Math.sin(gl * PI); c.translate(-1 * k, 2.4 * k); c.rotate(gl * 1.4); c.fillStyle = "#ffffff"; c.beginPath();
+      for (var gi = 0; gi < 8; gi++) { var ga = gi * PI / 4, gd = gi % 2 ? gr * .26 : gr; c.lineTo(Math.cos(ga) * gd, Math.sin(ga) * gd); }
+      c.closePath(); c.fill();
+    }
+    c.restore();
+  }
+  var OFF = null;
   function drawBearCanvas(cv, now, opts) {
     var w = cv.clientWidth, h = cv.clientHeight; if (!w || !h) return;
     var dpr = Math.min(2, window.devicePixelRatio || 1), W = Math.round(w * dpr), H = Math.round(h * dpr);
     if (cv.width !== W || cv.height !== H) { cv.width = W; cv.height = H; }
     var isLaunch = !!cv.closest(".pa-launch"), standPx = isLaunch ? 64 : h * .86;
     cv.__scale = standPx / STAND;
-    var B = bstate(cv), dt = Math.min(.1, now - (B.tPrev || now)); B.tPrev = now; B.cv = cv;
-    // ---- base "alive" motion: breathing, swaying, weight shifts, fidgets (never stands still)
-    var br = Math.sin(now * TAU / 2.4), sway = Math.sin(now * TAU / 4.1), shift = Math.sin(now * TAU / 6.3 + 1);
-    var P = { sheet: "happy", f: 0, sx: 1 - .012 * br, sy: 1 + .022 * br, rot: .035 * sway, dx: 2.5 * shift, ty: -1.2 * Math.max(0, br) };
-    var fid = (now % 7.3) / 7.3; if (fid > .82 && fid < .9) P.f = 1;          // little arm fidget
-    if (opts && opts.happy) { P.f = [0, 3, 4, 5, 4, 3][Math.floor(now * 6) % 6]; P.ty = -5 * Math.abs(Math.sin(now * 5)); }
+    var B = bstate(cv), dt = Math.min(.1, now - (B.tPrev || now)); B.tPrev = now; B.cv = cv; B.dt = dt;
+    // ---- base: the breathing idle loop (the drawing itself moves: chest, arms, head, ears)
+    var P = idlePose(now), src = "idle";
+    P.sx = 1; P.sy = 1; P.rot = .012 * Math.sin(now * TAU / 4.1); P.dx = 0; P.ty = 0;
+    if (opts && opts.happy) { var hp = tl(DANCE, now % 4); P = hp || P; P.ty = -5 * Math.abs(Math.sin(now * 5)); src = "happy"; }
     // ---- scroll physics: scrolling speed lifts the bear off the ground; when scrolling stops it falls back down
     var air = 0;
     if (isLaunch && !reduce) {
@@ -499,8 +679,9 @@
       else if (B.h > 0) {
         if (B.gone) { B.gone = 0; B.h = sky; }
         B.vh -= 2400 * dt; B.h += B.vh * dt;
-        if (B.h <= 0) { var hit = -B.vh; B.h = 0; B.vh = 0; B.act = null;
-          if (hit > 1100) { B.act = { name: "crash", t0: now }; B.wob = 1.4; } else if (hit > 250) { B.act = { name: "bump", t0: now }; B.wob = .9; } else B.wob = .4; }
+        if (B.h <= 0) { var hit = -B.vh; B.h = 0; B.vh = 0; B.act = null; B.landed = 0;
+          if (hit > 1100 && sheetReady("fall")) { B.act = { name: "crash", t0: now }; B.wob = 1.4; B.cut = 1; }
+          else if (hit > 250 && sheetReady("hello")) { B.act = { name: "bump", t0: now }; B.wob = .9; B.cut = 1; } else B.wob = .5; }
       }
       if (B.gone) B.h = Math.max(B.h, sky);
       if (B.h > 1) { air = B.h; if (B.act) B.act = null; }
@@ -508,46 +689,79 @@
     if (B.act) {
       var r = ACT[B.act.name](now - B.act.t0, B, B.act);
       if (!r) { B.act = null; B.next = now + rnd(1.2, 3.6); }
-      else { P.sheet = r.sheet; P.f = r.f; P.flip = r.flip; P.push = r.push; P.shove = r.shove; P.noShadow = r.noShadow;
-        P.sx *= (r.sx || 1); P.sy *= (r.sy || 1); P.rot = (r.rot || 0) + P.rot * .4; P.ty = (r.ty || 0) + P.ty * .5; P.dx *= .3; }
+      else {
+        src = B.act.name + (r.walk ? ":walk" : "");
+        if (r.f) { P.f = r.f; P.f2 = r.f2; P.mix = r.mix; }
+        P.flip = r.flip; P.push = r.push; P.strain = r.strain; P.walk = r.walk;
+        P.sx *= (r.sx || 1); P.sy *= (r.sy || 1); P.rot = (r.rot || 0) + P.rot * .4; P.ty = (r.ty || 0); P.dx *= .3;
+      }
     } else if (isLaunch && !reduce && now > B.next && !root.classList.contains("open")) think(cv, B, now);
-    if (air) {
-      var seq = [0, 1, 2, 3, 4, 3, 2, 1], ph = now * 4.5, i0 = Math.floor(ph), fr = ph - i0, lift = Math.min(1, air / 34);
-      if (lift < 1) { P.blend = { sheet: P.sheet, f: P.f, a: 1 - lift }; }      // feet leave the ground gradually
-      P.sheet = "fall"; P.f = seq[i0 % 8]; P.f2 = seq[(i0 + 1) % 8]; P.mix = fr * fr * (3 - 2 * fr);
-      P.ty = -air; P.noShadow = air > 60; P.rot = .08 * Math.sin(now * 2.6) * lift; P.sx = P.sy = 1; P.dx *= (1 - lift);
-    }
     if (P.flip === undefined) P.flip = B.face < 0;
+    // ---- in the air: arms up, legs paddling (the hand-drawn falling frames, in-betweened)
+    var G = null, gw = 0;
+    if (air) {
+      var lift = Math.min(1, air / 34), ph = now * 4.5, i0 = Math.floor(ph);
+      if (sheetReady("fall")) { var ap = seg("fall" + AIR[i0 % 8], "fall" + AIR[(i0 + 1) % 8], ph - i0);
+        if (lift < 1) { G = P; gw = 1 - lift; }                    // the feet leave the ground gradually
+        P = { f: ap.f, f2: ap.f2, mix: ap.mix, flip: P.flip, sx: 1, sy: 1, rot: .08 * Math.sin(now * 2.6) * lift, dx: 0 }; }
+      else { P.f = "happy4"; P.f2 = null; }
+      P.ty = -air; src = "air"; }
     // ---- skin/fur jiggle after landings and big moves (decays)
     B.wob = Math.max(0, (B.wob || 0) - dt * 1.6);
-    var jig = B.wob * Math.sin(now * 26); P.sx *= 1 + .06 * jig; P.sy *= 1 - .06 * jig;
+    var jig = B.wob * Math.sin(now * 26); P.sx *= 1 + .05 * jig; P.sy *= 1 - .05 * jig;
+    // ---- whenever it switches from one thing to another, the two poses melt into each other
+    if (src !== B.src) {
+      if (B.lastP && !reduce) {
+        var side = function (Q) { return !!(Q.walk || /^push/.test(Q.f || "")); };
+        B.turn = side(B.lastP) !== side(P);                    // front <-> side: a quick turn, not a slow dissolve
+        B.from = B.lastP; B.fromT = now; B.fromD = B.cut ? .07 : B.turn ? .13 : src === "air" || B.src === "air" ? .12 : .2;
+      }
+      B.src = src; B.cut = 0;
+    }
+    if (B.from && !G) { var bw = (now - B.fromT) / B.fromD; if (bw >= 1) B.from = null; else {
+      G = B.from; gw = 1 - sm(bw);
+      if (B.turn) { G = Object.assign({}, G, { sx: (G.sx || 1) * (1 - .1 * sm(bw)) }); P.sx *= 1 - .1 * (1 - sm(bw)); } } }
     if (isLaunch) {
       document.documentElement.classList.toggle("iu-bear-push", !!P.push);
-      document.documentElement.classList.toggle("iu-bear-shove", !!P.shove);
       var mv = cv.parentNode, tx = B.x + (P.dx || 0);
       mv.__tx = tx;
       mv.style.transform = "translate(" + tx.toFixed(1) + "px," + (P.ty || 0).toFixed(1) + "px)";
+      // how the bear is moving on screen (for the chain's swing)
+      var vx = dt > 0 ? (tx - (B.ptx === undefined ? tx : B.ptx)) / dt : 0, vy = dt > 0 ? ((P.ty || 0) - (B.pty === undefined ? 0 : B.pty)) / dt : 0;
+      B.vel = B.vel || [0, 0]; var ax = dt > 0 ? (vx - B.vel[0]) / dt : 0, ay = dt > 0 ? (vy - B.vel[1]) / dt : 0;
+      B.acc = [Math.max(-4000, Math.min(4000, ax)), Math.max(-4000, Math.min(4000, ay))]; B.vel = [vx, vy]; B.ptx = tx; B.pty = P.ty || 0;
+      // the button gets shoved exactly as far as the paws press into it
+      if (P.push && B.act) {
+        var A = B.act; if (A.btnL === undefined) { var bb = document.querySelector("#iu-social .sd-btn"); A.btnL = bb ? bb.getBoundingClientRect().left - BTN.x : 1e9; }
+        var cr = cv.getBoundingClientRect(), paw = cr.left + cr.width / 2 + (reachOf(P.f) * (1 - (P.f2 ? P.mix : 0)) + (P.f2 ? reachOf(P.f2) * P.mix : 0)) * cv.__scale;
+        var press = Math.max(0, Math.min(7, paw - A.btnL + .5)) * (P.strain > 0 ? 1 : 0);
+        btnStep(dt, press + (P.strain > .9 ? .6 * Math.sin(now * 31) : 0), P.strain > 0);
+      } else btnStep(dt, 0, false);
     }
     if (isLaunch) B.pose = { rot: P.rot || 0, fx: (P.flip ? -1 : 1) * (P.sx || 1), sy: P.sy || 1 };
-    var S = SH[P.sheet]; if (!S || !S.img.complete || !S.img.naturalWidth) return;
+    B.lastP = P;
+    if (!ATL[0].ok) return;
     var c = cv.getContext("2d"), k = cv.__scale * dpr;
     c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, W, H);
-    if (!P.noShadow) { var lift = Math.min(1, Math.max(0, -(P.ty || 0)) / 30); c.fillStyle = "rgba(0,0,0," + (.22 * (1 - lift)) + ")"; c.beginPath(); c.ellipse(W / 2 - (isLaunch ? 0 : 0), H - 3 * dpr - (P.ty || 0) * dpr * (isLaunch ? -1 : 0), 42 * k * (1 - .4 * lift), 6 * k, 0, 0, 7); c.fill(); }
-    c.translate(W / 2, H - 2 * dpr);
-    c.rotate(P.rot || 0); c.scale((P.flip ? -1 : 1) * (P.sx || 1), P.sy || 1);
-    var draw1 = function (Sx, f, a) { if (a <= .01 || !Sx || !Sx.img.complete) return; c.globalAlpha = a; c.drawImage(Sx.img, f * Sx.w, 0, Sx.w, Sx.h, -Sx.ax * k, -Sx.ay * k, Sx.w * k, Sx.h * k); };
-    var main = P.blend ? 1 - P.blend.a : 1;
-    if (P.blend) draw1(SH[P.blend.sheet], P.blend.f, P.blend.a);
-    if (P.f2 !== undefined && P.f2 !== P.f) { draw1(S, P.f, main * (1 - P.mix)); draw1(S, P.f2, main * P.mix); }
-    else draw1(S, P.f, main);
-    c.globalAlpha = 1;
-    var pd = PEND[P.sheet] && PEND[P.sheet][P.f], gl = ((now + 1.1) % 3.2) / .55;       // bling: the pendant twinkles
-    if (pd && gl < 1 && !reduce) {
-      var gx = (pd[0] - S.ax) * k - 2.2 * k, gy = (pd[1] - S.ay) * k - 2.4 * k, gr = 10 * k * Math.sin(gl * PI);
-      c.save(); c.translate(gx, gy); c.rotate(gl * 1.4); c.fillStyle = "#ffffff"; c.beginPath();
-      for (var gi = 0; gi < 8; gi++) { var ga = gi * PI / 4, gd = gi % 2 ? gr * .26 : gr; c.lineTo(Math.cos(ga) * gd, Math.sin(ga) * gd); }
-      c.closePath(); c.fill(); c.restore();
-    }
+    if (!P.noShadow) { var lf = Math.min(1, Math.max(0, -(P.ty || 0)) / 30), sw = P.walk ? 36 : 40; c.fillStyle = "rgba(0,0,0," + (.2 * (1 - lf)) + ")"; c.beginPath();
+      c.ellipse(W / 2, H - 3 * dpr, sw * k * (1 - .4 * lf), 5.5 * k, 0, 0, 7); c.fill(); }
+    // the bear itself, composed off-screen so dissolves stay solid
+    var o = OFF || (OFF = document.createElement("canvas")); if (o.width !== W || o.height !== H) { o.width = W; o.height = H; }
+    var oc = o.getContext("2d");
+    var comp = function (Q) {        // one pose, its two neighbouring frames dissolved in premultiplied space
+      oc.setTransform(1, 0, 0, 1, 0, 0); oc.globalCompositeOperation = "source-over"; oc.globalAlpha = 1; oc.clearRect(0, 0, W, H);
+      oc.globalCompositeOperation = "lighter"; xform(oc, Q, W, H, dpr, isLaunch); drawPose(oc, Q, 1, k);
+      oc.globalCompositeOperation = "source-over"; oc.globalAlpha = 1; oc.setTransform(1, 0, 0, 1, 0, 0);
+    };
+    // switching poses: the old one fades out underneath while the new one fades in on top (never see-through)
+    if (G) { comp(G); c.globalAlpha = Math.min(1, gw * 2); c.drawImage(o, 0, 0); }
+    comp(P); c.globalAlpha = G ? Math.min(1, (1 - gw) * 2) : 1; c.drawImage(o, 0, 0); c.globalAlpha = 1;
+    // the chain, in the main pose's own space
+    var ch = poseChain(P), cha = G ? Math.max(0, 1 - gw * 1.6) : 1;
+    if (G && gw > .5) { var chg = poseChain(G); if (chg) { ch = chg; cha = 1; xform(c, G, W, H, dpr, isLaunch); } else xform(c, P, W, H, dpr, isLaunch); }
+    else xform(c, P, W, H, dpr, isLaunch);
+    if (ch && cha > .02) drawChain(c, k, ch, B, isLaunch ? dt : 0, cha);
+    c.setTransform(1, 0, 0, 1, 0, 0); c.globalAlpha = 1;
   }
   var fxPrev = 0;
   function bearLoop() {
@@ -561,7 +775,7 @@
         drawBearCanvas(list[i], now, { happy: inHead && root.classList.contains("thinking") });
       }
       var minis = root.querySelectorAll(".pa-bear-mini:not([data-done])");
-      for (var j = 0; j < minis.length; j++) { var ok = SH.happy.img.complete; drawBearCanvas(minis[j], 0, null); if (ok && minis[j].clientWidth) minis[j].setAttribute("data-done", "1"); }
+      for (var j = 0; j < minis.length; j++) { var ok = ATL[0].ok; drawBearCanvas(minis[j], 0, null); if (ok && minis[j].clientWidth) minis[j].setAttribute("data-done", "1"); }
     }
     fxDraw(now, Math.min(.05, now - (fxPrev || now))); fxPrev = now;   // after the bear, so the stream starts exactly at its mouth
     if (!reduce) requestAnimationFrame(bearLoop); else setTimeout(bearLoop, 500);

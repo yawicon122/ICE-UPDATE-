@@ -167,5 +167,3 @@ html.iu-lite .pa-launch:not([class*="act-"]) .pa-peng{animation:none}
 .pa-launch .pa-mv{transform-origin:50% 100%;overflow:visible}
 .pa-launch .pa-mv{filter:none}
 /* the bear pushes the social button: it shows Facebook and shakes */
-@keyframes iuShove{0%,100%{transform:translateX(0) rotate(0)}30%{transform:translateX(2px) rotate(3deg)}60%{transform:translateX(-1px) rotate(-2deg)}}
-html.iu-bear-shove #iu-social .sd-btn{animation:iuShove .22s linear infinite}

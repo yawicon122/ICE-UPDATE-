@@ -28,7 +28,7 @@ window.SITE = {
      enabled:  false hides the bear everywhere. */
   assistant: {
     enabled: true,
-    endpoint: "https://047c71f.ice-update.pages.dev",
+    endpoint: "https://ice-update.pages.dev/api/chat",
     title: "Website Assistant",
     invite: "Hey! Need a hand?",
     quickPrompts: ["Explain pips", "What is leverage?", "How do I join the community?", "What is a stop-loss?", "Where are the PDFs?"]

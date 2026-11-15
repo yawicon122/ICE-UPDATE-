@@ -51,7 +51,7 @@ function json(body, status, headers) {
 export async function handle(request, env, deps) {
   deps = deps || {};
   const fetchFn = deps.fetch || ((u, i) => fetch(u, i)), now = deps.now || Date.now;
-  const allowed = String(env.ALLOWED_ORIGINS || "https://yawicon122.github.io").split(",").map(s => s.trim()).filter(Boolean);
+  const allowed = String(env.ALLOWED_ORIGINS || "https://iceupdate.com,https://www.iceupdate.com,https://yawicon122.github.io,https://ice-update.pages.dev").split(",").map(s => s.trim()).filter(Boolean);
   const origin = request.headers.get("Origin") || "";
   const cors = corsHeaders(origin, allowed);
   const provider = env.AI_PROVIDER || (env.ANTHROPIC_API_KEY ? "anthropic" : env.OPENAI_API_KEY ? "openai" : "");

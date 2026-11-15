@@ -89,3 +89,7 @@ Edit `src/*.js`, then run `node build.mjs` to rebuild `assistant-worker.js`. Run
 ## Not included, on purpose
 
 Accounts and logins, a conversation database, file upload with vector search, and the economic calendar. Each needs a paid service, a real login system, or a separate server, and none is needed to run a free education site safely. Ask if you want any of them added.
+
+## Option: run it on Cloudflare Pages instead of a Worker
+
+The repo also has `functions/api/chat.js`. If your Cloudflare **Pages** project is connected to this GitHub repo (build command empty, output directory `/`), Pages deploys the website and the AI together, and the AI answers at `https://YOUR-PROJECT.pages.dev/api/chat`. Put that full address in `config.js` → `endpoint`. Add the keys in the Pages project → Settings → Variables and Secrets (Production), then redeploy.

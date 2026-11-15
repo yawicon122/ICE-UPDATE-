@@ -112,7 +112,6 @@
 ["devaluation","**Devaluation** is a government deliberately lowering its currency's value against others."],
 ["depreciation|appreciation","A currency **appreciates** when it gains value and **depreciates** when it loses value against another currency."],
 ["central bank","A **central bank** sets interest rates and manages a country's money supply (like the Fed, ECB or Bank of Ghana)."],
-["bank of ghana|cedi|ghs","The **Bank of Ghana** is Ghana's central bank, and the **cedi (GHS)** is Ghana's currency. Its rate against the dollar moves with inflation, interest rates, imports and exports."],
 ["stablecoin|usdt|usdc","A **stablecoin** is a crypto token meant to hold a steady value (like $1). They're not risk-free: the issuer or backing can fail."],
 ["blockchain","A **blockchain** is a shared, tamper-resistant record of transactions kept by many computers instead of one company."],
 ["altcoin|altcoins","**Altcoins** are any cryptocurrencies other than Bitcoin. Many are very risky and can go to zero."],

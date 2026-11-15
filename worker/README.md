@@ -26,6 +26,7 @@ Your site is on GitHub Pages, which can't keep a secret, so the keys live in a f
 | `TWELVE_DATA_API_KEY` | Secret | your Twelve Data key |
 | `FINNHUB_API_KEY` | Secret | your Finnhub key |
 | `ALLOWED_ORIGINS` | Text | `https://iceupdate.com,https://yawicon122.github.io` |
+| `ANTHROPIC_MODEL`, `OPENAI_MODEL`, `GEMINI_MODEL` | Text, optional | pick a model for one AI. A plain `MODEL` is only used if its name matches the AI in use |
 | `MODEL` | Text, optional | e.g. `claude-haiku-5-5` (Claude), `gpt-4.1` (OpenAI) or a Gemini model name (default `gemini-flash-latest`) |
 | `DAILY_LIMIT` | Text, optional | most AI answers per day for the whole site (default `800`; `0` = no cap). After that the bear points people to your channels. Exact with KV memory on; approximate without it |
 | `GEMINI_THINKING_BUDGET` | Text, optional | Gemini only. Left empty = Google's default. `0` = no thinking (fastest, but some models refuse it) |

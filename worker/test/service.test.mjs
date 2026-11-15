@@ -248,3 +248,12 @@ test("worker: ?selftest=models lists usable Gemini models without leaking the ke
   const r = await (await handle(new Request("https://w.test/api/chat?selftest=models", { method: "GET", headers: { "CF-Connecting-IP": "20.0.0.1" } }), { ALLOWED_ORIGINS: ORIGIN, GEMINI_API_KEY: "GEMINI-SECRET1", MODEL: "gemini-1.5-flash" }, { fetch: f, now: nowFn })).json();
   assert.deepEqual(r, { ok: true, usingNow: "gemini-1.5-flash", models: ["gemini-2.5-flash"] });
 });
+
+test("a MODEL left over from another AI is ignored; provider-specific names win", async () => {
+  const seen = []; const mk = () => async (u, i) => { seen.push(JSON.parse(i.body).model); return u.includes("openai") ? J({ id: "r", output: [{ type: "message", content: [{ type: "output_text", text: "ok" }] }] }) : J(text("ok")); };
+  await handle(req(user("hi"), { ip: "21.0.0.1" }), { ...ENV, MODEL: "gemini-2.5-flash" }, { fetch: mk(), now: nowFn });
+  await handle(req(user("hi"), { ip: "21.0.0.2" }), { ...ENV, MODEL: "claude-sonnet-5-5" }, { fetch: mk(), now: nowFn });
+  await handle(req(user("hi"), { ip: "21.0.0.3" }), { ...ENV, MODEL: "gemini-2.5-flash", ANTHROPIC_MODEL: "claude-opus-5-5" }, { fetch: mk(), now: nowFn });
+  await handle(req(user("hi"), { ip: "21.0.0.4" }), { ALLOWED_ORIGINS: ORIGIN, OPENAI_API_KEY: "sk-OAI-SECRET", MODEL: "claude-haiku-5-5" }, { fetch: mk(), now: nowFn });
+  assert.deepEqual(seen, ["claude-haiku-5-5", "claude-sonnet-5-5", "claude-opus-5-5", "gpt-4.1"]);
+});

@@ -6,6 +6,14 @@ function timed(fetchFn, env) {
   const ms = Math.max(5000, parseInt(env.AI_TIMEOUT_MS || "25000", 10) || 25000);
   return (u, i) => fetchFn(u, { ...i, signal: AbortSignal.timeout(ms) }).catch(e => { if (e && (e.name === "TimeoutError" || e.name === "AbortError")) throw new AiError("timeout", 504); throw e; });
 }
+/* a MODEL setting left over from another AI (e.g. a Gemini name while using Claude) is ignored */
+function pickModel(env, which) {
+  const rx = { anthropic: /^claude/i, openai: /^(gpt|o\d|chatgpt)/i, gemini: /^(models\/)?gemini/i }[which];
+  const own = env[which.toUpperCase() + "_MODEL"] || (which === "anthropic" ? "" : "");
+  if (own) return own;
+  if (env.MODEL && rx.test(env.MODEL)) return env.MODEL;
+  return { anthropic: "claude-haiku-5-5", openai: "gpt-4.1", gemini: "gemini-flash-latest" }[which];
+}
 async function upErr(r, env) {
   let d = ""; try { d = (await r.text()).slice(0, 300); } catch (e) { /* no body */ }
   return new AiError("upstream", r.status, redact(d, [env.ANTHROPIC_API_KEY, env.OPENAI_API_KEY, env.GEMINI_API_KEY]));
@@ -21,7 +29,7 @@ export async function runAnthropic(o) {
     const r = await fetchFn("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: { "x-api-key": env.ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01", "content-type": "application/json" },
-      body: JSON.stringify({ model: env.MODEL || "claude-haiku-5-5", max_tokens: 1000, system, messages: msgs, tools: defs })
+      body: JSON.stringify({ model: pickModel(env, "anthropic"), max_tokens: 1000, system, messages: msgs, tools: defs })
     });
     if (r.status === 429) throw new AiError("rate");
     if (!r.ok) throw await upErr(r, env);
@@ -46,7 +54,7 @@ export async function runOpenAI(o) {
   const { env, system, messages, tools, exec, collected } = o, fetchFn = timed(o.fetchFn, o.env);
   const defs = tools.map(t => ({ type: "function", name: t.name, description: t.description, parameters: t.schema, strict: false }));
   if (env.WEB_SEARCH === "on") defs.push({ type: "web_search" });
-  const model = env.MODEL || env.OPENAI_MODEL || "gpt-4.1";
+  const model = pickModel(env, "openai");
   let input = messages.map(m => ({ role: m.role, content: m.content })), prev = null;
   for (let step = 0; step < MAX_STEPS; step++) {
     const body = { model, instructions: system, input, tools: defs, max_output_tokens: 1000 };
@@ -80,7 +88,7 @@ let geminiThinkingOk = true;   // flips off if a model rejects the thinking sett
 export async function runGemini(o) {
   const { env, system, messages, tools, exec } = o, fetchFn = timed(o.fetchFn, o.env);
   const decls = tools.map(t => { const d = { name: t.name, description: t.description }; if (Object.keys(t.schema.properties || {}).length) d.parameters = gType(t.schema); return d; });
-  let model = (env.MODEL || env.GEMINI_MODEL || "gemini-flash-latest").replace(/^models\//, "");
+  let model = pickModel(env, "gemini").replace(/^models\//, "");
   const contents = messages.map(m => ({ role: m.role === "assistant" ? "model" : "user", parts: [{ text: m.content }] }));
   for (let step = 0; step < MAX_STEPS; step++) {
     const r = await fetchFn("https://generativelanguage.googleapis.com/v1beta/models/" + encodeURIComponent(model) + ":generateContent", {

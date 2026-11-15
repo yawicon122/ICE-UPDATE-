@@ -202,6 +202,14 @@ test("worker: ?selftest=1 shows the real provider error without leaking keys", a
   const bad = { status: 400, ok: false, text: async () => '{"error":{"message":"API key not valid GEMINI-SECRET1"}}', json: async () => ({}) };
   const a = await (await handle(G("14.0.0.1"), env, { fetch: async () => bad, now: nowFn })).json();
   assert.equal(a.ok, false); assert.equal(a.status, 400); assert.match(a.detail, /API key not valid \*\*\*/); assert.ok(!JSON.stringify(a).includes("GEMINI-SECRET1"));
-  const b = await (await handle(G("14.0.0.2"), env, { fetch: async () => J({ candidates: [{ content: { parts: [{ text: "OK" }] } }] }), now: nowFn })).json(); assert.deepEqual(b, { ok: true, provider: "gemini", sample: "OK" });
+  const b = await (await handle(G("14.0.0.2"), env, { fetch: async () => J({ candidates: [{ content: { parts: [{ text: "OK" }] } }] }), now: nowFn })).json(); assert.deepEqual(b, { ok: true, provider: "gemini", tools: false, sample: "OK" });
   assert.equal((await (await handle(G("14.0.0.3"), { ALLOWED_ORIGINS: ORIGIN }, {})).json()).ok, false);
+});
+
+test("worker: ?selftest=tools runs the real tools", async () => {
+  let n = 0, hadTools = false;
+  const f = async (u, i) => { const b = JSON.parse(i.body); hadTools = !!b.tools; if (++n === 1) return J({ candidates: [{ content: { parts: [{ functionCall: { name: "calculate", args: { expression: "12*12" } } }] } }] }); return J({ candidates: [{ content: { parts: [{ text: "144" }] } }] }); };
+  const r = await (await handle(new Request("https://w.test/api/chat?selftest=tools", { method: "GET", headers: { "CF-Connecting-IP": "15.0.0.1" } }), { ALLOWED_ORIGINS: ORIGIN, GEMINI_API_KEY: "GEMINI-SECRET1" }, { fetch: f, now: nowFn })).json();
+  assert.deepEqual(r, { ok: true, provider: "gemini", tools: true, sample: "144" }); assert.ok(hadTools);
+  const st = await (await handle(req(null, { method: "GET", ip: "15.0.0.2" }), { ALLOWED_ORIGINS: ORIGIN, GEMINI_API_KEY: "k12345678" }, {})).json(); assert.deepEqual(st.allowedOrigins, [ORIGIN]);
 });

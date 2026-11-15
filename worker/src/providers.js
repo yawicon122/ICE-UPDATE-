@@ -79,7 +79,7 @@ export async function runGemini(o) {
   for (let step = 0; step < MAX_STEPS; step++) {
     const r = await fetchFn("https://generativelanguage.googleapis.com/v1beta/models/" + encodeURIComponent(model) + ":generateContent", {
       method: "POST", headers: { "x-goog-api-key": env.GEMINI_API_KEY, "content-type": "application/json" },
-      body: JSON.stringify({ systemInstruction: { parts: [{ text: system }] }, contents, ...(decls.length ? { tools: [{ functionDeclarations: decls }] } : {}), generationConfig: { maxOutputTokens: 1200 } })
+      body: JSON.stringify({ systemInstruction: { parts: [{ text: system }] }, contents, ...(decls.length ? { tools: [{ functionDeclarations: decls }] } : {}), generationConfig: { maxOutputTokens: 4096 } })
     });
     if (r.status === 429) throw new AiError("rate", 429);
     if (!r.ok) throw await upErr(r, env);

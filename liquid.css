@@ -239,3 +239,9 @@ html.iu-lite .stats,html.iu-lite .resource-card,html.iu-lite .join-card,html.iu-
 html.iu-lite .lcard,html.iu-lite .gitem,html.iu-lite .broker{animation:none!important}
 html.iu-lite .glass::before,html.iu-lite .nav::before,html.iu-lite .btn::before,html.iu-lite .hv-bar::before,html.iu-lite .scroll-hint::before,html.iu-lite .stats::before{display:none}
 html.iu-lite .nav,html.iu-lite .scroll-hint{-webkit-backdrop-filter:blur(6px)!important;backdrop-filter:blur(6px)!important}
+/* gallery: small thumbnails (tap to open full size) */
+.masonry{columns:auto;display:flex;flex-wrap:wrap;gap:10px;justify-content:flex-start}
+.masonry .gitem{flex:0 0 130px;width:130px;margin:0;padding:5px;border-radius:16px}
+.masonry .gitem img{width:100%;height:150px;object-fit:cover;object-position:top;border-radius:11px}
+.masonry .gitem p{font-size:.72rem;line-height:1.3;padding:5px 3px 1px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+@media(min-width:760px){.masonry .gitem{flex-basis:170px;width:170px}.masonry .gitem img{height:190px}}

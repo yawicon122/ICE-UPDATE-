@@ -628,7 +628,7 @@
     return (BD.reach["push" + m[1]] || 0) * (1 - t) + (BD.reach["push" + m[2]] || 0) * t; }
   /* the "cash gatling" bear: a cut-out animation (no background box) that takes over the launcher for a few seconds.
      The bear is drawn from the sprite sheet; the money is live particles on a full-screen layer, so it flies freely up into the sky. */
-  var CASH = { ok: false, img: null, seq: [0, 1, 2, 3, 4, 5, 6, 7, 8, 7, 6, 5, 4, 3, 2, 3, 4, 5, 6, 7, 8, 7, 6, 5, 4, 3, 2, 1, 0], fw: 250, fh: 225, k: .37, busy: false, bills: [], fx: null };
+  var CASH = { ok: false, img: null, seq: [0, 1, 2, 3, 4, 5, 6, 7, 8, 7, 6, 5, 4, 3, 2, 3, 4, 5, 6, 7, 8, 7, 6, 5, 4, 3, 2, 1, 0], fw: 250, fh: 225, k: .41, bx: 33, by: 8, busy: false, bills: [], fx: null };
   setTimeout(function () { var im = new Image(); im.onload = function () { CASH.img = im; CASH.ok = true; }; im.src = BASE + "bear-cash.webp"; }, 3500);
   function billSprite() {   // one bill drawn once, reused for every particle
     var c = document.createElement("canvas"), w = 64, h = 32; c.width = w + 4; c.height = h + 4; var g = c.getContext("2d");
@@ -654,8 +654,8 @@
     // stand exactly where the bear is right now (he may have walked along): no jumping to the middle
     var cr = cv.getBoundingClientRect(), lr = L.getBoundingClientRect(), bs = bstate(cv);
     var feetX = cr.left + cr.width / 2, feetY = cr.bottom - 2;
-    c2.style.width = fw + "px"; c2.style.height = fh + "px"; c2.style.marginLeft = "0"; c2.style.left = (feetX - lr.left - fw / 2) + "px"; c2.style.bottom = (lr.bottom - feetY) + "px";
     if (bs && bs.pose && bs.pose.fx) flip = bs.pose.fx < 0;   // shoot the way he is facing
+    c2.style.width = fw + "px"; c2.style.height = fh + "px"; c2.style.marginLeft = "0"; c2.style.left = (feetX - lr.left - fw / 2 + (flip ? -1 : 1) * CASH.bx * CASH.k) + "px"; c2.style.bottom = (lr.bottom - feetY - CASH.by * CASH.k) + "px";
     var g = c2.getContext("2d"), fx = moneyLayer(); sizeMoney(fx); c2.style.transform = flip ? "scaleX(-1)" : "";
     var t0 = performance.now(), last = t0, STEP = 115, total = CASH.seq.length * STEP, acc = 0, FADE = 160;
     L.classList.add("pa-cashing"); cv.style.transition = "opacity .16s"; cv.style.opacity = "0";

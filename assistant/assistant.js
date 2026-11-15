@@ -648,7 +648,11 @@
     CASH.busy = true; var flip = Math.random() < .5;
     var c2 = L.querySelector(".pa-cash"), fw = CASH.fw * CASH.k, fh = CASH.fh * CASH.k;
     if (!c2) { c2 = document.createElement("canvas"); c2.className = "pa-cash"; c2.width = CASH.fw; c2.height = CASH.fh; c2.setAttribute("aria-hidden", "true"); L.appendChild(c2); }
-    c2.style.width = fw + "px"; c2.style.height = fh + "px"; c2.style.marginLeft = (-fw / 2) + "px";
+    // stand exactly where the bear is right now (he may have walked along): no jumping to the middle
+    var cr = cv.getBoundingClientRect(), lr = L.getBoundingClientRect(), bs = bstate(cv);
+    var feetX = cr.left + cr.width / 2, feetY = cr.bottom - 2;
+    c2.style.width = fw + "px"; c2.style.height = fh + "px"; c2.style.marginLeft = "0"; c2.style.left = (feetX - lr.left - fw / 2) + "px"; c2.style.bottom = (lr.bottom - feetY) + "px";
+    if (bs && bs.pose && bs.pose.fx) flip = bs.pose.fx < 0;   // shoot the way he is facing
     var g = c2.getContext("2d"), fx = moneyLayer(); sizeMoney(fx); c2.style.transform = flip ? "scaleX(-1)" : "";
     var t0 = performance.now(), last = t0, STEP = 115, total = CASH.seq.length * STEP, acc = 0, FADE = 160;
     L.classList.add("pa-cashing"); cv.style.transition = "opacity .16s"; cv.style.opacity = "0";

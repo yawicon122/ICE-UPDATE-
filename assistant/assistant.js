@@ -1027,7 +1027,9 @@
     if (!cmd && isLive(q) && !(CFG.endpoint && CFG.live)) { var lr = liveReply(); return Promise.resolve({ t: lr.t, a: lr.acts }); }
     // 2) known topic → instant local answer
     var hit = (cmd || (isLive(q) && CFG.live)) && CFG.endpoint ? null : match(q);
-    if (hit && (hit.score >= 2 || !CFG.endpoint || q.trim().split(/\s+/).length <= 4)) {
+    // built-in answers come FIRST whenever one fits; only a question with its own numbers to work out goes on to the AI
+    var sums = CFG.endpoint && /\d/.test(q) && /(calculat|how much|lot size for|position size for|\d\s*[-+*\/x×÷]\s*\d)/i.test(q);
+    if (hit && !sums) {
       var e = hit.e; return Promise.resolve({ t: typeof e.t === "function" ? e.t() : e.t, a: e.acts });
     }
     // 3) anything else → AI server, if configured

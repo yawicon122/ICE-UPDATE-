@@ -645,6 +645,7 @@ async function runOpenAI(o) {
 /* Google Gemini (generateContent). The key goes in a header, never in the URL. */
 const gType = n => Array.isArray(n) ? n.map(gType) : n && typeof n === "object" ? Object.fromEntries(Object.entries(n).map(([k, v]) => [k, k === "type" && typeof v === "string" ? v.toUpperCase() : gType(v)])) : n;
 
+let geminiThinkingOk = true;   // flips off if a model rejects the thinking setting
 async function runGemini(o) {
   const { env, system, messages, tools, exec, fetchFn } = o;
   const decls = tools.map(t => { const d = { name: t.name, description: t.description }; if (Object.keys(t.schema.properties || {}).length) d.parameters = gType(t.schema); return d; });
@@ -653,10 +654,14 @@ async function runGemini(o) {
   for (let step = 0; step < MAX_STEPS; step++) {
     const r = await fetchFn("https://generativelanguage.googleapis.com/v1beta/models/" + encodeURIComponent(model) + ":generateContent", {
       method: "POST", headers: { "x-goog-api-key": env.GEMINI_API_KEY, "content-type": "application/json" },
-      body: JSON.stringify({ systemInstruction: { parts: [{ text: system }] }, contents, ...(decls.length ? { tools: [{ functionDeclarations: decls }] } : {}), generationConfig: { maxOutputTokens: 4096 } })
+      body: JSON.stringify({ systemInstruction: { parts: [{ text: system }] }, contents, ...(decls.length ? { tools: [{ functionDeclarations: decls }] } : {}), generationConfig: { maxOutputTokens: 4096, ...(geminiThinkingOk && env.GEMINI_THINKING_BUDGET !== "default" ? { thinkingConfig: { thinkingBudget: parseInt(env.GEMINI_THINKING_BUDGET || "0", 10) } } : {}) } })
     });
     if (r.status === 429) throw new AiError("rate", 429);
-    if (!r.ok) throw await upErr(r, env);
+    if (!r.ok) {
+      const e = await upErr(r, env);
+      if (r.status === 400 && geminiThinkingOk && /think/i.test(e.detail || "")) { geminiThinkingOk = false; step--; continue; }
+      throw e;
+    }
     const out = await r.json(), cand = out.candidates && out.candidates[0], parts = cand && cand.content && Array.isArray(cand.content.parts) ? cand.content.parts : [];
     const calls = parts.filter(p => p.functionCall);
     if (calls.length) {
@@ -736,12 +741,12 @@ async function handle(request, env, deps) {
     // asks the AI one tiny question and shows the real result or the provider's error text (never a key)
     if (!provider) return json({ ok: false, error: "No AI key is set on this deployment." }, 200, cors);
     if (limited("selftest:" + (request.headers.get("CF-Connecting-IP") || "x"), now())) return json({ error: "Too many requests" }, 429, cors);
-    const withTools = request.url.includes("selftest=tools"), col = { quotes: [], analyses: [], sources: [] };
+    const t0 = Date.now(), withTools = request.url.includes("selftest=tools"), col = { quotes: [], analyses: [], sources: [] };
     try {
       const ex = makeExecutor({ market: makeMarket(env, fetchFn, now), now, collected: col }, evaluate, tradeCalc, summarize, untrusted);
       const t = await run({ env, system: withTools ? SYSTEM : "Reply with the single word OK.", messages: [{ role: "user", content: withTools ? "What is 12*12? Use the calculator tool." : "ping" }], tools: withTools ? TOOLS : [], exec: ex, fetchFn, collected: col });
-      return json({ ok: true, provider, tools: withTools, sample: t.slice(0, 80) }, 200, cors); }
-    catch (e) { return json({ ok: false, provider, kind: e && e.kind || "error", status: e && e.status || null, detail: e && e.detail || "" }, 200, cors); }
+      return json({ ok: true, provider, tools: withTools, sample: t.slice(0, 80), ms: Date.now() - t0 }, 200, cors); }
+    catch (e) { return json({ ok: false, provider, kind: e && e.kind || "error", status: e && e.status || null, detail: e && e.detail || "", ms: Date.now() - t0 }, 200, cors); }
   }
   if (request.method === "GET") {
     // a safe status check: shows what is switched on, never any key

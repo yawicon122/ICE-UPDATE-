@@ -71,6 +71,7 @@ export async function runOpenAI(o) {
 /* Google Gemini (generateContent). The key goes in a header, never in the URL. */
 const gType = n => Array.isArray(n) ? n.map(gType) : n && typeof n === "object" ? Object.fromEntries(Object.entries(n).map(([k, v]) => [k, k === "type" && typeof v === "string" ? v.toUpperCase() : gType(v)])) : n;
 
+let geminiThinkingOk = true;   // flips off if a model rejects the thinking setting
 export async function runGemini(o) {
   const { env, system, messages, tools, exec, fetchFn } = o;
   const decls = tools.map(t => { const d = { name: t.name, description: t.description }; if (Object.keys(t.schema.properties || {}).length) d.parameters = gType(t.schema); return d; });
@@ -79,10 +80,14 @@ export async function runGemini(o) {
   for (let step = 0; step < MAX_STEPS; step++) {
     const r = await fetchFn("https://generativelanguage.googleapis.com/v1beta/models/" + encodeURIComponent(model) + ":generateContent", {
       method: "POST", headers: { "x-goog-api-key": env.GEMINI_API_KEY, "content-type": "application/json" },
-      body: JSON.stringify({ systemInstruction: { parts: [{ text: system }] }, contents, ...(decls.length ? { tools: [{ functionDeclarations: decls }] } : {}), generationConfig: { maxOutputTokens: 4096 } })
+      body: JSON.stringify({ systemInstruction: { parts: [{ text: system }] }, contents, ...(decls.length ? { tools: [{ functionDeclarations: decls }] } : {}), generationConfig: { maxOutputTokens: 4096, ...(geminiThinkingOk && env.GEMINI_THINKING_BUDGET !== "default" ? { thinkingConfig: { thinkingBudget: parseInt(env.GEMINI_THINKING_BUDGET || "0", 10) } } : {}) } })
     });
     if (r.status === 429) throw new AiError("rate", 429);
-    if (!r.ok) throw await upErr(r, env);
+    if (!r.ok) {
+      const e = await upErr(r, env);
+      if (r.status === 400 && geminiThinkingOk && /think/i.test(e.detail || "")) { geminiThinkingOk = false; step--; continue; }
+      throw e;
+    }
     const out = await r.json(), cand = out.candidates && out.candidates[0], parts = cand && cand.content && Array.isArray(cand.content.parts) ? cand.content.parts : [];
     const calls = parts.filter(p => p.functionCall);
     if (calls.length) {

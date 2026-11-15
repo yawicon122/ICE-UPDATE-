@@ -28,6 +28,7 @@ Your site is on GitHub Pages, which can't keep a secret, so the keys live in a f
 | `ALLOWED_ORIGINS` | Text | `https://iceupdate.com,https://yawicon122.github.io` |
 | `MODEL` | Text, optional | e.g. `claude-haiku-5-5` (Claude), `gpt-4.1` (OpenAI) or a Gemini model name (default `gemini-flash-latest`) |
 | `DAILY_LIMIT` | Text, optional | most AI answers per day for the whole site (default `800`; `0` = no cap). After that the bear points people to your channels. Exact with KV memory on; approximate without it |
+| `GEMINI_THINKING_BUDGET` | Text, optional | Gemini only. `0` (default) = fastest replies. A bigger number (e.g. `1024`) lets it think longer; `default` leaves Google's setting |
 | `WEB_SEARCH` | Text, optional | `on` to let the AI search the web (Claude and OpenAI only; not available with Gemini here) |
 
 5. **Memory (optional)**: Storage & databases → KV → Create namespace `ice-memory`. Worker → Settings → Bindings → Add → KV namespace → variable name `MEMORY` → pick `ice-memory`.

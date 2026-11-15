@@ -62,12 +62,12 @@ export async function handle(request, env, deps) {
     // asks the AI one tiny question and shows the real result or the provider's error text (never a key)
     if (!provider) return json({ ok: false, error: "No AI key is set on this deployment." }, 200, cors);
     if (limited("selftest:" + (request.headers.get("CF-Connecting-IP") || "x"), now())) return json({ error: "Too many requests" }, 429, cors);
-    const withTools = request.url.includes("selftest=tools"), col = { quotes: [], analyses: [], sources: [] };
+    const t0 = Date.now(), withTools = request.url.includes("selftest=tools"), col = { quotes: [], analyses: [], sources: [] };
     try {
       const ex = makeExecutor({ market: makeMarket(env, fetchFn, now), now, collected: col }, evaluate, tradeCalc, summarize, untrusted);
       const t = await run({ env, system: withTools ? SYSTEM : "Reply with the single word OK.", messages: [{ role: "user", content: withTools ? "What is 12*12? Use the calculator tool." : "ping" }], tools: withTools ? TOOLS : [], exec: ex, fetchFn, collected: col });
-      return json({ ok: true, provider, tools: withTools, sample: t.slice(0, 80) }, 200, cors); }
-    catch (e) { return json({ ok: false, provider, kind: e && e.kind || "error", status: e && e.status || null, detail: e && e.detail || "" }, 200, cors); }
+      return json({ ok: true, provider, tools: withTools, sample: t.slice(0, 80), ms: Date.now() - t0 }, 200, cors); }
+    catch (e) { return json({ ok: false, provider, kind: e && e.kind || "error", status: e && e.status || null, detail: e && e.detail || "", ms: Date.now() - t0 }, 200, cors); }
   }
   if (request.method === "GET") {
     // a safe status check: shows what is switched on, never any key

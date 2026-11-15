@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /debug.html
+Disallow: /free-classes-popup.html
+Disallow: /worker/
+Disallow: /functions/
+
+Sitemap: https://iceupdate.com/sitemap.xml

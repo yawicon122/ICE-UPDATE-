@@ -1,0 +1,12 @@
+{
+  // Lets Cloudflare deploy this Worker straight from GitHub (Workers Builds).
+  "name": "ice-assistant",
+  "main": "assistant-worker.js",
+  "compatibility_date": "2026-11-01",
+  "workers_dev": true,
+  "keep_vars": true,
+  "vars": {
+    "ALLOWED_ORIGINS": "https://iceupdate.com,https://yawicon122.github.io"
+  }
+  // Secrets (AI key, Twelve Data, Finnhub) stay in the Cloudflare dashboard, never in this file.
+}

@@ -50,7 +50,7 @@
       "A **pip** is the standard small step a currency price moves.\n\n- On most pairs (like EUR/USD) 1 pip = **0.0001**. 1.1050 → 1.1051 is 1 pip.\n- On JPY pairs (like USD/JPY) 1 pip = **0.01**.\n- On gold (XAU/USD) most brokers count **0.10** as 1 pip, but check your broker's spec.\n\n**Example:** buy EUR/USD at 1.1000, close at 1.1030 → +30 pips. What that is worth in money depends on your lot size." },
     { k: ["lot", "lots", "lot size", "micro lot", "mini lot", "standard lot", "volume"], t:
       "A **lot** is your trade size.\n\n- **Standard lot** = 1.00 → about $10 per pip on EUR/USD\n- **Mini lot** = 0.10 → about $1 per pip\n- **Micro lot** = 0.01 → about $0.10 per pip\n\nBeginners usually start with micro lots so mistakes stay small." },
-    { k: ["spread", "bid", "ask", "bid ask"], t:
+    { k: ["spread", "bid price", "ask price", "bid ask", "bid and ask"], t:
       "The **spread** is the gap between the **bid** (sell) price and the **ask** (buy) price. It's a cost you pay on every trade.\n\n**Example:** EUR/USD bid 1.1000, ask 1.1002 → spread = 2 pips. Your trade starts 2 pips down. Spreads usually widen around big news and when the market is quiet." },
     { k: ["leverage", "1:100", "1:500", "1:1000", "high leverage"], t:
       "**Leverage** lets you control a bigger position with a small deposit.\n\n- With 1:100, $100 of margin controls a $10,000 position.\n- It makes **profits and losses bigger**. It doesn't make trades more likely to win.\n\nHigh leverage is the most common way beginners blow accounts. Keep your risk per trade small (many traders use 1-2%) whatever leverage your broker offers. " + NO_ADVICE },

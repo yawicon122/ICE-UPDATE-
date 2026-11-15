@@ -626,8 +626,8 @@
     return (BD.reach["push" + m[1]] || 0) * (1 - t) + (BD.reach["push" + m[2]] || 0) * t; }
   /* the "cash gatling" bear: a cut-out animation (no background box) that takes over the launcher for a few seconds.
      The bear is drawn from the sprite sheet; the money is live particles on a full-screen layer, so it flies freely up into the sky. */
-  var CASH = { ok: false, img: null, seq: [0, 1, 2, 3, 4, 5, 6, 7, 8, 7, 6, 5, 4, 3, 2, 3, 4, 5, 6, 7, 8, 7, 6, 5, 4, 3, 2, 1, 0], fw: 250, fh: 225, k: .34, busy: false, bills: [], fx: null };
-  // switched off: set CASH.ok = true after loading BASE + "bear-cash.webp" and add ["cash", 1.6] to CHOICES to bring it back
+  var CASH = { ok: false, img: null, seq: [0, 1, 2, 3, 4, 5, 6, 7, 8, 7, 6, 5, 4, 3, 2, 3, 4, 5, 6, 7, 8, 7, 6, 5, 4, 3, 2, 1, 0], fw: 250, fh: 225, k: .37, busy: false, bills: [], fx: null };
+  setTimeout(function () { var im = new Image(); im.onload = function () { CASH.img = im; CASH.ok = true; }; im.src = BASE + "bear-cash.webp"; }, 3500);
   function billSprite() {   // one bill drawn once, reused for every particle
     var c = document.createElement("canvas"), w = 64, h = 32; c.width = w + 4; c.height = h + 4; var g = c.getContext("2d");
     function rr(x, y, ww, hh, r) { g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + ww, y, x + ww, y + hh, r); g.arcTo(x + ww, y + hh, x, y + hh, r); g.arcTo(x, y + hh, x, y, r); g.arcTo(x, y, x + ww, y, r); g.closePath(); }
@@ -645,11 +645,11 @@
   function sizeMoney(fx) { var d = Math.min(2, window.devicePixelRatio || 1); fx.d = d; fx.c.width = Math.round(innerWidth * d); fx.c.height = Math.round(innerHeight * d); fx.c.style.width = innerWidth + "px"; fx.c.style.height = innerHeight + "px"; }
   function playCash(cv) {
     var L = cv.closest(".pa-launch"); if (!L || CASH.busy || !CASH.ok || reduce) return false;
-    CASH.busy = true;
+    CASH.busy = true; var flip = Math.random() < .5;
     var c2 = L.querySelector(".pa-cash"), fw = CASH.fw * CASH.k, fh = CASH.fh * CASH.k;
     if (!c2) { c2 = document.createElement("canvas"); c2.className = "pa-cash"; c2.width = CASH.fw; c2.height = CASH.fh; c2.setAttribute("aria-hidden", "true"); L.appendChild(c2); }
     c2.style.width = fw + "px"; c2.style.height = fh + "px"; c2.style.marginLeft = (-fw / 2) + "px";
-    var g = c2.getContext("2d"), fx = moneyLayer(); sizeMoney(fx);
+    var g = c2.getContext("2d"), fx = moneyLayer(); sizeMoney(fx); c2.style.transform = flip ? "scaleX(-1)" : "";
     var t0 = performance.now(), last = t0, STEP = 115, total = CASH.seq.length * STEP, acc = 0, FADE = 160;
     L.classList.add("pa-cashing"); cv.style.transition = "opacity .16s"; cv.style.opacity = "0";
     (function frame(now) {
@@ -662,11 +662,11 @@
         g.drawImage(CASH.img, fi * CASH.fw, 0, CASH.fw, CASH.fh, 0, 0, CASH.fw, CASH.fh); g.globalAlpha = 1;
         // the muzzle, on screen: bills spray out of it and fly up into the sky
         if (fi >= 2) {
-          var r = c2.getBoundingClientRect(), mx = r.left + r.width * (168 / CASH.fw), my = r.top + r.height * (78 / CASH.fh);
-          acc += dt * (fi >= 3 ? 46 : 22);
-          while (acc >= 1) { acc -= 1;
-            var a = (-90 + (Math.random() * 78 - 30)) * Math.PI / 180, sp = 330 + Math.random() * 520;
-            CASH.bills.push({ x: mx + Math.random() * 6, y: my + Math.random() * 6, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, r: Math.random() * 6.28, vr: (Math.random() - .5) * 9, s: .22 + Math.random() * .2, t: 0, life: 2.2 + Math.random() * 1.6, ph: Math.random() * 6.28 });
+          var r = c2.getBoundingClientRect(), mx = r.left + r.width * (flip ? 1 - 168 / CASH.fw : 168 / CASH.fw), my = r.top + r.height * (78 / CASH.fh);
+          acc += dt * (fi >= 3 ? 24 : 10);
+          while (acc >= 1) { acc -= 1;   // tossed up into the sky, leaning the way the bear faces, then they flutter down
+            var a = (-90 + (flip ? -18 : 18) + (Math.random() * 70 - 35)) * Math.PI / 180, sp = 320 + Math.random() * 380;
+            CASH.bills.push({ x: mx + Math.random() * 6, y: my + Math.random() * 6, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, r: Math.random() * 6.28, vr: (Math.random() - .5) * 9, s: .22 + Math.random() * .16, grow: .3 + Math.random() * .4, t: 0, life: 2.4 + Math.random() * 1.4, ph: Math.random() * 6.28 });
           }
         }
       } else { cv.style.opacity = "1"; L.classList.remove("pa-cashing"); }
@@ -674,9 +674,9 @@
       var G = fx.g, d = fx.d; G.setTransform(1, 0, 0, 1, 0, 0); G.clearRect(0, 0, fx.c.width, fx.c.height);
       for (var i = CASH.bills.length - 1; i >= 0; i--) {
         var b = CASH.bills[i]; b.t += dt; if (b.t > b.life || b.y > innerHeight + 60) { CASH.bills.splice(i, 1); continue; }
-        b.vy += 560 * dt; b.vx *= (1 - .55 * dt); if (b.vy > 0) b.vy *= (1 - 1.1 * dt);   // gravity, then they flutter down slowly
-        b.x += (b.vx + Math.sin(b.t * 4 + b.ph) * 22) * dt; b.y += b.vy * dt; b.r += b.vr * dt;
-        var fade = Math.min(1, (b.life - b.t) / .5, b.t / .06), sc = b.s * (.8 + .2 * Math.abs(Math.cos(b.r * .7)));
+        if (b.rainy) { b.vy = Math.min(b.vy + 40 * dt, 230); } else { b.vy += 520 * dt; b.vx *= (1 - .5 * dt); if (b.vy > 0) b.vy *= (1 - 1.3 * dt); }   // gravity, then they flutter down slowly
+        b.x += (b.vx + Math.sin(b.t * 3.2 + b.ph) * 38) * dt; b.y += b.vy * dt; b.r += b.vr * dt;
+        var fade = Math.min(1, (b.life - b.t) / .5, b.t / .06), sc = (b.s + b.grow * Math.min(1, b.t / 1.2) * .3) * (.85 + .15 * Math.abs(Math.cos(b.r * .7)));
         G.globalAlpha = Math.max(0, fade); G.setTransform(d, 0, 0, d, b.x * d, b.y * d); G.rotate(b.r); G.scale(sc, sc * (.55 + .45 * Math.abs(Math.cos(b.r * .5 + b.ph))));
         G.drawImage(fx.spr, -fx.spr.width / 2, -fx.spr.height / 2);
       }
@@ -687,7 +687,7 @@
     return true;
   }
   /* the "brain": picks what to do next on its own, never repeats the same thing twice in a row */
-  var CHOICES = [["wander", 3], ["look", 2.2], ["dance", 1.6], ["stretch", 1.4], ["wave", 1.4], ["hello", 1.2], ["push", 1.5], ["spin", 1], ["nap", .6], ["spew", 1.3], ["rain", 1.4]];
+  var CHOICES = [["wander", 3], ["look", 2.2], ["dance", 1.6], ["stretch", 1.4], ["wave", 1.4], ["hello", 1.2], ["push", 1.5], ["spin", 1], ["nap", .6], ["spew", 1.3], ["rain", 1.4], ["cash", 1.6]];
   function think(cv, B, now) {
     if (document.documentElement.getAttribute("data-bear-idle") === "off") return;
     var bored = now - B.seen > 40, list = CHOICES.filter(function (c) { return c[0] !== B.last && (c[0] !== "cash" || CASH.ok) && (!NEEDS[c[0]] || sheetReady(NEEDS[c[0]])); }).map(function (c) {

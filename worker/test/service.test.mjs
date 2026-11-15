@@ -174,3 +174,25 @@ test("worker: daily cap stops the AI for the whole site, but not commands", asyn
   assert.match((await (await handle(req(user("/calculate 2+2"), { ip: "12.0.2.3" }), e2, { fetch: f, now: nw })).json()).reply, /= \*\*4\*\*/);
   const off = { ...ENV, DAILY_LIMIT: "0" }; for (let i = 0; i < 4; i++) assert.equal((await (await handle(req(user("hi"), { ip: "12.0.3." + i }), off, { fetch: f, now: () => Date.parse("2032-01-01T10:00:00Z") })).json()).reply.startsWith("ok"), true);
 });
+
+test("worker: Gemini provider (key in header, thought signatures returned, tools declared)", async () => {
+  let n = 0;
+  const f = async (u, i) => {
+    assert.match(u, /generativelanguage\.googleapis\.com\/v1beta\/models\/gemini-flash-latest:generateContent$/); assert.equal(i.headers["x-goog-api-key"], "GEMINI-SECRET1"); assert.ok(!u.includes("GEMINI-SECRET1"));
+    const b = JSON.parse(i.body); assert.match(b.systemInstruction.parts[0].text, /Ice Update/); assert.equal(b.contents[0].role, "user");
+    const names = b.tools[0].functionDeclarations.map(d => d.name); assert.ok(names.includes("get_quote")); assert.equal(b.tools[0].functionDeclarations.find(d => d.name === "get_time").parameters, undefined);
+    assert.equal(b.tools[0].functionDeclarations.find(d => d.name === "calculate").parameters.type, "OBJECT");
+    if (++n === 1) return J({ candidates: [{ content: { role: "model", parts: [{ functionCall: { name: "calculate", args: { expression: "7*6" } }, thoughtSignature: "SIG-A" }] } }] });
+    assert.equal(b.contents[1].role, "model"); assert.equal(b.contents[1].parts[0].thoughtSignature, "SIG-A");
+    assert.equal(b.contents[2].role, "user"); const fr = b.contents[2].parts[0].functionResponse; assert.equal(fr.name, "calculate"); assert.match(fr.response.output, /"result":42/);
+    return J({ candidates: [{ content: { role: "model", parts: [{ text: "thinking", thought: true }, { text: "It is 42." }] } }] });
+  };
+  const env = { ALLOWED_ORIGINS: ORIGIN, GEMINI_API_KEY: "GEMINI-SECRET1" };
+  const j = await (await handle(req(user("7*6"), { ip: "13.0.0.1" }), env, { fetch: f, now: nowFn })).json(); assert.equal(j.reply, "It is 42.");
+  assert.equal((await (await handle(req(null, { method: "GET", ip: "13.0.0.2" }), env, {})).json()).ai, "gemini");
+  const bad = await handle(req(user("hi"), { ip: "13.0.0.3" }), env, { fetch: async () => J({ error: { message: "API key not valid" } }, 400), now: nowFn }); assert.equal(bad.status, 502); assert.equal((await bad.json()).upstreamStatus, 400);
+  assert.equal((await handle(req(user("hi"), { ip: "13.0.0.4" }), env, { fetch: async () => J({ candidates: [] }), now: nowFn })).status, 502);
+  assert.equal((await handle(req(user("hi"), { ip: "13.0.0.5" }), env, { fetch: async () => J({}, 429), now: nowFn })).status, 429);
+  assert.equal((await handle(req(user("hi"), { ip: "13.0.0.6" }), { ALLOWED_ORIGINS: ORIGIN, AI_PROVIDER: "gemini" }, {})).status, 503);
+  const p = await handle(req(user("hi"), { ip: "13.0.0.7" }), { ...env, ANTHROPIC_API_KEY: "sk-ant-both123", AI_PROVIDER: "gemini" }, { fetch: async u => { assert.match(u, /generativelanguage/); return J({ candidates: [{ content: { parts: [{ text: "gem" }] } }] }); }, now: nowFn }); assert.equal((await p.json()).reply, "gem");
+});

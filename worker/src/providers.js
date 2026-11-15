@@ -1,5 +1,5 @@
 /* ---------- providers: the tool-calling loop for Claude (Anthropic) or OpenAI. Keys are read from the server only. ---------- */
-export class AiError extends Error { constructor(kind) { super(kind); this.kind = kind; } }
+export class AiError extends Error { constructor(kind, status) { super(kind); this.kind = kind; this.status = status; } }
 const MAX_STEPS = 6;
 
 export async function runAnthropic(o) {
@@ -14,7 +14,7 @@ export async function runAnthropic(o) {
       body: JSON.stringify({ model: env.MODEL || "claude-haiku-5-5", max_tokens: 1000, system, messages: msgs, tools: defs })
     });
     if (r.status === 429) throw new AiError("rate");
-    if (!r.ok) throw new AiError("upstream");
+    if (!r.ok) throw new AiError("upstream", r.status);
     const out = await r.json(), content = Array.isArray(out.content) ? out.content : [];
     for (const b of content) if (b.type === "text" && Array.isArray(b.citations)) for (const c of b.citations) if (c && c.url) collected.sources.push({ title: c.title, url: c.url });
     const uses = content.filter(b => b.type === "tool_use");
@@ -45,7 +45,7 @@ export async function runOpenAI(o) {
       method: "POST", headers: { Authorization: "Bearer " + env.OPENAI_API_KEY, "content-type": "application/json" }, body: JSON.stringify(body)
     });
     if (r.status === 429) throw new AiError("rate");
-    if (!r.ok) throw new AiError("upstream");
+    if (!r.ok) throw new AiError("upstream", r.status);
     const out = await r.json(), items = Array.isArray(out.output) ? out.output : [];
     const calls = items.filter(i => i.type === "function_call");
     let text = "";
@@ -59,6 +59,37 @@ export async function runOpenAI(o) {
       let args = {}; try { args = JSON.parse(c.arguments || "{}"); } catch (e) { /* bad JSON from the model */ }
       return { type: "function_call_output", call_id: c.call_id, output: await exec(c.name, args) };
     }));
+  }
+  throw new AiError("loop");
+}
+
+/* Google Gemini (generateContent). The key goes in a header, never in the URL. */
+const gType = n => Array.isArray(n) ? n.map(gType) : n && typeof n === "object" ? Object.fromEntries(Object.entries(n).map(([k, v]) => [k, k === "type" && typeof v === "string" ? v.toUpperCase() : gType(v)])) : n;
+
+export async function runGemini(o) {
+  const { env, system, messages, tools, exec, fetchFn } = o;
+  const decls = tools.map(t => { const d = { name: t.name, description: t.description }; if (Object.keys(t.schema.properties || {}).length) d.parameters = gType(t.schema); return d; });
+  const model = (env.MODEL || env.GEMINI_MODEL || "gemini-flash-latest").replace(/^models\//, "");
+  const contents = messages.map(m => ({ role: m.role === "assistant" ? "model" : "user", parts: [{ text: m.content }] }));
+  for (let step = 0; step < MAX_STEPS; step++) {
+    const r = await fetchFn("https://generativelanguage.googleapis.com/v1beta/models/" + encodeURIComponent(model) + ":generateContent", {
+      method: "POST", headers: { "x-goog-api-key": env.GEMINI_API_KEY, "content-type": "application/json" },
+      body: JSON.stringify({ systemInstruction: { parts: [{ text: system }] }, contents, tools: [{ functionDeclarations: decls }], generationConfig: { maxOutputTokens: 1200 } })
+    });
+    if (r.status === 429) throw new AiError("rate", 429);
+    if (!r.ok) throw new AiError("upstream", r.status);
+    const out = await r.json(), cand = out.candidates && out.candidates[0], parts = cand && cand.content && Array.isArray(cand.content.parts) ? cand.content.parts : [];
+    const calls = parts.filter(p => p.functionCall);
+    if (calls.length) {
+      // send the model's own parts back unchanged: Gemini needs its "thoughtSignature" values returned exactly as given
+      contents.push({ role: "model", parts });
+      const resp = await Promise.all(calls.map(async p => ({ functionResponse: { name: p.functionCall.name, response: { output: await exec(p.functionCall.name, p.functionCall.args) } } })));
+      contents.push({ role: "user", parts: resp });
+      continue;
+    }
+    const text = parts.filter(p => typeof p.text === "string" && !p.thought).map(p => p.text).join("").trim();
+    if (!text) throw new AiError("empty", 200);
+    return text;
   }
   throw new AiError("loop");
 }

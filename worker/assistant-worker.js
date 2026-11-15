@@ -573,7 +573,7 @@ function dataFooter(collected) {
 }
 
 /* ---------- providers: the tool-calling loop for Claude (Anthropic) or OpenAI. Keys are read from the server only. ---------- */
-class AiError extends Error { constructor(kind) { super(kind); this.kind = kind; } }
+class AiError extends Error { constructor(kind, status) { super(kind); this.kind = kind; this.status = status; } }
 const MAX_STEPS = 6;
 
 async function runAnthropic(o) {
@@ -588,7 +588,7 @@ async function runAnthropic(o) {
       body: JSON.stringify({ model: env.MODEL || "claude-haiku-5-5", max_tokens: 1000, system, messages: msgs, tools: defs })
     });
     if (r.status === 429) throw new AiError("rate");
-    if (!r.ok) throw new AiError("upstream");
+    if (!r.ok) throw new AiError("upstream", r.status);
     const out = await r.json(), content = Array.isArray(out.content) ? out.content : [];
     for (const b of content) if (b.type === "text" && Array.isArray(b.citations)) for (const c of b.citations) if (c && c.url) collected.sources.push({ title: c.title, url: c.url });
     const uses = content.filter(b => b.type === "tool_use");
@@ -619,7 +619,7 @@ async function runOpenAI(o) {
       method: "POST", headers: { Authorization: "Bearer " + env.OPENAI_API_KEY, "content-type": "application/json" }, body: JSON.stringify(body)
     });
     if (r.status === 429) throw new AiError("rate");
-    if (!r.ok) throw new AiError("upstream");
+    if (!r.ok) throw new AiError("upstream", r.status);
     const out = await r.json(), items = Array.isArray(out.output) ? out.output : [];
     const calls = items.filter(i => i.type === "function_call");
     let text = "";
@@ -633,6 +633,37 @@ async function runOpenAI(o) {
       let args = {}; try { args = JSON.parse(c.arguments || "{}"); } catch (e) { /* bad JSON from the model */ }
       return { type: "function_call_output", call_id: c.call_id, output: await exec(c.name, args) };
     }));
+  }
+  throw new AiError("loop");
+}
+
+/* Google Gemini (generateContent). The key goes in a header, never in the URL. */
+const gType = n => Array.isArray(n) ? n.map(gType) : n && typeof n === "object" ? Object.fromEntries(Object.entries(n).map(([k, v]) => [k, k === "type" && typeof v === "string" ? v.toUpperCase() : gType(v)])) : n;
+
+async function runGemini(o) {
+  const { env, system, messages, tools, exec, fetchFn } = o;
+  const decls = tools.map(t => { const d = { name: t.name, description: t.description }; if (Object.keys(t.schema.properties || {}).length) d.parameters = gType(t.schema); return d; });
+  const model = (env.MODEL || env.GEMINI_MODEL || "gemini-flash-latest").replace(/^models\//, "");
+  const contents = messages.map(m => ({ role: m.role === "assistant" ? "model" : "user", parts: [{ text: m.content }] }));
+  for (let step = 0; step < MAX_STEPS; step++) {
+    const r = await fetchFn("https://generativelanguage.googleapis.com/v1beta/models/" + encodeURIComponent(model) + ":generateContent", {
+      method: "POST", headers: { "x-goog-api-key": env.GEMINI_API_KEY, "content-type": "application/json" },
+      body: JSON.stringify({ systemInstruction: { parts: [{ text: system }] }, contents, tools: [{ functionDeclarations: decls }], generationConfig: { maxOutputTokens: 1200 } })
+    });
+    if (r.status === 429) throw new AiError("rate", 429);
+    if (!r.ok) throw new AiError("upstream", r.status);
+    const out = await r.json(), cand = out.candidates && out.candidates[0], parts = cand && cand.content && Array.isArray(cand.content.parts) ? cand.content.parts : [];
+    const calls = parts.filter(p => p.functionCall);
+    if (calls.length) {
+      // send the model's own parts back unchanged: Gemini needs its "thoughtSignature" values returned exactly as given
+      contents.push({ role: "model", parts });
+      const resp = await Promise.all(calls.map(async p => ({ functionResponse: { name: p.functionCall.name, response: { output: await exec(p.functionCall.name, p.functionCall.args) } } })));
+      contents.push({ role: "user", parts: resp });
+      continue;
+    }
+    const text = parts.filter(p => typeof p.text === "string" && !p.thought).map(p => p.text).join("").trim();
+    if (!text) throw new AiError("empty", 200);
+    return text;
   }
   throw new AiError("loop");
 }
@@ -692,7 +723,7 @@ async function handle(request, env, deps) {
   const allowed = String(env.ALLOWED_ORIGINS || "https://iceupdate.com,https://www.iceupdate.com,https://yawicon122.github.io,https://ice-update.pages.dev").split(",").map(s => s.trim()).filter(Boolean);
   const origin = request.headers.get("Origin") || "";
   const cors = corsHeaders(origin, allowed);
-  const provider = env.AI_PROVIDER || (env.ANTHROPIC_API_KEY ? "anthropic" : env.OPENAI_API_KEY ? "openai" : "");
+  const provider = env.AI_PROVIDER || (env.ANTHROPIC_API_KEY ? "anthropic" : env.OPENAI_API_KEY ? "openai" : env.GEMINI_API_KEY ? "gemini" : "");
 
   if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: cors });
   if (request.method === "GET") {
@@ -702,7 +733,7 @@ async function handle(request, env, deps) {
   if (request.method !== "POST") return json({ error: "Method not allowed" }, 405, cors);
   if (!allowed.includes(origin)) return json({ error: "Origin not allowed" }, 403, cors);
   if (!provider) return json({ error: "Assistant not configured" }, 503, cors);
-  if (provider === "anthropic" && !env.ANTHROPIC_API_KEY || provider === "openai" && !env.OPENAI_API_KEY) return json({ error: "Assistant not configured" }, 503, cors);
+  if (provider === "anthropic" && !env.ANTHROPIC_API_KEY || provider === "openai" && !env.OPENAI_API_KEY || provider === "gemini" && !env.GEMINI_API_KEY || !["anthropic", "openai", "gemini"].includes(provider)) return json({ error: "Assistant not configured" }, 503, cors);
 
   const ip = request.headers.get("CF-Connecting-IP") || "unknown";
   if (limited(ip, now())) return json({ error: "Too many requests" }, 429, cors);
@@ -748,12 +779,12 @@ async function handle(request, env, deps) {
   } catch (e) { /* memory is optional */ }
 
   try {
-    const run = provider === "openai" ? runOpenAI : runAnthropic;
+    const run = provider === "openai" ? runOpenAI : provider === "gemini" ? runGemini : runAnthropic;
     const reply = await run({ env, system, messages: msgs, tools: TOOLS, exec, fetchFn, collected });
     return json({ reply: reply + dataFooter(collected) }, 200, cors);
   } catch (e) {
     const f = e instanceof AiError ? FRIENDLY[e.kind] : FRIENDLY.upstream;
-    return json({ error: f[1] }, f[0], cors);
+    return json({ error: f[1], ...(e instanceof AiError && e.status ? { upstreamStatus: e.status } : {}) }, f[0], cors);
   }
 }
 

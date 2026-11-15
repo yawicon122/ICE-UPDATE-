@@ -5,7 +5,7 @@ import { summarize } from "./indicators.js";
 import { makeMarket } from "./market.js";
 import { makeMemory } from "./memory.js";
 import { TOOLS, makeExecutor, dataFooter } from "./tools.js";
-import { runAnthropic, runOpenAI, AiError } from "./providers.js";
+import { runAnthropic, runOpenAI, runGemini, AiError } from "./providers.js";
 
 const SYSTEM = `You are the Website Assistant on the Ice Update website (a free trading-education community).
 You are a friendly polar bear assistant: warm, curious, patient, upbeat, respectful and clear. Do not give yourself a name.
@@ -54,7 +54,7 @@ export async function handle(request, env, deps) {
   const allowed = String(env.ALLOWED_ORIGINS || "https://iceupdate.com,https://www.iceupdate.com,https://yawicon122.github.io,https://ice-update.pages.dev").split(",").map(s => s.trim()).filter(Boolean);
   const origin = request.headers.get("Origin") || "";
   const cors = corsHeaders(origin, allowed);
-  const provider = env.AI_PROVIDER || (env.ANTHROPIC_API_KEY ? "anthropic" : env.OPENAI_API_KEY ? "openai" : "");
+  const provider = env.AI_PROVIDER || (env.ANTHROPIC_API_KEY ? "anthropic" : env.OPENAI_API_KEY ? "openai" : env.GEMINI_API_KEY ? "gemini" : "");
 
   if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: cors });
   if (request.method === "GET") {
@@ -64,7 +64,7 @@ export async function handle(request, env, deps) {
   if (request.method !== "POST") return json({ error: "Method not allowed" }, 405, cors);
   if (!allowed.includes(origin)) return json({ error: "Origin not allowed" }, 403, cors);
   if (!provider) return json({ error: "Assistant not configured" }, 503, cors);
-  if (provider === "anthropic" && !env.ANTHROPIC_API_KEY || provider === "openai" && !env.OPENAI_API_KEY) return json({ error: "Assistant not configured" }, 503, cors);
+  if (provider === "anthropic" && !env.ANTHROPIC_API_KEY || provider === "openai" && !env.OPENAI_API_KEY || provider === "gemini" && !env.GEMINI_API_KEY || !["anthropic", "openai", "gemini"].includes(provider)) return json({ error: "Assistant not configured" }, 503, cors);
 
   const ip = request.headers.get("CF-Connecting-IP") || "unknown";
   if (limited(ip, now())) return json({ error: "Too many requests" }, 429, cors);
@@ -110,12 +110,12 @@ export async function handle(request, env, deps) {
   } catch (e) { /* memory is optional */ }
 
   try {
-    const run = provider === "openai" ? runOpenAI : runAnthropic;
+    const run = provider === "openai" ? runOpenAI : provider === "gemini" ? runGemini : runAnthropic;
     const reply = await run({ env, system, messages: msgs, tools: TOOLS, exec, fetchFn, collected });
     return json({ reply: reply + dataFooter(collected) }, 200, cors);
   } catch (e) {
     const f = e instanceof AiError ? FRIENDLY[e.kind] : FRIENDLY.upstream;
-    return json({ error: f[1] }, f[0], cors);
+    return json({ error: f[1], ...(e instanceof AiError && e.status ? { upstreamStatus: e.status } : {}) }, f[0], cors);
   }
 }
 

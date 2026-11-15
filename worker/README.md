@@ -15,20 +15,20 @@ Your site is on GitHub Pages, which can't keep a secret, so the keys live in a f
 
 ## Setup
 
-1. **AI key** (pick one): Claude at console.anthropic.com, or OpenAI at platform.openai.com. Add a small credit and set a monthly spend limit.
+1. **AI key** (pick one): Claude at console.anthropic.com, OpenAI at platform.openai.com, or Gemini at aistudio.google.com. Add a small credit and set a monthly spend limit.
 2. **Market data keys** (both free): `twelvedata.com` (forex, gold, stocks, candles; free plan about 8 requests per minute and 800 per day) and `finnhub.io` (stock fallback and news). Crypto prices use CoinGecko and need no key.
 3. **Cloudflare**: dash.cloudflare.com → Workers & Pages → Create → Create Worker, name it `ice-assistant` → Deploy → **Edit code** → delete everything → paste all of `assistant-worker.js` from this folder → **Deploy**.
 4. Worker → **Settings → Variables and Secrets**, add:
 
 | Name | Type | Value |
 |---|---|---|
-| `ANTHROPIC_API_KEY` or `OPENAI_API_KEY` | Secret | your AI key |
+| `ANTHROPIC_API_KEY`, `OPENAI_API_KEY` or `GEMINI_API_KEY` | Secret | your AI key (Claude, OpenAI or Google Gemini). If more than one is set, add `AI_PROVIDER` = `anthropic`, `openai` or `gemini` to choose |
 | `TWELVE_DATA_API_KEY` | Secret | your Twelve Data key |
 | `FINNHUB_API_KEY` | Secret | your Finnhub key |
 | `ALLOWED_ORIGINS` | Text | `https://iceupdate.com,https://yawicon122.github.io` |
-| `MODEL` | Text, optional | e.g. `claude-haiku-5-5` (Claude) or `gpt-4.1` (OpenAI) |
+| `MODEL` | Text, optional | e.g. `claude-haiku-5-5` (Claude), `gpt-4.1` (OpenAI) or a Gemini model name (default `gemini-flash-latest`) |
 | `DAILY_LIMIT` | Text, optional | most AI answers per day for the whole site (default `800`; `0` = no cap). After that the bear points people to your channels. Exact with KV memory on; approximate without it |
-| `WEB_SEARCH` | Text, optional | `on` to let the AI search the web (it must be allowed on your AI account) |
+| `WEB_SEARCH` | Text, optional | `on` to let the AI search the web (Claude and OpenAI only; not available with Gemini here) |
 
 5. **Memory (optional)**: Storage & databases → KV → Create namespace `ice-memory`. Worker → Settings → Bindings → Add → KV namespace → variable name `MEMORY` → pick `ice-memory`.
 6. Open the Worker address in your browser. You should see a short status line, for example `"ai":"anthropic"`, `"marketData":{...}`. It never shows a key.

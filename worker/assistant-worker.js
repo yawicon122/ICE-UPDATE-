@@ -575,6 +575,11 @@ function dataFooter(collected) {
 /* ---------- providers: the tool-calling loop for Claude (Anthropic) or OpenAI. Keys are read from the server only. ---------- */
 
 class AiError extends Error { constructor(kind, status, detail) { super(kind); this.kind = kind; this.status = status; this.detail = detail; } }
+/* every AI call gets a hard time limit, so a stuck provider fails in seconds, not minutes */
+function timed(fetchFn, env) {
+  const ms = Math.max(5000, parseInt(env.AI_TIMEOUT_MS || "25000", 10) || 25000);
+  return (u, i) => fetchFn(u, { ...i, signal: AbortSignal.timeout(ms) }).catch(e => { if (e && (e.name === "TimeoutError" || e.name === "AbortError")) throw new AiError("timeout", 504); throw e; });
+}
 async function upErr(r, env) {
   let d = ""; try { d = (await r.text()).slice(0, 300); } catch (e) { /* no body */ }
   return new AiError("upstream", r.status, redact(d, [env.ANTHROPIC_API_KEY, env.OPENAI_API_KEY, env.GEMINI_API_KEY]));
@@ -582,7 +587,7 @@ async function upErr(r, env) {
 const MAX_STEPS = 6;
 
 async function runAnthropic(o) {
-  const { env, system, messages, tools, exec, fetchFn, collected } = o;
+  const { env, system, messages, tools, exec, collected } = o, fetchFn = timed(o.fetchFn, o.env);
   const defs = tools.map(t => ({ name: t.name, description: t.description, input_schema: t.schema }));
   if (env.WEB_SEARCH === "on") defs.push({ type: "web_search_20250305", name: "web_search", max_uses: 3 });
   const msgs = messages.slice();
@@ -612,7 +617,7 @@ async function runAnthropic(o) {
 }
 
 async function runOpenAI(o) {
-  const { env, system, messages, tools, exec, fetchFn, collected } = o;
+  const { env, system, messages, tools, exec, collected } = o, fetchFn = timed(o.fetchFn, o.env);
   const defs = tools.map(t => ({ type: "function", name: t.name, description: t.description, parameters: t.schema, strict: false }));
   if (env.WEB_SEARCH === "on") defs.push({ type: "web_search" });
   const model = env.MODEL || env.OPENAI_MODEL || "gpt-4.1";
@@ -647,14 +652,14 @@ const gType = n => Array.isArray(n) ? n.map(gType) : n && typeof n === "object" 
 
 let geminiThinkingOk = true;   // flips off if a model rejects the thinking setting
 async function runGemini(o) {
-  const { env, system, messages, tools, exec, fetchFn } = o;
+  const { env, system, messages, tools, exec } = o, fetchFn = timed(o.fetchFn, o.env);
   const decls = tools.map(t => { const d = { name: t.name, description: t.description }; if (Object.keys(t.schema.properties || {}).length) d.parameters = gType(t.schema); return d; });
   const model = (env.MODEL || env.GEMINI_MODEL || "gemini-flash-latest").replace(/^models\//, "");
   const contents = messages.map(m => ({ role: m.role === "assistant" ? "model" : "user", parts: [{ text: m.content }] }));
   for (let step = 0; step < MAX_STEPS; step++) {
     const r = await fetchFn("https://generativelanguage.googleapis.com/v1beta/models/" + encodeURIComponent(model) + ":generateContent", {
       method: "POST", headers: { "x-goog-api-key": env.GEMINI_API_KEY, "content-type": "application/json" },
-      body: JSON.stringify({ systemInstruction: { parts: [{ text: system }] }, contents, ...(decls.length ? { tools: [{ functionDeclarations: decls }] } : {}), generationConfig: { maxOutputTokens: 4096, ...(geminiThinkingOk && env.GEMINI_THINKING_BUDGET !== "default" ? { thinkingConfig: { thinkingBudget: parseInt(env.GEMINI_THINKING_BUDGET || "0", 10) } } : {}) } })
+      body: JSON.stringify({ systemInstruction: { parts: [{ text: system }] }, contents, ...(decls.length ? { tools: [{ functionDeclarations: decls }] } : {}), generationConfig: { maxOutputTokens: 4096, ...(geminiThinkingOk && /^-?\d+$/.test(env.GEMINI_THINKING_BUDGET || "") ? { thinkingConfig: { thinkingBudget: parseInt(env.GEMINI_THINKING_BUDGET, 10) } } : {}) } })
     });
     if (r.status === 429) throw new AiError("rate", 429);
     if (!r.ok) {
@@ -717,7 +722,7 @@ RULES
 - Plain text with simple markdown only (**bold**, - bullets, 1. steps). No tables, no HTML, no code blocks unless asked. Emojis rarely.`;
 
 const limited = makeLimiter(10 * 60 * 1000, 25);
-const FRIENDLY = { rate: [429, "Too many requests"], upstream: [502, "Upstream error"], empty: [502, "Empty reply"], loop: [502, "Upstream error"] };
+const FRIENDLY = { rate: [429, "Too many requests"], upstream: [502, "Upstream error"], empty: [502, "Empty reply"], loop: [502, "Upstream error"], timeout: [504, "The AI took too long"] };
 
 function corsHeaders(origin, allowed) {
   const ok = origin && allowed.includes(origin);

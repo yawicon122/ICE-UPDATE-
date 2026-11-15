@@ -38,7 +38,7 @@ RULES
 - Plain text with simple markdown only (**bold**, - bullets, 1. steps). No tables, no HTML, no code blocks unless asked. Emojis rarely.`;
 
 const limited = makeLimiter(10 * 60 * 1000, 25);
-const FRIENDLY = { rate: [429, "Too many requests"], upstream: [502, "Upstream error"], empty: [502, "Empty reply"], loop: [502, "Upstream error"] };
+const FRIENDLY = { rate: [429, "Too many requests"], upstream: [502, "Upstream error"], empty: [502, "Empty reply"], loop: [502, "Upstream error"], timeout: [504, "The AI took too long"] };
 
 function corsHeaders(origin, allowed) {
   const ok = origin && allowed.includes(origin);

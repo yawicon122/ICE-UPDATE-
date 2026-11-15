@@ -214,11 +214,25 @@ test("worker: ?selftest=tools runs the real tools", async () => {
   const st = await (await handle(req(null, { method: "GET", ip: "15.0.0.2" }), { ALLOWED_ORIGINS: ORIGIN, GEMINI_API_KEY: "k12345678" }, {})).json(); assert.deepEqual(st.allowedOrigins, [ORIGIN]);
 });
 
-test("Gemini: thinking is turned down for speed, and dropped if a model refuses it", async () => {
+test("Gemini: thinking budget is opt-in, and dropped if a model refuses it", async () => {
   const bodies = [];
   const f = async (u, i) => { const b = JSON.parse(i.body); bodies.push(b); if (b.generationConfig.thinkingConfig) return { status: 400, ok: false, text: async () => "Thinking budget cannot be set for this model", json: async () => ({}) }; return J({ candidates: [{ content: { parts: [{ text: "hi" }] } }] }); };
-  const env = { ALLOWED_ORIGINS: ORIGIN, GEMINI_API_KEY: "GEMINI-SECRET1" };
+  const env = { ALLOWED_ORIGINS: ORIGIN, GEMINI_API_KEY: "GEMINI-SECRET1", GEMINI_THINKING_BUDGET: "0" };
   const r = await (await handle(req(user("hello"), { ip: "16.0.0.1" }), env, { fetch: f, now: nowFn })).json();
   assert.equal(r.reply, "hi"); assert.equal(bodies[0].generationConfig.thinkingConfig.thinkingBudget, 0); assert.equal(bodies[1].generationConfig.thinkingConfig, undefined);
   await handle(req(user("again"), { ip: "16.0.0.2" }), env, { fetch: f, now: nowFn }); assert.equal(bodies[2].generationConfig.thinkingConfig, undefined, "remembers the refusal");
+});
+
+test("Gemini: thinking setting is NOT sent unless asked for", async () => {
+  let body; const f = async (u, i) => { body = JSON.parse(i.body); return J({ candidates: [{ content: { parts: [{ text: "hi" }] } }] }); };
+  await handle(req(user("hello"), { ip: "17.0.0.1" }), { ALLOWED_ORIGINS: ORIGIN, GEMINI_API_KEY: "GEMINI-SECRET1" }, { fetch: f, now: nowFn });
+  assert.equal(body.generationConfig.thinkingConfig, undefined);
+});
+test("a hung AI provider is cut off with a clear timeout error", async () => {
+  const hang = (u, i) => new Promise((_, rej) => i.signal.addEventListener("abort", () => rej(Object.assign(new Error("aborted"), { name: "TimeoutError" }))));
+  const keep = setTimeout(() => {}, 15000);   // Node does not wait for AbortSignal timers by itself
+  const t0 = Date.now(), r = await handle(req(user("hi"), { ip: "18.0.0.1" }), { ALLOWED_ORIGINS: ORIGIN, GEMINI_API_KEY: "GEMINI-SECRET1", AI_TIMEOUT_MS: "5000" }, { fetch: hang, now: nowFn });
+  assert.equal(r.status, 504); assert.ok(Date.now() - t0 < 7000);
+  const st = await (await handle(new Request("https://w.test/api/chat?selftest=1", { method: "GET", headers: { "CF-Connecting-IP": "18.0.0.2" } }), { ALLOWED_ORIGINS: ORIGIN, GEMINI_API_KEY: "GEMINI-SECRET1", AI_TIMEOUT_MS: "5000" }, { fetch: hang, now: nowFn })).json();
+  assert.equal(st.kind, "timeout"); assert.equal(st.status, 504); clearTimeout(keep);
 });

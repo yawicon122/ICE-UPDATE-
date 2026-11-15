@@ -113,6 +113,7 @@ window.SITE = {
   loader: { enabled: true, minMs: 1800 },
 
   gallery: [
+    { src: "cash-gatling-bear.gif", caption: "The Ice Update bear: cash gatling, money everywhere 💸" },
     { src: "gold-sell-strategy.jpg", caption: "Gold sell strategy: retest the red zone, multi-TP breakdown" },
     { src: "https://raw.githubusercontent.com/yawicon122/ICE-UPDATE-/main/a39e0c2cf1b85e1c798876f4526ac48f.jpg", caption: "Gold (XAUUSD) M1 – price falling, sell entries" },
     // { src: "assets/images/chart1.jpg", caption: "Hammer at support" },

@@ -23,13 +23,17 @@ const MAX_STEPS = 6;
 export async function runAnthropic(o) {
   const { env, system, messages, tools, exec, collected } = o, fetchFn = timed(o.fetchFn, o.env);
   const defs = tools.map(t => ({ name: t.name, description: t.description, input_schema: t.schema }));
-  if (env.WEB_SEARCH === "on") defs.push({ type: "web_search_20250305", name: "web_search", max_uses: 3 });
+  if (env.WEB_SEARCH === "on" && !o.noSearch) defs.push({ type: "web_search_20250305", name: "web_search", max_uses: 2 });
+  if (defs.length) defs[defs.length - 1].cache_control = { type: "ephemeral" };
+  // the fixed instructions are cached by Anthropic (faster + cheaper); the time/notes part changes every call
+  const cut = system.indexOf("\n\nCurrent UTC time:");
+  const sys = cut > 0 ? [{ type: "text", text: system.slice(0, cut), cache_control: { type: "ephemeral" } }, { type: "text", text: system.slice(cut + 2) }] : system;
   const msgs = messages.slice();
   for (let step = 0; step < MAX_STEPS; step++) {
     const r = await fetchFn("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: { "x-api-key": env.ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01", "content-type": "application/json" },
-      body: JSON.stringify({ model: pickModel(env, "anthropic"), max_tokens: 1000, system, messages: msgs, tools: defs })
+      body: JSON.stringify({ model: pickModel(env, "anthropic"), max_tokens: 700, system: sys, messages: msgs, ...(defs.length ? { tools: defs } : {}) })
     });
     if (r.status === 429) throw new AiError("rate");
     if (!r.ok) throw await upErr(r, env);
@@ -53,11 +57,11 @@ export async function runAnthropic(o) {
 export async function runOpenAI(o) {
   const { env, system, messages, tools, exec, collected } = o, fetchFn = timed(o.fetchFn, o.env);
   const defs = tools.map(t => ({ type: "function", name: t.name, description: t.description, parameters: t.schema, strict: false }));
-  if (env.WEB_SEARCH === "on") defs.push({ type: "web_search" });
+  if (env.WEB_SEARCH === "on" && !o.noSearch) defs.push({ type: "web_search" });
   const model = pickModel(env, "openai");
   let input = messages.map(m => ({ role: m.role, content: m.content })), prev = null;
   for (let step = 0; step < MAX_STEPS; step++) {
-    const body = { model, instructions: system, input, tools: defs, max_output_tokens: 1000 };
+    const body = { model, instructions: system, input, ...(defs.length ? { tools: defs } : {}), max_output_tokens: 700 };
     if (prev) body.previous_response_id = prev;
     const r = await fetchFn("https://api.openai.com/v1/responses", {
       method: "POST", headers: { Authorization: "Bearer " + env.OPENAI_API_KEY, "content-type": "application/json" }, body: JSON.stringify(body)

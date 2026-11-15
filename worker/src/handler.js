@@ -38,6 +38,19 @@ RULES
 - Plain text with simple markdown only (**bold**, - bullets, 1. steps). No tables, no HTML, no code blocks unless asked. Emojis rarely.`;
 
 const limited = makeLimiter(10 * 60 * 1000, 25);
+/* questions that need live data, maths, the time or a web search; everything else is answered in one quick call */
+export function needsTools(text, msgs) {
+  const t = String(text || "").toLowerCase();
+  if (/^search the web/.test(t)) return true;
+  if (/\d\s*[-+*/x×÷^%]\s*\d|\bcalculat|\bhow much\b|\bpercent|\bcompound|\blot size|\bposition size|\bpip value|\brisk.*\$|\$\s*\d|\d+\s*(usd|dollars?|pips?|lots?)\b/.test(t)) return true;
+  if (/\b(price|prices|quote|trading at|right now|today|now|current|currently|latest|live|this week|news|headlines?|analy[sz]e|analysis|chart|trend|rsi|macd|atr|moving average|support|resistance|signal|time is it|what time|date today|what day)\b/.test(t) &&
+      /\b(gold|xau|silver|xag|oil|eur|usd|gbp|jpy|chf|aud|nzd|cad|btc|bitcoin|eth|ethereum|crypto|stock|stocks|nasdaq|s&p|dow|us30|aapl|tsla|nvda|forex|market|markets|time|date|day|[a-z]{3}\/?[a-z]{3})\b/.test(t)) return true;
+  // follow-ups ("and silver?") right after a data answer keep the tools
+  const prev = (msgs || []).slice(-3, -1).map(m => String(m.content || "")).join(" ").toLowerCase();
+  if (t.length < 40 && /(price|quote|analy|calcul|news|=)/.test(prev)) return true;
+  return false;
+}
+
 const FRIENDLY = { rate: [429, "Too many requests"], upstream: [502, "Upstream error"], empty: [502, "Empty reply"], loop: [502, "Upstream error"], timeout: [504, "The AI took too long"] };
 
 function corsHeaders(origin, allowed) {
@@ -133,7 +146,9 @@ export async function handle(request, env, deps) {
   } catch (e) { /* memory is optional */ }
 
   try {
-    const reply = await run({ env, system, messages: msgs, tools: TOOLS, exec, fetchFn, collected });
+    // speed: most questions don't need tools, and a tool-free call is one fast round trip instead of several
+    const useTools = needsTools(last.content, msgs);
+    const reply = await run({ env, system: useTools ? system : system + "\n\nThis turn has no tools: answer directly from your own knowledge, briefly.", messages: msgs, tools: useTools ? TOOLS : [], noSearch: !useTools, exec, fetchFn, collected });
     return json({ reply: reply + dataFooter(collected) }, 200, cors);
   } catch (e) {
     const f = e instanceof AiError ? FRIENDLY[e.kind] : FRIENDLY.upstream;

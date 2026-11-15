@@ -597,13 +597,17 @@ const MAX_STEPS = 6;
 async function runAnthropic(o) {
   const { env, system, messages, tools, exec, collected } = o, fetchFn = timed(o.fetchFn, o.env);
   const defs = tools.map(t => ({ name: t.name, description: t.description, input_schema: t.schema }));
-  if (env.WEB_SEARCH === "on") defs.push({ type: "web_search_20250305", name: "web_search", max_uses: 3 });
+  if (env.WEB_SEARCH === "on" && !o.noSearch) defs.push({ type: "web_search_20250305", name: "web_search", max_uses: 2 });
+  if (defs.length) defs[defs.length - 1].cache_control = { type: "ephemeral" };
+  // the fixed instructions are cached by Anthropic (faster + cheaper); the time/notes part changes every call
+  const cut = system.indexOf("\n\nCurrent UTC time:");
+  const sys = cut > 0 ? [{ type: "text", text: system.slice(0, cut), cache_control: { type: "ephemeral" } }, { type: "text", text: system.slice(cut + 2) }] : system;
   const msgs = messages.slice();
   for (let step = 0; step < MAX_STEPS; step++) {
     const r = await fetchFn("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: { "x-api-key": env.ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01", "content-type": "application/json" },
-      body: JSON.stringify({ model: pickModel(env, "anthropic"), max_tokens: 1000, system, messages: msgs, tools: defs })
+      body: JSON.stringify({ model: pickModel(env, "anthropic"), max_tokens: 700, system: sys, messages: msgs, ...(defs.length ? { tools: defs } : {}) })
     });
     if (r.status === 429) throw new AiError("rate");
     if (!r.ok) throw await upErr(r, env);
@@ -627,11 +631,11 @@ async function runAnthropic(o) {
 async function runOpenAI(o) {
   const { env, system, messages, tools, exec, collected } = o, fetchFn = timed(o.fetchFn, o.env);
   const defs = tools.map(t => ({ type: "function", name: t.name, description: t.description, parameters: t.schema, strict: false }));
-  if (env.WEB_SEARCH === "on") defs.push({ type: "web_search" });
+  if (env.WEB_SEARCH === "on" && !o.noSearch) defs.push({ type: "web_search" });
   const model = pickModel(env, "openai");
   let input = messages.map(m => ({ role: m.role, content: m.content })), prev = null;
   for (let step = 0; step < MAX_STEPS; step++) {
-    const body = { model, instructions: system, input, tools: defs, max_output_tokens: 1000 };
+    const body = { model, instructions: system, input, ...(defs.length ? { tools: defs } : {}), max_output_tokens: 700 };
     if (prev) body.previous_response_id = prev;
     const r = await fetchFn("https://api.openai.com/v1/responses", {
       method: "POST", headers: { Authorization: "Bearer " + env.OPENAI_API_KEY, "content-type": "application/json" }, body: JSON.stringify(body)
@@ -732,6 +736,19 @@ RULES
 - Plain text with simple markdown only (**bold**, - bullets, 1. steps). No tables, no HTML, no code blocks unless asked. Emojis rarely.`;
 
 const limited = makeLimiter(10 * 60 * 1000, 25);
+/* questions that need live data, maths, the time or a web search; everything else is answered in one quick call */
+function needsTools(text, msgs) {
+  const t = String(text || "").toLowerCase();
+  if (/^search the web/.test(t)) return true;
+  if (/\d\s*[-+*/x×÷^%]\s*\d|\bcalculat|\bhow much\b|\bpercent|\bcompound|\blot size|\bposition size|\bpip value|\brisk.*\$|\$\s*\d|\d+\s*(usd|dollars?|pips?|lots?)\b/.test(t)) return true;
+  if (/\b(price|prices|quote|trading at|right now|today|now|current|currently|latest|live|this week|news|headlines?|analy[sz]e|analysis|chart|trend|rsi|macd|atr|moving average|support|resistance|signal|time is it|what time|date today|what day)\b/.test(t) &&
+      /\b(gold|xau|silver|xag|oil|eur|usd|gbp|jpy|chf|aud|nzd|cad|btc|bitcoin|eth|ethereum|crypto|stock|stocks|nasdaq|s&p|dow|us30|aapl|tsla|nvda|forex|market|markets|time|date|day|[a-z]{3}\/?[a-z]{3})\b/.test(t)) return true;
+  // follow-ups ("and silver?") right after a data answer keep the tools
+  const prev = (msgs || []).slice(-3, -1).map(m => String(m.content || "")).join(" ").toLowerCase();
+  if (t.length < 40 && /(price|quote|analy|calcul|news|=)/.test(prev)) return true;
+  return false;
+}
+
 const FRIENDLY = { rate: [429, "Too many requests"], upstream: [502, "Upstream error"], empty: [502, "Empty reply"], loop: [502, "Upstream error"], timeout: [504, "The AI took too long"] };
 
 function corsHeaders(origin, allowed) {
@@ -827,7 +844,9 @@ async function handle(request, env, deps) {
   } catch (e) { /* memory is optional */ }
 
   try {
-    const reply = await run({ env, system, messages: msgs, tools: TOOLS, exec, fetchFn, collected });
+    // speed: most questions don't need tools, and a tool-free call is one fast round trip instead of several
+    const useTools = needsTools(last.content, msgs);
+    const reply = await run({ env, system: useTools ? system : system + "\n\nThis turn has no tools: answer directly from your own knowledge, briefly.", messages: msgs, tools: useTools ? TOOLS : [], noSearch: !useTools, exec, fetchFn, collected });
     return json({ reply: reply + dataFooter(collected) }, 200, cors);
   } catch (e) {
     const f = e instanceof AiError ? FRIENDLY[e.kind] : FRIENDLY.upstream;

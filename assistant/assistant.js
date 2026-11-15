@@ -118,6 +118,51 @@
     { k: ["social", "tiktok", "instagram", "youtube", "facebook", "follow"], t: "All Ice Update social profiles are in the **Social** section at the bottom of the page, and the small round icon in the corner.", acts: [["Go to Social", "#social"]] },
     { k: ["start", "beginner", "new", "where do i start", "how to start", "start here", "learn trading"], t:
       "Welcome! A simple path:\n\n1. **Learn & Play** → follow the 5-step \"Start here\" route\n2. Read the **Candlestick** and **Support & Resistance** PDFs\n3. Watch the video lessons\n4. Practise on a **demo account**\n5. Join the community for live classes\n\nAsk me anything along the way.", acts: [["Start here", "#learn-card"], ["PDF guides", "#pdf-card"]] },
+    // ---- more common questions (answered locally, no AI credit)
+    { k: ["is it free", "free to join", "how much does it cost", "do i have to pay", "price of course", "is ice update free", "cost to join", "any fee"], t:
+      "Yes, Ice Update is **free**: the PDF guides, video lessons, games and community channels. Be careful of anyone who asks you to pay to \"join\" or \"unlock\" Ice Update. That is not us." },
+    { k: ["is ice update legit", "is this legit", "legit", "trustworthy", "can i trust", "is this real", "is it safe"], t:
+      "Ice Update is a **free education** site. It doesn't manage money, sell signals or take deposits. Only trust the official links on this site, and never send money to anyone claiming to be Ice Update.", acts: ["channels"] },
+    { k: ["what can you do", "what do you do", "how can you help", "help", "what can i ask", "commands"], t:
+      "I can:\n\n- Explain **trading basics** (pips, leverage, stop-loss, risk, candles)\n- Help you **find things** on the site (PDFs, videos, games, brokers)\n- Point you to the **WhatsApp and Telegram** channels\n- Answer **general questions** and do simple **calculations**\n\nTry: \"What is leverage?\" or \"Where are the PDFs?\"" },
+    { k: ["how are you", "how are you doing", "how r u", "hows it going", "how do you do"], t: "I'm doing great, thanks for asking! 🐻‍❄️ What would you like to learn today?" },
+    { k: ["bye", "goodbye", "see you", "see ya", "good night", "goodnight", "talk later"], t: "Bye! 👋 Stay disciplined and manage your risk. Come back anytime." },
+    { k: ["joke", "funny", "make me laugh"], t: "Why did the trader bring a ladder? To reach the **higher highs**. 😄\n\nNow, want to learn something useful?" },
+    { k: ["can i get rich", "get rich", "make money fast", "how much can i make", "make a living", "millionaire", "quick money", "profit daily"], t:
+      "Trading is **not** a quick way to get rich. Most beginners lose money because they risk too much, skip a plan, or trade emotionally. Learn first, practise on a **demo account**, risk **1% or less** per trade, and treat it as a skill that takes time.\n\n" + NO_ADVICE },
+    { k: ["how much to start", "how much money to start", "minimum deposit", "start with how much", "small account", "$10", "$50", "$100", "capital to start"], t:
+      "Many brokers let you start with small amounts, but a small account means **small lot sizes** and strict risk (1% or less). Start on a **demo account** first, and only ever trade money you can afford to lose.\n\n" + NO_ADVICE },
+    { k: ["deposit", "withdraw", "withdrawal", "how do i withdraw", "how to deposit", "payment method"], t:
+      "Deposits and withdrawals are handled by **your broker**, not Ice Update. Check the broker's official website for payment methods, fees and processing times. Never send money to a person or \"account manager\" instead of the broker's own platform." },
+    { k: ["scalping", "scalp", "day trading", "day trader", "swing trading", "swing trade", "position trading", "trading style", "timeframe", "time frame", "which timeframe"], t:
+      "Common trading styles:\n\n- **Scalping**: seconds to minutes, many small trades\n- **Day trading**: opens and closes within the day\n- **Swing trading**: holds for days to weeks\n- **Position trading**: weeks to months\n\nBeginners often do better on **higher timeframes** (1H, 4H, Daily), where there is less noise and less stress." },
+    { k: ["trading session", "sessions", "best time to trade", "london session", "new york session", "asian session", "tokyo session", "market hours", "market open"], t:
+      "Forex runs 24 hours on weekdays in **4 main sessions**: **Sydney, Tokyo (Asian), London and New York**. The busiest and most volatile time is the **London / New York overlap**. Gold is most active in the London and New York sessions. The market is closed on weekends." },
+    { k: ["bull", "bear", "bullish", "bearish", "bull market", "bear market"], t:
+      "**Bullish** = price expected to rise (buyers in control). **Bearish** = price expected to fall (sellers in control).\n\nA **bull market** is a long rising period, a **bear market** a long falling one." },
+    { k: ["long", "short", "go long", "go short", "buy and sell", "what is buy", "what is sell", "short selling"], t:
+      "**Buy (long)** = you profit if price goes **up**. **Sell (short)** = you profit if price goes **down**. In forex you can do both, because you are always buying one currency and selling another." },
+    { k: ["crypto", "bitcoin", "btc", "ethereum", "eth", "cryptocurrency"], t:
+      "**Crypto** (like Bitcoin and Ethereum) trades 24/7 and can move very fast, so it is **high risk**. The same rules apply: use a stop-loss, small position sizes, and never invest money you can't afford to lose. Be extra careful with \"guaranteed return\" crypto offers, which are usually scams." },
+    { k: ["stock", "stocks", "shares", "stock market", "equities", "nasdaq", "us30", "dow jones", "indices", "index trading"], t:
+      "**Stocks** are small ownership pieces of a company. **Indices** (like US30 or Nasdaq) track a group of companies. Stock markets only trade during set hours, unlike forex which runs through the week. The same risk rules apply: use a stop-loss and risk 1% or less." },
+    { k: ["prop firm", "prop firms", "funded account", "funded trader", "challenge account", "ftmo", "evaluation"], t:
+      "**Prop firms** sell you a \"challenge\": if you pass it with their rules, you trade their funded account. Most people **fail** the challenge, and you pay a fee each try. Check the rules (daily loss limit, max drawdown), read reviews, and be careful of firms that promise easy money." },
+    { k: ["copy trading", "copy trade", "signal provider", "mam", "pamm", "managed account", "bot", "trading bot", "expert advisor", "ea", "robot", "auto trading", "ai trading"], t:
+      "Be very careful with **bots, copy trading and managed accounts** that promise steady profit. Many are scams, and even honest ones can lose. Never give anyone your password or the control of your money. Learn to read the market yourself first." },
+    { k: ["journal", "trading journal", "trade journal", "backtest", "backtesting", "back test", "trading plan", "plan", "strategy"], t:
+      "A **trading plan** says when you enter, where your stop-loss is, your target, and how much you risk. A **journal** records each trade (entry, exit, reason, result, feeling). **Backtesting** means testing your idea on past charts before risking real money. Together these turn guessing into a skill you can improve." },
+    { k: ["volatility", "volatile", "atr", "high impact news", "news trading", "trade news", "red folder"], t:
+      "**Volatility** is how much and how fast price moves. It jumps around **high-impact news** (interest rates, NFP, inflation), and spreads can widen. Beginners often stay out for a few minutes around big news, or use a smaller size and a wider stop." },
+    { k: ["correlation", "correlated", "dxy", "dollar index", "usd strength", "strong dollar"], t:
+      "**Correlation** means two markets tend to move together or opposite. Example: gold often moves **opposite** to a strong US dollar (**DXY**). Don't open several trades on the same currency, because that is one big risk, not several small ones." },
+    { k: ["break even", "breakeven", "move stop", "trailing stop", "trail"], t:
+      "**Break-even** means moving your stop-loss to your entry price once the trade is in profit, so it can't turn into a loss. A **trailing stop** follows price at a set distance. Don't move it too early, or normal pullbacks will stop you out." },
+    { k: ["slippage", "requote", "re-quote", "execution", "fill"], t:
+      "**Slippage** is when your order fills at a different price than you clicked, usually in fast markets or around news. It can work for or against you. Using limit orders and avoiding big news minutes helps." },
+    { k: ["contact", "contact you", "email", "phone number", "talk to someone", "speak to someone", "customer service"], t:
+      "The best way to reach Ice Update is the community channels below. For problems or scam reports, ask me \"I want to report an issue\" and I'll show you how to contact a real person.", acts: ["channels"] },
+    { k: ["founder", "owner", "who owns", "who created", "who made ice update", "who runs"], t: "The founder of Ice Update is **Ice**." },
     { k: ["who are you", "what are you", "are you human", "are you a bot", "are you real"], t:
       "I'm the Ice Update website assistant, a computer program, not a person and not a financial adviser. I can explain trading concepts, help you find things on this site and answer general questions." },
     { k: ["hello", "hi", "hey", "good morning", "good evening", "wagwan", "yo"], t: "Hey! 👋 What can I help you with? Trading basics, finding something on the site, or something else?" },
@@ -911,7 +956,7 @@
     if (!cmd && isLive(q) && !(CFG.endpoint && CFG.live)) { var lr = liveReply(); return Promise.resolve({ t: lr.t, a: lr.acts }); }
     // 2) known topic → instant local answer
     var hit = (cmd || (isLive(q) && CFG.live)) && CFG.endpoint ? null : match(q);
-    if (hit && (hit.score >= 2 || !CFG.endpoint)) {
+    if (hit && (hit.score >= 2 || !CFG.endpoint || q.trim().split(/\s+/).length <= 4)) {
       var e = hit.e; return Promise.resolve({ t: typeof e.t === "function" ? e.t() : e.t, a: e.acts });
     }
     // 3) anything else → AI server, if configured

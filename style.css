@@ -695,8 +695,3 @@ html.iu-pdfopen .iu-dock{visibility:hidden}
 .vhint{color:var(--mut);font-weight:700;font-size:.85rem;margin:2px 4px 0}
 
 @media(max-width:620px){.hv{aspect-ratio:1/1}}
-
-/* chart pictures: a swipe row of cards, same as the lesson row */
-.gcard{flex:0 0 min(78vw,400px);margin:0;cursor:zoom-in;padding:8px}
-.gcard img{display:block;width:100%;height:auto;max-height:70vh;object-fit:contain;border-radius:16px;background:#000}
-.gcard .vt{padding:10px 8px 6px;font-weight:700;font-size:.95rem}

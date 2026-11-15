@@ -624,14 +624,32 @@
   function reachOf(n) { if (!n) return 0; var k = key(n); if (k[1] !== "-1") return BD.reach[n] || 0;
     var m = /^push(\d+)-(\d+)\.(\d+)$/.exec(n); if (!m) return 0; var K = BD.tw["push" + m[1] + "-" + m[2]], t = m[3] / (K + 1);
     return (BD.reach["push" + m[1]] || 0) * (1 - t) + (BD.reach["push" + m[2]] || 0) * t; }
+  /* the "cash gatling" bear: a separate cut-out animation (no background) that takes over the launcher for a couple of seconds */
+  var CASH = { ok: false, img: null, seq: [0, 1, 2, 3, 4, 5, 6, 7, 8, 7, 6, 5, 4, 3, 2, 1, 0], fw: 220, fh: 195, busy: false };
+  setTimeout(function () { var im = new Image(); im.onload = function () { CASH.img = im; CASH.ok = true; }; im.src = BASE + "bear-cash.webp"; }, 3500);
+  function playCash(cv) {
+    var L = cv.closest(".pa-launch"); if (!L || CASH.busy || !CASH.ok || reduce) return false;
+    CASH.busy = true;
+    var c2 = L.querySelector(".pa-cash");
+    if (!c2) { c2 = document.createElement("canvas"); c2.className = "pa-cash"; c2.width = CASH.fw; c2.height = CASH.fh; c2.setAttribute("aria-hidden", "true"); L.appendChild(c2); }
+    var g = c2.getContext("2d"), t0 = performance.now(), STEP = 125, total = CASH.seq.length * STEP;
+    L.classList.add("pa-cashing"); cv.style.visibility = "hidden";
+    (function frame(now) {
+      var el = now - t0;
+      if (el >= total || root.classList.contains("open")) { L.classList.remove("pa-cashing"); cv.style.visibility = ""; CASH.busy = false; g.clearRect(0, 0, c2.width, c2.height); return; }
+      var i = CASH.seq[Math.floor(el / STEP)]; g.clearRect(0, 0, c2.width, c2.height); g.drawImage(CASH.img, i * CASH.fw, 0, CASH.fw, CASH.fh, 0, 0, CASH.fw, CASH.fh);
+      requestAnimationFrame(frame);
+    })(t0);
+    return true;
+  }
   /* the "brain": picks what to do next on its own, never repeats the same thing twice in a row */
-  var CHOICES = [["wander", 3], ["look", 2.2], ["dance", 1.6], ["stretch", 1.4], ["wave", 1.4], ["hello", 1.2], ["push", 1.5], ["spin", 1], ["nap", .6], ["spew", 1.3], ["rain", 1.4]];
+  var CHOICES = [["wander", 3], ["look", 2.2], ["dance", 1.6], ["stretch", 1.4], ["wave", 1.4], ["hello", 1.2], ["push", 1.5], ["spin", 1], ["nap", .6], ["spew", 1.3], ["rain", 1.4], ["cash", 1.6]];
   function think(cv, B, now) {
     if (document.documentElement.getAttribute("data-bear-idle") === "off") return;
-    var bored = now - B.seen > 40, list = CHOICES.filter(function (c) { return c[0] !== B.last && (!NEEDS[c[0]] || sheetReady(NEEDS[c[0]])); }).map(function (c) {
+    var bored = now - B.seen > 40, list = CHOICES.filter(function (c) { return c[0] !== B.last && (c[0] !== "cash" || CASH.ok) && (!NEEDS[c[0]] || sheetReady(NEEDS[c[0]])); }).map(function (c) {
       var w = c[1]; if (c[0] === "nap") w *= bored ? 5 : 1; if (c[0] === "push" && B.x < -60) w *= .5; return [c[0], w]; });
     var sum = list.reduce(function (s, c) { return s + c[1]; }, 0), r = Math.random() * sum;
-    for (var i = 0; i < list.length; i++) { r -= list[i][1]; if (r <= 0) { play(cv.closest(".pa-launch"), list[i][0]); break; } }
+    for (var i = 0; i < list.length; i++) { r -= list[i][1]; if (r <= 0) { if (list[i][0] === "cash") { B.last = "cash"; playCash(cv); } else play(cv.closest(".pa-launch"), list[i][0]); break; } }
   }
   /* ---- drawing ---- */
   function frameChain(n) { var d = n && BD.f[n]; return d && d.length > 7 ? d.slice(7) : null; }

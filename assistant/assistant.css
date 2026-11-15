@@ -167,3 +167,7 @@ html.iu-lite .pa-launch:not([class*="act-"]) .pa-peng{animation:none}
 .pa-launch .pa-mv{transform-origin:50% 100%;overflow:visible}
 .pa-launch .pa-mv{filter:none}
 /* the bear pushes the social button: it shows Facebook and shakes */
+
+.pa-cash{position:absolute;left:50%;bottom:-2px;width:112px;height:99px;margin-left:-56px;pointer-events:none;display:none;z-index:2}
+.pa-launch.pa-cashing .pa-cash{display:block}
+.pa-launch.pa-cashing::before{opacity:.6}

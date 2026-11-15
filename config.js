@@ -29,6 +29,7 @@ window.SITE = {
   assistant: {
     enabled: true,
     endpoint: "https://ice-update.pages.dev/api/chat",
+    email: "",   // support email shown for scam reports / help. Add it once you create it, e.g. "help@iceupdate.com"
     title: "Website Assistant",
     invite: "Hey! Need a hand?",
     quickPrompts: ["Explain pips", "What is leverage?", "How do I join the community?", "What is a stop-loss?", "Where are the PDFs?"]

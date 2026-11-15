@@ -32,6 +32,7 @@
     maxPerSession: 40,      // messages sent to the AI per tab session
     timeoutMs: 45000,       // the AI may look up prices and run calculations first
     live: A.liveData !== false,
+    email: (A.email || "").trim(),
   };
   var KEY_LOG = "iu_pa_log_v1", KEY_SEEN = "iu_pa_seen_v1", KEY_COUNT = "iu_pa_n_v1";
   var reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -176,6 +177,8 @@
       if (a === "channels") {
         if (CFG.wa) h += '<a class="pa-act wa" href="' + esc(CFG.wa) + '" target="_blank" rel="noopener" data-track="assistant-join-whatsapp">' + ICON_WA + "WhatsApp channel</a>";
         if (CFG.tg) h += '<a class="pa-act tg" href="' + esc(CFG.tg) + '" target="_blank" rel="noopener" data-track="assistant-join-telegram">' + ICON_TG + "Telegram</a>";
+      } else if (Array.isArray(a) && /^mailto:[\w.+-]+@[\w-]+(\.[\w-]+)+$/.test(a[1])) {
+        h += '<a class="pa-act" href="' + esc(a[1]) + '">' + esc(a[0]) + " →</a>";
       } else if (Array.isArray(a) && /^#[\w-]+$/.test(a[1]) && document.querySelector(a[1])) {
         h += '<button type="button" class="pa-act" data-go="' + esc(a[1]) + '">' + esc(a[0]) + " →</button>";
       }
@@ -876,7 +879,32 @@
   }
   function push(m) { history.push(m); save(); bubble(m); }
 
+  /* Fixed answers that never use the AI (free, instant). Checked first. */
+  function quick(q) {
+    var n = norm(q);
+    var w = n.trim();
+    if (/^(hi|hey|hello|yo|hiya|sup|wagwan|good (morning|afternoon|evening)|hey there|hi there|whats up|what is up|wassup|whatsup|how are you|how r u|hows it going)( (there|ice|bro|man|guys|everyone|today))?$/.test(w)) {
+      return { t: "Hey! 👋 I'm good, thanks. What can I help you with? Trading basics, finding something on the site, or the community channels?" };
+    }
+    if (/\b(founder|owner|creator|who (made|created|owns|runs|started|built)|who is (ice|behind)|who is the (admin|boss|head))\b/.test(w) && !/\b(you|bot)\b.*\b(made|built)\b/.test(w)) {
+      return { t: "The founder of Ice Update is **Ice**. He runs the free trading education and the community channels.", a: ["channels"] };
+    }
+    if (/\b(scam|scammed|scamm?er|fraud|cheated|stole|stolen|lost my money|report|complain|complaint|issue|problem|refund|human|real person|support|contact|help me)\b/.test(w) &&
+        /\b(scammed|cheated|stole|stolen|lost my money|report|complain|complaint|issue|problem|refund|human|real person|support|contact|help me|i got|someone)\b/.test(w) &&
+        !/\b(what is|red flags|how to spot|signs of|how do i avoid|explain)\b/.test(w)) {
+      var m = CFG.email ? "I'm sorry that happened. Please contact Ice Update directly for help from a real person:\n\n**" + CFG.email + "**\n\nInclude what happened, the dates, and any screenshots. Never send passwords, codes or your seed phrase by email." :
+        "I'm sorry that happened. A real person can help you. Please message Ice Update on the **WhatsApp** or **Telegram** channel below. A support email is coming soon.\n\nNever share passwords, codes or your seed phrase with anyone.";
+      return { t: m, a: CFG.email ? [["Email support", "mailto:" + CFG.email]] : ["channels"] };
+    }
+    if (/\b(prediction|predictions|predict|forecast|signal|signals|tips|call|calls|where is (gold|price|market) going|will (gold|btc|bitcoin|eurusd|the market) (go|rise|fall|drop|pump))\b/.test(w) || /\b(buy or sell|should i (buy|sell))\b/.test(w)) {
+      return { t: "I don't give predictions or trade signals here. For Ice Update's market updates and analysis, please join the **WhatsApp** and **Telegram** channels below.\n\nWhatever you trade, use a stop-loss and risk only what you can afford to lose.", a: ["channels"] };
+    }
+    return null;
+  }
+
   function reply(q) {
+    var qk = !/^\//.test(q) ? quick(q) : null;
+    if (qk) return Promise.resolve(qk);
     // 1) live data / signals → channels (always local, instant)
     // (with the AI server on, live questions go to it, because it can fetch real prices; /commands always go to it)
     var cmd = /^\//.test(q);

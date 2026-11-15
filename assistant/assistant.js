@@ -169,6 +169,8 @@
     { k: ["thank", "thanks", "thank you", "cheers"], t: "You're welcome! Anything else?" }
   ];
 
+  if (window.ICE_ANSWERS && window.ICE_ANSWERS.length) KB = KB.concat(window.ICE_ANSWERS);
+
   var LIVE = /\b(price|prices|signal|signals|news|today|tonight|right now|now|live|current|currently|latest|this week|tomorrow|update|updates|forecast|prediction|predict|will .* (go|rise|fall|drop|pump)|should i (buy|sell|enter)|buy or sell|entry)\b/i;
   var MKT = /\b(gold|xau|xauusd|eur|usd|gbp|jpy|btc|bitcoin|crypto|forex|fx|market|markets|nasdaq|us30|dow|oil|silver|pair|chart|trade|signals?)\b/i;
 

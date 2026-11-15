@@ -242,3 +242,9 @@ test("Gemini: a retired MODEL name falls back to the current alias", async () =>
   const r = await (await handle(req(user("hello"), { ip: "19.0.0.1" }), { ALLOWED_ORIGINS: ORIGIN, GEMINI_API_KEY: "GEMINI-SECRET1", MODEL: "gemini-1.5-flash" }, { fetch: f, now: nowFn })).json();
   assert.equal(r.reply, "hi"); assert.match(urls[0], /gemini-1\.5-flash:/); assert.match(urls[1], /gemini-flash-latest:/);
 });
+
+test("worker: ?selftest=models lists usable Gemini models without leaking the key", async () => {
+  const f = async (u, i) => { assert.match(u, /v1beta\/models\?pageSize/); assert.equal(i.headers["x-goog-api-key"], "GEMINI-SECRET1"); return J({ models: [{ name: "models/gemini-2.5-flash", supportedGenerationMethods: ["generateContent"] }, { name: "models/embedding-001", supportedGenerationMethods: ["embedContent"] }, { name: "models/gemini-pro-vision", supportedGenerationMethods: ["countTokens"] }] }); };
+  const r = await (await handle(new Request("https://w.test/api/chat?selftest=models", { method: "GET", headers: { "CF-Connecting-IP": "20.0.0.1" } }), { ALLOWED_ORIGINS: ORIGIN, GEMINI_API_KEY: "GEMINI-SECRET1", MODEL: "gemini-1.5-flash" }, { fetch: f, now: nowFn })).json();
+  assert.deepEqual(r, { ok: true, usingNow: "gemini-1.5-flash", models: ["gemini-2.5-flash"] });
+});

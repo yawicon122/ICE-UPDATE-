@@ -744,6 +744,17 @@ async function handle(request, env, deps) {
 
   if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: cors });
   const run = provider === "openai" ? runOpenAI : provider === "gemini" ? runGemini : runAnthropic;
+  if (request.method === "GET" && new URL(request.url).searchParams.get("selftest") === "models" && provider === "gemini") {
+    // lists the Gemini models this key can really use, so the right MODEL name can be picked
+    if (limited("selftest:" + (request.headers.get("CF-Connecting-IP") || "x"), now())) return json({ error: "Too many requests" }, 429, cors);
+    try {
+      const r = await fetchFn("https://generativelanguage.googleapis.com/v1beta/models?pageSize=200", { headers: { "x-goog-api-key": env.GEMINI_API_KEY }, signal: AbortSignal.timeout(15000) });
+      if (!r.ok) return json({ ok: false, status: r.status, detail: redact((await r.text()).slice(0, 300), [env.GEMINI_API_KEY]) }, 200, cors);
+      const d = await r.json();
+      const names = (d.models || []).filter(m => (m.supportedGenerationMethods || []).includes("generateContent") && /gemini/.test(m.name)).map(m => m.name.replace(/^models\//, ""));
+      return json({ ok: true, usingNow: env.MODEL || "gemini-flash-latest", models: names }, 200, cors);
+    } catch (e) { return json({ ok: false, error: "Could not reach Google: " + (e && e.name || "error") }, 200, cors); }
+  }
   if (request.method === "GET" && new URL(request.url).searchParams.get("selftest")) {
     // asks the AI one tiny question and shows the real result or the provider's error text (never a key)
     if (!provider) return json({ ok: false, error: "No AI key is set on this deployment." }, 200, cors);

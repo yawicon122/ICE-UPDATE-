@@ -627,7 +627,7 @@
   /* the "cash gatling" bear: a cut-out animation (no background box) that takes over the launcher for a few seconds.
      The bear is drawn from the sprite sheet; the money is live particles on a full-screen layer, so it flies freely up into the sky. */
   var CASH = { ok: false, img: null, seq: [0, 1, 2, 3, 4, 5, 6, 7, 8, 7, 6, 5, 4, 3, 2, 3, 4, 5, 6, 7, 8, 7, 6, 5, 4, 3, 2, 1, 0], fw: 250, fh: 225, k: .34, busy: false, bills: [], fx: null };
-  setTimeout(function () { var im = new Image(); im.onload = function () { CASH.img = im; CASH.ok = true; }; im.src = BASE + "bear-cash.webp"; }, 3500);
+  // switched off: set CASH.ok = true after loading BASE + "bear-cash.webp" and add ["cash", 1.6] to CHOICES to bring it back
   function billSprite() {   // one bill drawn once, reused for every particle
     var c = document.createElement("canvas"), w = 64, h = 32; c.width = w + 4; c.height = h + 4; var g = c.getContext("2d");
     function rr(x, y, ww, hh, r) { g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + ww, y, x + ww, y + hh, r); g.arcTo(x + ww, y + hh, x, y + hh, r); g.arcTo(x, y + hh, x, y, r); g.arcTo(x, y, x + ww, y, r); g.closePath(); }
@@ -687,7 +687,7 @@
     return true;
   }
   /* the "brain": picks what to do next on its own, never repeats the same thing twice in a row */
-  var CHOICES = [["wander", 3], ["look", 2.2], ["dance", 1.6], ["stretch", 1.4], ["wave", 1.4], ["hello", 1.2], ["push", 1.5], ["spin", 1], ["nap", .6], ["spew", 1.3], ["rain", 1.4], ["cash", 1.6]];
+  var CHOICES = [["wander", 3], ["look", 2.2], ["dance", 1.6], ["stretch", 1.4], ["wave", 1.4], ["hello", 1.2], ["push", 1.5], ["spin", 1], ["nap", .6], ["spew", 1.3], ["rain", 1.4]];
   function think(cv, B, now) {
     if (document.documentElement.getAttribute("data-bear-idle") === "off") return;
     var bored = now - B.seen > 40, list = CHOICES.filter(function (c) { return c[0] !== B.last && (c[0] !== "cash" || CASH.ok) && (!NEEDS[c[0]] || sheetReady(NEEDS[c[0]])); }).map(function (c) {

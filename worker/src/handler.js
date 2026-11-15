@@ -1,5 +1,5 @@
 /* ---------- handler: the Worker itself (Cloudflare calls default.fetch) ---------- */
-import { sanitizeMessages, validClientId, makeLimiter, cleanText, untrusted, LIMITS } from "./guard.js";
+import { sanitizeMessages, validClientId, makeLimiter, cleanText, untrusted, overDailyCap, LIMITS } from "./guard.js";
 import { evaluate, tradeCalc } from "./calc.js";
 import { summarize } from "./indicators.js";
 import { makeMarket } from "./market.js";
@@ -99,6 +99,7 @@ export async function handle(request, env, deps) {
     last.content = "Search the web and answer with sources: " + m[1].trim();
   }
 
+  if (await overDailyCap(env, now())) return json({ reply: "I've answered a lot of questions today and need a rest. Please come back tomorrow, or ask in our community channels.\n[[CHANNELS]]" }, 200, cors);
   const collected = { quotes: [], analyses: [], sources: [] };
   const ctx = { market: makeMarket(env, fetchFn, now), now, collected };
   const exec = makeExecutor(ctx, evaluate, tradeCalc, summarize, untrusted);

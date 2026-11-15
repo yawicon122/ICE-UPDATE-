@@ -44,3 +44,22 @@ export function redact(text, secrets) {
   for (const s of secrets || []) if (s && s.length > 5) t = t.split(s).join("***");
   return t;
 }
+
+/* Whole-site daily cap on AI answers (protects your credit). Uses KV when it is bound, otherwise a best-effort per-server counter. */
+const memDay = { day: "", n: 0 };
+export async function overDailyCap(env, nowMs) {
+  const cap = parseInt(env.DAILY_LIMIT || "800", 10);
+  if (!(cap > 0)) return false;               // DAILY_LIMIT=0 turns the cap off
+  const day = new Date(nowMs).toISOString().slice(0, 10), kv = env.MEMORY;
+  try {
+    if (kv && kv.get && kv.put) {
+      const n = parseInt((await kv.get("d:" + day)) || "0", 10) || 0;
+      if (n >= cap) return true;
+      await kv.put("d:" + day, String(n + 1), { expirationTtl: 172800 });
+      return false;
+    }
+  } catch (e) { /* fall through to the in-memory counter */ }
+  if (memDay.day !== day) { memDay.day = day; memDay.n = 0; }
+  if (memDay.n >= cap) return true;
+  memDay.n++; return false;
+}

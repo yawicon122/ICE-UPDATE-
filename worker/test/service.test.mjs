@@ -163,3 +163,14 @@ test("worker: injected 'system' role from the browser is dropped; tool errors ar
   const f2 = async (u, i) => { const b = JSON.parse(i.body); if (b.messages.length === 1) return J({ stop_reason: "tool_use", content: [{ type: "tool_use", id: "z", name: "calculate", input: { expression: "process.exit()" } }, { type: "tool_use", id: "y", name: "nope", input: null }] }); const rs = b.messages[2].content; assert.match(rs[0].content, /Unsupported|Unknown/); assert.match(rs[1].content, /Unknown tool/); return J(text("handled")); };
   assert.equal((await (await handle(req(user("x"), { ip: "10.0.0.2" }), ENV, { fetch: f2, now: nowFn })).json()).reply, "handled");
 });
+
+test("worker: daily cap stops the AI for the whole site, but not commands", async () => {
+  let calls = 0; const f = async () => { calls++; return J(text("ok")); }, env = { ...ENV, DAILY_LIMIT: "3" };
+  const out = []; for (let i = 0; i < 5; i++) out.push(await (await handle(req(user("hi"), { ip: "12.0.0." + i }), env, { fetch: f, now: () => Date.parse("2030-01-01T10:00:00Z") })).json());
+  assert.equal(calls, 3); assert.match(out[3].reply, /need a rest[\s\S]*\[\[CHANNELS\]\]/); assert.equal(out[2].reply.startsWith("ok"), true);
+  const nxt = await (await handle(req(user("hi"), { ip: "12.0.1.1" }), env, { fetch: f, now: () => Date.parse("2030-01-02T10:00:00Z") })).json(); assert.equal(nxt.reply.startsWith("ok"), true);
+  const kv = fakeKV(), e2 = { ...ENV, DAILY_LIMIT: "1", MEMORY: kv }, nw = () => Date.parse("2031-05-05T10:00:00Z");
+  await handle(req(user("hi"), { ip: "12.0.2.1" }), e2, { fetch: f, now: nw }); assert.match((await (await handle(req(user("hi"), { ip: "12.0.2.2" }), e2, { fetch: f, now: nw })).json()).reply, /need a rest/);
+  assert.match((await (await handle(req(user("/calculate 2+2"), { ip: "12.0.2.3" }), e2, { fetch: f, now: nw })).json()).reply, /= \*\*4\*\*/);
+  const off = { ...ENV, DAILY_LIMIT: "0" }; for (let i = 0; i < 4; i++) assert.equal((await (await handle(req(user("hi"), { ip: "12.0.3." + i }), off, { fetch: f, now: () => Date.parse("2032-01-01T10:00:00Z") })).json()).reply.startsWith("ok"), true);
+});

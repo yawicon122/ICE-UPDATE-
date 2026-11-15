@@ -51,6 +51,25 @@ function redact(text, secrets) {
   return t;
 }
 
+/* Whole-site daily cap on AI answers (protects your credit). Uses KV when it is bound, otherwise a best-effort per-server counter. */
+const memDay = { day: "", n: 0 };
+async function overDailyCap(env, nowMs) {
+  const cap = parseInt(env.DAILY_LIMIT || "800", 10);
+  if (!(cap > 0)) return false;               // DAILY_LIMIT=0 turns the cap off
+  const day = new Date(nowMs).toISOString().slice(0, 10), kv = env.MEMORY;
+  try {
+    if (kv && kv.get && kv.put) {
+      const n = parseInt((await kv.get("d:" + day)) || "0", 10) || 0;
+      if (n >= cap) return true;
+      await kv.put("d:" + day, String(n + 1), { expirationTtl: 172800 });
+      return false;
+    }
+  } catch (e) { /* fall through to the in-memory counter */ }
+  if (memDay.day !== day) { memDay.day = day; memDay.n = 0; }
+  if (memDay.n >= cap) return true;
+  memDay.n++; return false;
+}
+
 /* ---------- calc: a safe maths parser (no eval, no Function) + trading calculators ---------- */
 const FUNCS = {
   sqrt: x => { if (x < 0) throw new Error("Square root of a negative number."); return Math.sqrt(x); },
@@ -718,6 +737,7 @@ async function handle(request, env, deps) {
     last.content = "Search the web and answer with sources: " + m[1].trim();
   }
 
+  if (await overDailyCap(env, now())) return json({ reply: "I've answered a lot of questions today and need a rest. Please come back tomorrow, or ask in our community channels.\n[[CHANNELS]]" }, 200, cors);
   const collected = { quotes: [], analyses: [], sources: [] };
   const ctx = { market: makeMarket(env, fetchFn, now), now, collected };
   const exec = makeExecutor(ctx, evaluate, tradeCalc, summarize, untrusted);

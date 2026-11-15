@@ -129,12 +129,18 @@ if (!(S.pdfs || []).length) pg.innerHTML = `<div class="glass empty">📄 PDF gu
 
 /* ---------- gallery ---------- */
 const gg = $("#galGrid"), lb = $("#lightbox");
-if (!(S.gallery || []).length) gg.innerHTML = `<div class="glass empty" style="column-span:all">🖼️ Chart pictures are coming soon.</div>`;
-(S.gallery || []).forEach(g => {
-  const d = document.createElement("figure"); d.className = "gitem glass tilt reveal";
-  d.innerHTML = `<img loading="lazy" src="${esc(safeUrl(g.src))}" alt="${esc(g.caption)}">${g.caption ? `<p>${esc(g.caption)}</p>` : ""}`;
+if (!(S.gallery || []).length) { const row = $("#chartrow"); if (row) row.remove(); }
+(S.gallery || []).forEach((g, i) => {
+  const d = document.createElement("figure"); d.className = "lcard gcard glass"; d.style.setProperty("--d", (i * -1.7) + "s");
+  d.innerHTML = `<img loading="lazy" src="${esc(safeUrl(g.src))}" alt="${esc(g.caption)}">${g.caption ? `<div class="vt">${esc(g.caption)}</div>` : ""}`;
   d.onclick = () => { $("img", lb).src = safeUrl(g.src); $("p", lb).textContent = g.caption || ""; lb.hidden = false; track("gallery-" + (g.caption || "")); }; gg.appendChild(d);
 });
+if (gg) {   // arrows (desktop), same as the lesson row
+  const wrap = gg.parentNode, pv = wrap.querySelector(".prev"), nx = wrap.querySelector(".next");
+  const arrows = () => { pv.hidden = gg.scrollLeft < 20; nx.hidden = gg.scrollLeft > gg.scrollWidth - gg.clientWidth - 20; };
+  const step = d => { const c = gg.querySelector(".lcard"); gg.scrollBy({ left: d * (c ? c.offsetWidth + 16 : 300), behavior: "smooth" }); };
+  pv.addEventListener("click", () => step(-1)); nx.addEventListener("click", () => step(1)); gg.addEventListener("scroll", arrows, { passive: true }); arrows();
+}
 lb.onclick = () => lb.hidden = true;
 
 /* ---------- brokers ---------- */

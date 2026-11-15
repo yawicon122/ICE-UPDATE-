@@ -624,20 +624,64 @@
   function reachOf(n) { if (!n) return 0; var k = key(n); if (k[1] !== "-1") return BD.reach[n] || 0;
     var m = /^push(\d+)-(\d+)\.(\d+)$/.exec(n); if (!m) return 0; var K = BD.tw["push" + m[1] + "-" + m[2]], t = m[3] / (K + 1);
     return (BD.reach["push" + m[1]] || 0) * (1 - t) + (BD.reach["push" + m[2]] || 0) * t; }
-  /* the "cash gatling" bear: a separate cut-out animation (no background) that takes over the launcher for a couple of seconds */
-  var CASH = { ok: false, img: null, seq: [0, 1, 2, 3, 4, 5, 6, 7, 8, 7, 6, 5, 4, 3, 2, 1, 0], fw: 220, fh: 195, busy: false };
+  /* the "cash gatling" bear: a cut-out animation (no background box) that takes over the launcher for a few seconds.
+     The bear is drawn from the sprite sheet; the money is live particles on a full-screen layer, so it flies freely up into the sky. */
+  var CASH = { ok: false, img: null, seq: [0, 1, 2, 3, 4, 5, 6, 7, 8, 7, 6, 5, 4, 3, 2, 3, 4, 5, 6, 7, 8, 7, 6, 5, 4, 3, 2, 1, 0], fw: 250, fh: 225, k: .34, busy: false, bills: [], fx: null };
   setTimeout(function () { var im = new Image(); im.onload = function () { CASH.img = im; CASH.ok = true; }; im.src = BASE + "bear-cash.webp"; }, 3500);
+  function billSprite() {   // one bill drawn once, reused for every particle
+    var c = document.createElement("canvas"), w = 64, h = 32; c.width = w + 4; c.height = h + 4; var g = c.getContext("2d");
+    function rr(x, y, ww, hh, r) { g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + ww, y, x + ww, y + hh, r); g.arcTo(x + ww, y + hh, x, y + hh, r); g.arcTo(x, y + hh, x, y, r); g.arcTo(x, y, x + ww, y, r); g.closePath(); }
+    rr(2, 2, w, h, 5); g.fillStyle = "#8fc27a"; g.fill(); g.lineWidth = 2.2; g.strokeStyle = "#1c3320"; g.stroke();
+    rr(7, 7, w - 10, h - 10, 3); g.lineWidth = 1.2; g.strokeStyle = "#4d8a4f"; g.stroke();
+    g.beginPath(); g.arc(2 + w / 2, 2 + h / 2, 8.5, 0, TAU); g.fillStyle = "#79b366"; g.fill(); g.lineWidth = 1.2; g.stroke();
+    g.fillStyle = "#1f4a2a"; g.font = "bold 13px sans-serif"; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText("$", 2 + w / 2, 3 + h / 2);
+    return c;
+  }
+  function moneyLayer() {
+    if (CASH.fx) return CASH.fx;
+    var c = document.createElement("canvas"); c.className = "pa-money"; c.setAttribute("aria-hidden", "true"); document.body.appendChild(c);
+    CASH.fx = { c: c, g: c.getContext("2d"), spr: billSprite() }; return CASH.fx;
+  }
+  function sizeMoney(fx) { var d = Math.min(2, window.devicePixelRatio || 1); fx.d = d; fx.c.width = Math.round(innerWidth * d); fx.c.height = Math.round(innerHeight * d); fx.c.style.width = innerWidth + "px"; fx.c.style.height = innerHeight + "px"; }
   function playCash(cv) {
     var L = cv.closest(".pa-launch"); if (!L || CASH.busy || !CASH.ok || reduce) return false;
     CASH.busy = true;
-    var c2 = L.querySelector(".pa-cash");
+    var c2 = L.querySelector(".pa-cash"), fw = CASH.fw * CASH.k, fh = CASH.fh * CASH.k;
     if (!c2) { c2 = document.createElement("canvas"); c2.className = "pa-cash"; c2.width = CASH.fw; c2.height = CASH.fh; c2.setAttribute("aria-hidden", "true"); L.appendChild(c2); }
-    var g = c2.getContext("2d"), t0 = performance.now(), STEP = 125, total = CASH.seq.length * STEP;
-    L.classList.add("pa-cashing"); cv.style.visibility = "hidden";
+    c2.style.width = fw + "px"; c2.style.height = fh + "px"; c2.style.marginLeft = (-fw / 2) + "px";
+    var g = c2.getContext("2d"), fx = moneyLayer(); sizeMoney(fx);
+    var t0 = performance.now(), last = t0, STEP = 115, total = CASH.seq.length * STEP, acc = 0, FADE = 160;
+    L.classList.add("pa-cashing"); cv.style.transition = "opacity .16s"; cv.style.opacity = "0";
     (function frame(now) {
-      var el = now - t0;
-      if (el >= total || root.classList.contains("open")) { L.classList.remove("pa-cashing"); cv.style.visibility = ""; CASH.busy = false; g.clearRect(0, 0, c2.width, c2.height); return; }
-      var i = CASH.seq[Math.floor(el / STEP)]; g.clearRect(0, 0, c2.width, c2.height); g.drawImage(CASH.img, i * CASH.fw, 0, CASH.fw, CASH.fh, 0, 0, CASH.fw, CASH.fh);
+      var dt = Math.min(.05, (now - last) / 1000); last = now;
+      var el = now - t0, ending = el >= total || root.classList.contains("open");
+      var idx = Math.min(CASH.seq.length - 1, Math.floor(el / STEP)), fi = CASH.seq[idx];
+      g.clearRect(0, 0, c2.width, c2.height);
+      if (!ending) {
+        var al = Math.min(1, el / FADE, (total - el) / FADE); g.globalAlpha = Math.max(0, al);
+        g.drawImage(CASH.img, fi * CASH.fw, 0, CASH.fw, CASH.fh, 0, 0, CASH.fw, CASH.fh); g.globalAlpha = 1;
+        // the muzzle, on screen: bills spray out of it and fly up into the sky
+        if (fi >= 2) {
+          var r = c2.getBoundingClientRect(), mx = r.left + r.width * (168 / CASH.fw), my = r.top + r.height * (78 / CASH.fh);
+          acc += dt * (fi >= 3 ? 46 : 22);
+          while (acc >= 1) { acc -= 1;
+            var a = (-90 + (Math.random() * 78 - 30)) * Math.PI / 180, sp = 330 + Math.random() * 520;
+            CASH.bills.push({ x: mx + Math.random() * 6, y: my + Math.random() * 6, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, r: Math.random() * 6.28, vr: (Math.random() - .5) * 9, s: .22 + Math.random() * .2, t: 0, life: 2.2 + Math.random() * 1.6, ph: Math.random() * 6.28 });
+          }
+        }
+      } else { cv.style.opacity = "1"; L.classList.remove("pa-cashing"); }
+      // money physics + drawing (every bill is its own free particle: no box, no clipping)
+      var G = fx.g, d = fx.d; G.setTransform(1, 0, 0, 1, 0, 0); G.clearRect(0, 0, fx.c.width, fx.c.height);
+      for (var i = CASH.bills.length - 1; i >= 0; i--) {
+        var b = CASH.bills[i]; b.t += dt; if (b.t > b.life || b.y > innerHeight + 60) { CASH.bills.splice(i, 1); continue; }
+        b.vy += 560 * dt; b.vx *= (1 - .55 * dt); if (b.vy > 0) b.vy *= (1 - 1.1 * dt);   // gravity, then they flutter down slowly
+        b.x += (b.vx + Math.sin(b.t * 4 + b.ph) * 22) * dt; b.y += b.vy * dt; b.r += b.vr * dt;
+        var fade = Math.min(1, (b.life - b.t) / .5, b.t / .06), sc = b.s * (.8 + .2 * Math.abs(Math.cos(b.r * .7)));
+        G.globalAlpha = Math.max(0, fade); G.setTransform(d, 0, 0, d, b.x * d, b.y * d); G.rotate(b.r); G.scale(sc, sc * (.55 + .45 * Math.abs(Math.cos(b.r * .5 + b.ph))));
+        G.drawImage(fx.spr, -fx.spr.width / 2, -fx.spr.height / 2);
+      }
+      G.globalAlpha = 1;
+      if (ending && !CASH.bills.length) { CASH.busy = false; G.setTransform(1, 0, 0, 1, 0, 0); G.clearRect(0, 0, fx.c.width, fx.c.height); return; }
       requestAnimationFrame(frame);
     })(t0);
     return true;

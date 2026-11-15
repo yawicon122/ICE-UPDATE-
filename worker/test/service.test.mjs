@@ -196,3 +196,12 @@ test("worker: Gemini provider (key in header, thought signatures returned, tools
   assert.equal((await handle(req(user("hi"), { ip: "13.0.0.6" }), { ALLOWED_ORIGINS: ORIGIN, AI_PROVIDER: "gemini" }, {})).status, 503);
   const p = await handle(req(user("hi"), { ip: "13.0.0.7" }), { ...env, ANTHROPIC_API_KEY: "sk-ant-both123", AI_PROVIDER: "gemini" }, { fetch: async u => { assert.match(u, /generativelanguage/); return J({ candidates: [{ content: { parts: [{ text: "gem" }] } }] }); }, now: nowFn }); assert.equal((await p.json()).reply, "gem");
 });
+
+test("worker: ?selftest=1 shows the real provider error without leaking keys", async () => {
+  const env = { ALLOWED_ORIGINS: ORIGIN, GEMINI_API_KEY: "GEMINI-SECRET1" }, G = ip => new Request("https://w.test/api/chat?selftest=1", { method: "GET", headers: { "CF-Connecting-IP": ip } });
+  const bad = { status: 400, ok: false, text: async () => '{"error":{"message":"API key not valid GEMINI-SECRET1"}}', json: async () => ({}) };
+  const a = await (await handle(G("14.0.0.1"), env, { fetch: async () => bad, now: nowFn })).json();
+  assert.equal(a.ok, false); assert.equal(a.status, 400); assert.match(a.detail, /API key not valid \*\*\*/); assert.ok(!JSON.stringify(a).includes("GEMINI-SECRET1"));
+  const b = await (await handle(G("14.0.0.2"), env, { fetch: async () => J({ candidates: [{ content: { parts: [{ text: "OK" }] } }] }), now: nowFn })).json(); assert.deepEqual(b, { ok: true, provider: "gemini", sample: "OK" });
+  assert.equal((await (await handle(G("14.0.0.3"), { ALLOWED_ORIGINS: ORIGIN }, {})).json()).ok, false);
+});

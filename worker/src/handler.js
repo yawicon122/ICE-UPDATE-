@@ -1,5 +1,5 @@
 /* ---------- handler: the Worker itself (Cloudflare calls default.fetch) ---------- */
-import { sanitizeMessages, validClientId, makeLimiter, cleanText, untrusted, overDailyCap, LIMITS } from "./guard.js";
+import { sanitizeMessages, validClientId, makeLimiter, cleanText, untrusted, overDailyCap, redact, LIMITS } from "./guard.js";
 import { evaluate, tradeCalc } from "./calc.js";
 import { summarize } from "./indicators.js";
 import { makeMarket } from "./market.js";
@@ -57,6 +57,14 @@ export async function handle(request, env, deps) {
   const provider = env.AI_PROVIDER || (env.ANTHROPIC_API_KEY ? "anthropic" : env.OPENAI_API_KEY ? "openai" : env.GEMINI_API_KEY ? "gemini" : "");
 
   if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: cors });
+  const run = provider === "openai" ? runOpenAI : provider === "gemini" ? runGemini : runAnthropic;
+  if (request.method === "GET" && new URL(request.url).searchParams.get("selftest")) {
+    // asks the AI one tiny question and shows the real result or the provider's error text (never a key)
+    if (!provider) return json({ ok: false, error: "No AI key is set on this deployment." }, 200, cors);
+    if (limited("selftest:" + (request.headers.get("CF-Connecting-IP") || "x"), now())) return json({ error: "Too many requests" }, 429, cors);
+    try { const t = await run({ env, system: "Reply with the single word OK.", messages: [{ role: "user", content: "ping" }], tools: [], exec: async () => "{}", fetchFn, collected: { quotes: [], analyses: [], sources: [] } }); return json({ ok: true, provider, sample: t.slice(0, 40) }, 200, cors); }
+    catch (e) { return json({ ok: false, provider, kind: e && e.kind || "error", status: e && e.status || null, detail: e && e.detail || "" }, 200, cors); }
+  }
   if (request.method === "GET") {
     // a safe status check: shows what is switched on, never any key
     return json({ ok: true, ai: provider || "not configured", marketData: { forexMetalsStocks: !!env.TWELVE_DATA_API_KEY, news: !!env.FINNHUB_API_KEY, crypto: true }, webSearch: env.WEB_SEARCH === "on", memory: !!env.MEMORY }, 200, cors);
@@ -110,7 +118,6 @@ export async function handle(request, env, deps) {
   } catch (e) { /* memory is optional */ }
 
   try {
-    const run = provider === "openai" ? runOpenAI : provider === "gemini" ? runGemini : runAnthropic;
     const reply = await run({ env, system, messages: msgs, tools: TOOLS, exec, fetchFn, collected });
     return json({ reply: reply + dataFooter(collected) }, 200, cors);
   } catch (e) {

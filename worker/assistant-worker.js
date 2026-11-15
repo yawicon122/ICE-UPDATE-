@@ -573,7 +573,12 @@ function dataFooter(collected) {
 }
 
 /* ---------- providers: the tool-calling loop for Claude (Anthropic) or OpenAI. Keys are read from the server only. ---------- */
-class AiError extends Error { constructor(kind, status) { super(kind); this.kind = kind; this.status = status; } }
+
+class AiError extends Error { constructor(kind, status, detail) { super(kind); this.kind = kind; this.status = status; this.detail = detail; } }
+async function upErr(r, env) {
+  let d = ""; try { d = (await r.text()).slice(0, 300); } catch (e) { /* no body */ }
+  return new AiError("upstream", r.status, redact(d, [env.ANTHROPIC_API_KEY, env.OPENAI_API_KEY, env.GEMINI_API_KEY]));
+}
 const MAX_STEPS = 6;
 
 async function runAnthropic(o) {
@@ -588,7 +593,7 @@ async function runAnthropic(o) {
       body: JSON.stringify({ model: env.MODEL || "claude-haiku-5-5", max_tokens: 1000, system, messages: msgs, tools: defs })
     });
     if (r.status === 429) throw new AiError("rate");
-    if (!r.ok) throw new AiError("upstream", r.status);
+    if (!r.ok) throw await upErr(r, env);
     const out = await r.json(), content = Array.isArray(out.content) ? out.content : [];
     for (const b of content) if (b.type === "text" && Array.isArray(b.citations)) for (const c of b.citations) if (c && c.url) collected.sources.push({ title: c.title, url: c.url });
     const uses = content.filter(b => b.type === "tool_use");
@@ -619,7 +624,7 @@ async function runOpenAI(o) {
       method: "POST", headers: { Authorization: "Bearer " + env.OPENAI_API_KEY, "content-type": "application/json" }, body: JSON.stringify(body)
     });
     if (r.status === 429) throw new AiError("rate");
-    if (!r.ok) throw new AiError("upstream", r.status);
+    if (!r.ok) throw await upErr(r, env);
     const out = await r.json(), items = Array.isArray(out.output) ? out.output : [];
     const calls = items.filter(i => i.type === "function_call");
     let text = "";
@@ -648,10 +653,10 @@ async function runGemini(o) {
   for (let step = 0; step < MAX_STEPS; step++) {
     const r = await fetchFn("https://generativelanguage.googleapis.com/v1beta/models/" + encodeURIComponent(model) + ":generateContent", {
       method: "POST", headers: { "x-goog-api-key": env.GEMINI_API_KEY, "content-type": "application/json" },
-      body: JSON.stringify({ systemInstruction: { parts: [{ text: system }] }, contents, tools: [{ functionDeclarations: decls }], generationConfig: { maxOutputTokens: 1200 } })
+      body: JSON.stringify({ systemInstruction: { parts: [{ text: system }] }, contents, ...(decls.length ? { tools: [{ functionDeclarations: decls }] } : {}), generationConfig: { maxOutputTokens: 1200 } })
     });
     if (r.status === 429) throw new AiError("rate", 429);
-    if (!r.ok) throw new AiError("upstream", r.status);
+    if (!r.ok) throw await upErr(r, env);
     const out = await r.json(), cand = out.candidates && out.candidates[0], parts = cand && cand.content && Array.isArray(cand.content.parts) ? cand.content.parts : [];
     const calls = parts.filter(p => p.functionCall);
     if (calls.length) {
@@ -726,6 +731,14 @@ async function handle(request, env, deps) {
   const provider = env.AI_PROVIDER || (env.ANTHROPIC_API_KEY ? "anthropic" : env.OPENAI_API_KEY ? "openai" : env.GEMINI_API_KEY ? "gemini" : "");
 
   if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: cors });
+  const run = provider === "openai" ? runOpenAI : provider === "gemini" ? runGemini : runAnthropic;
+  if (request.method === "GET" && new URL(request.url).searchParams.get("selftest")) {
+    // asks the AI one tiny question and shows the real result or the provider's error text (never a key)
+    if (!provider) return json({ ok: false, error: "No AI key is set on this deployment." }, 200, cors);
+    if (limited("selftest:" + (request.headers.get("CF-Connecting-IP") || "x"), now())) return json({ error: "Too many requests" }, 429, cors);
+    try { const t = await run({ env, system: "Reply with the single word OK.", messages: [{ role: "user", content: "ping" }], tools: [], exec: async () => "{}", fetchFn, collected: { quotes: [], analyses: [], sources: [] } }); return json({ ok: true, provider, sample: t.slice(0, 40) }, 200, cors); }
+    catch (e) { return json({ ok: false, provider, kind: e && e.kind || "error", status: e && e.status || null, detail: e && e.detail || "" }, 200, cors); }
+  }
   if (request.method === "GET") {
     // a safe status check: shows what is switched on, never any key
     return json({ ok: true, ai: provider || "not configured", marketData: { forexMetalsStocks: !!env.TWELVE_DATA_API_KEY, news: !!env.FINNHUB_API_KEY, crypto: true }, webSearch: env.WEB_SEARCH === "on", memory: !!env.MEMORY }, 200, cors);
@@ -779,7 +792,6 @@ async function handle(request, env, deps) {
   } catch (e) { /* memory is optional */ }
 
   try {
-    const run = provider === "openai" ? runOpenAI : provider === "gemini" ? runGemini : runAnthropic;
     const reply = await run({ env, system, messages: msgs, tools: TOOLS, exec, fetchFn, collected });
     return json({ reply: reply + dataFooter(collected) }, 200, cors);
   } catch (e) {

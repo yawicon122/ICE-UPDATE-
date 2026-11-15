@@ -654,7 +654,7 @@ let geminiThinkingOk = true;   // flips off if a model rejects the thinking sett
 async function runGemini(o) {
   const { env, system, messages, tools, exec } = o, fetchFn = timed(o.fetchFn, o.env);
   const decls = tools.map(t => { const d = { name: t.name, description: t.description }; if (Object.keys(t.schema.properties || {}).length) d.parameters = gType(t.schema); return d; });
-  const model = (env.MODEL || env.GEMINI_MODEL || "gemini-flash-latest").replace(/^models\//, "");
+  let model = (env.MODEL || env.GEMINI_MODEL || "gemini-flash-latest").replace(/^models\//, "");
   const contents = messages.map(m => ({ role: m.role === "assistant" ? "model" : "user", parts: [{ text: m.content }] }));
   for (let step = 0; step < MAX_STEPS; step++) {
     const r = await fetchFn("https://generativelanguage.googleapis.com/v1beta/models/" + encodeURIComponent(model) + ":generateContent", {
@@ -664,6 +664,8 @@ async function runGemini(o) {
     if (r.status === 429) throw new AiError("rate", 429);
     if (!r.ok) {
       const e = await upErr(r, env);
+      // a retired or misspelled MODEL setting: fall back to Google's always-current alias instead of failing
+      if (r.status === 404 && model !== "gemini-flash-latest" && /not found|not supported/i.test(e.detail || "")) { model = "gemini-flash-latest"; step--; continue; }
       if (r.status === 400 && geminiThinkingOk && /think/i.test(e.detail || "")) { geminiThinkingOk = false; step--; continue; }
       throw e;
     }

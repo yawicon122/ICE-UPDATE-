@@ -236,3 +236,9 @@ test("a hung AI provider is cut off with a clear timeout error", async () => {
   const st = await (await handle(new Request("https://w.test/api/chat?selftest=1", { method: "GET", headers: { "CF-Connecting-IP": "18.0.0.2" } }), { ALLOWED_ORIGINS: ORIGIN, GEMINI_API_KEY: "GEMINI-SECRET1", AI_TIMEOUT_MS: "5000" }, { fetch: hang, now: nowFn })).json();
   assert.equal(st.kind, "timeout"); assert.equal(st.status, 504); clearTimeout(keep);
 });
+
+test("Gemini: a retired MODEL name falls back to the current alias", async () => {
+  const urls = []; const f = async u => { urls.push(u); return /gemini-1\.5-flash:/.test(u) ? { status: 404, ok: false, text: async () => '{"error":{"message":"models/gemini-1.5-flash is not found for API version v1beta"}}', json: async () => ({}) } : J({ candidates: [{ content: { parts: [{ text: "hi" }] } }] }); };
+  const r = await (await handle(req(user("hello"), { ip: "19.0.0.1" }), { ALLOWED_ORIGINS: ORIGIN, GEMINI_API_KEY: "GEMINI-SECRET1", MODEL: "gemini-1.5-flash" }, { fetch: f, now: nowFn })).json();
+  assert.equal(r.reply, "hi"); assert.match(urls[0], /gemini-1\.5-flash:/); assert.match(urls[1], /gemini-flash-latest:/);
+});

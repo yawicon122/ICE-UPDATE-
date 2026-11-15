@@ -629,7 +629,7 @@
   /* the "cash gatling" bear: a cut-out animation (no background box) that takes over the launcher for a few seconds.
      The bear is drawn from the sprite sheet; the money is live particles on a full-screen layer, so it flies freely up into the sky. */
   var CASH = { ok: false, img: null, seq: [0, 1, 2, 3, 4, 5, 6, 7, 8, 7, 6, 5, 4, 3, 2, 3, 4, 5, 6, 7, 8, 7, 6, 5, 4, 3, 2, 1, 0], fw: 250, fh: 225, k: .41, bx: 33, by: 8, busy: false, bills: [], fx: null };
-  setTimeout(function () { var im = new Image(); im.onload = function () { CASH.img = im; CASH.ok = true; }; im.src = BASE + "bear-cash.webp"; }, 3500);
+  setTimeout(function () { var im = new Image(); im.onload = function () { CASH.img = im; CASH.ok = true; }; im.src = BASE + "bear-cash.webp"; var gi = new Image(); gi.onload = function () { CASH.gun = gi; }; gi.src = BASE + "bear-gun.webp"; }, 3500);
   function billSprite() {   // one bill drawn once, reused for every particle
     var c = document.createElement("canvas"), w = 64, h = 32; c.width = w + 4; c.height = h + 4; var g = c.getContext("2d");
     function rr(x, y, ww, hh, r) { g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + ww, y, x + ww, y + hh, r); g.arcTo(x + ww, y + hh, x, y + hh, r); g.arcTo(x, y + hh, x, y, r); g.arcTo(x, y, x + ww, y, r); g.closePath(); }
@@ -657,16 +657,25 @@
     if (bs && bs.pose && bs.pose.fx) flip = bs.pose.fx < 0;   // shoot the way he is facing
     c2.style.width = fw + "px"; c2.style.height = fh + "px"; c2.style.marginLeft = "0"; c2.style.left = (feetX - lr.left - fw / 2 + (flip ? -1 : 1) * CASH.bx * CASH.k) + "px"; c2.style.bottom = (lr.bottom - feetY - CASH.by * CASH.k) + "px";
     var g = c2.getContext("2d"), fx = moneyLayer(); sizeMoney(fx); c2.style.transform = flip ? "scaleX(-1)" : "";
-    var t0 = performance.now(), last = t0, STEP = 115, total = CASH.seq.length * STEP, acc = 0, FADE = 160;
-    L.classList.add("pa-cashing"); cv.style.transition = "opacity .16s"; cv.style.opacity = "0";
+    // the bear never vanishes: the gun pops into his paws over the normal bear, then he fires,
+    // and at the end the normal bear is back at once while only the gun fades away
+    var POP = CASH.gun ? 260 : 0, OUT = CASH.gun ? 380 : 0;
+    var t0 = performance.now(), last = t0, STEP = 115, total = POP + CASH.seq.length * STEP, acc = 0, outT = 0, swapped = false;
+    L.classList.add("pa-cashing"); cv.style.transition = "none";
+    function gunOnly(al, sc, lift) {
+      g.save(); g.globalAlpha = Math.max(0, Math.min(1, al)); g.translate(CASH.fw * .56, CASH.fh * .62 - lift); g.scale(sc, sc); g.translate(-CASH.fw * .56, -CASH.fh * .62);
+      g.drawImage(CASH.gun, 0, 0); g.restore();
+    }
     (function frame(now) {
       var dt = Math.min(.05, (now - last) / 1000); last = now;
       var el = now - t0, ending = el >= total || root.classList.contains("open") || (B0.h || 0) > 0;
-      var idx = Math.min(CASH.seq.length - 1, Math.floor(el / STEP)), fi = CASH.seq[idx];
+      var idx = Math.min(CASH.seq.length - 1, Math.max(0, Math.floor((el - POP) / STEP))), fi = el < POP ? -1 : CASH.seq[idx];
       g.clearRect(0, 0, c2.width, c2.height);
-      if (!ending) {
-        var al = Math.min(1, el / FADE, (total - el) / FADE); g.globalAlpha = Math.max(0, al);
-        g.drawImage(CASH.img, fi * CASH.fw, 0, CASH.fw, CASH.fh, 0, 0, CASH.fw, CASH.fh); g.globalAlpha = 1;
+      if (!ending && el < POP) {   // the gun appears in his paws (the normal bear is still showing)
+        var u = el / POP; gunOnly(u * 1.4, .6 + .4 * (1 - Math.pow(1 - u, 3)), 0);
+      } else if (!ending) {
+        if (!swapped) { swapped = true; cv.style.opacity = "0"; }   // same spot, same size: an instant, invisible swap
+        g.drawImage(CASH.img, fi * CASH.fw, 0, CASH.fw, CASH.fh, 0, 0, CASH.fw, CASH.fh);
         // the muzzle, on screen: bills spray out of it and fly up into the sky
         if (fi >= 2) {
           var r = c2.getBoundingClientRect(), mx = r.left + r.width * (flip ? 1 - 168 / CASH.fw : 168 / CASH.fw), my = r.top + r.height * (78 / CASH.fh);
@@ -676,7 +685,11 @@
             CASH.bills.push({ x: mx + Math.random() * 6, y: my + Math.random() * 6, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, r: Math.random() * 6.28, vr: (Math.random() - .5) * 9, s: .22 + Math.random() * .16, grow: .3 + Math.random() * .4, t: 0, life: 2.4 + Math.random() * 1.4, ph: Math.random() * 6.28 });
           }
         }
-      } else { cv.style.opacity = "1"; L.classList.remove("pa-cashing"); }
+      } else {
+        cv.style.opacity = "1";   // the bear is back instantly, standing right there
+        if (CASH.gun && outT < OUT && swapped) { outT += dt * 1000; var v = outT / OUT; gunOnly(1 - v, 1 - .35 * v, 10 * v); }   // only the gun fades away
+        else { g.clearRect(0, 0, c2.width, c2.height); L.classList.remove("pa-cashing"); outT = OUT; }
+      }
       // money physics + drawing (every bill is its own free particle: no box, no clipping)
       var G = fx.g, d = fx.d; G.setTransform(1, 0, 0, 1, 0, 0); G.clearRect(0, 0, fx.c.width, fx.c.height);
       for (var i = CASH.bills.length - 1; i >= 0; i--) {
@@ -688,7 +701,7 @@
         G.drawImage(fx.spr, -fx.spr.width / 2, -fx.spr.height / 2);
       }
       G.globalAlpha = 1;
-      if (ending && !CASH.bills.length) { CASH.busy = false; G.setTransform(1, 0, 0, 1, 0, 0); G.clearRect(0, 0, fx.c.width, fx.c.height); return; }
+      if (ending && outT >= OUT && !CASH.bills.length) { L.classList.remove("pa-cashing"); CASH.busy = false; G.setTransform(1, 0, 0, 1, 0, 0); G.clearRect(0, 0, fx.c.width, fx.c.height); return; }
       requestAnimationFrame(frame);
     })(t0);
     return true;

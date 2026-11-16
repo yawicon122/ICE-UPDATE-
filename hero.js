@@ -25,8 +25,8 @@
     if(trade&&!trade.done){var hitTP=trade.d>0?price>=trade.tp:price<=trade.tp,hitSL=trade.d>0?price<=trade.sl:price>=trade.sl;
       if(hitTP)close(true);else if(hitSL){if(trade.willWin){price=trade.sl+trade.d*.35;cur.c=price;cur.l=Math.min(cur.l,trade.sl);cur.h=Math.max(cur.h,price)}else close(false)}}
     if(tk>=TPC)endCandle()}
-  function close(win){var t=trade;t.done=true;t.win=win;t.endId=base;t.fadeT=0;var amt=win?t.risk*2:-t.risk;bal+=amt;if(win){wins++;flash=1;if(0)coins.push({x:W*.5+(R()-.5)*160,y:H*.5,vx:(R()-.5)*60,vy:-90-R()*90,a:1,r:(8+R()*5)*1.6})}else losses++;
-    fade.push(t);trade=null;cool=2+Math.floor(R()*3);
+  function close(win){var t=trade;t.done=true;t.win=win;t.endId=base;t.fadeT=0;var amt=win?t.risk*2:-t.risk;bal+=amt;if(win){wins++;flash=1;for(var i=0;i<7;i++)coins.push({x:W*.5+(R()-.5)*160,y:H*.5,vx:(R()-.5)*60,vy:-90-R()*90,a:1,r:(8+R()*5)*1.6})}else losses++;
+    pops.push({t:0,txt:(win?"+$":"-$")+Math.abs(amt).toLocaleString(),col:win?UP:DN});fade.push(t);trade=null;cool=2+Math.floor(R()*3);
     if(win)reg=newReg("range");else reg=newReg("range")}
   function maybeEnter(){
     if(trade||cool>0||cs.length<12||tk!==Math.floor(TPC/2))return;
@@ -64,7 +64,11 @@
     if(cur)candle(cur,X(V-1),w);
     if(trade)tradeDraw(trade,1);
     if(cur){x.strokeStyle="rgba(255,255,255,.4)";x.lineWidth=1.5;x.setLineDash([3,6]);x.beginPath();x.moveTo(X(V-1),Y(price));x.lineTo(Rr+8*s,Y(price));x.stroke();x.setLineDash([]);
-      tag(price.toFixed(2),Y(price),"rgba(255,255,255,.85)")}
+      if(trade){var pl=(price-trade.e)*trade.d/(trade.e-trade.sl)/trade.d*trade.d;var r=(price-trade.e)*trade.d/Math.abs(trade.e-trade.sl),usd=Math.round(r*trade.risk);tag((usd>=0?"+$":"-$")+Math.abs(usd),Y(price),usd>=0?UP:DN,usd>=0?"#05151a":"#fff")}else tag(price.toFixed(2),Y(price),"rgba(255,255,255,.85)")}
+    /* balance */
+    x.save();var sh=x.createLinearGradient(0,0,250*s,0);sh.addColorStop(0,"rgba(5,8,22,.7)");sh.addColorStop(1,"rgba(5,8,22,0)");
+    x.textAlign="left";x.textBaseline="alphabetic";    x.fillStyle=flash>0?"#b8ffe3":UP;x.shadowColor=UP;x.shadowBlur=(flash>0?24:8)*s/2;x.font="900 "+Math.round(28*s)+"px Sora,Inter,sans-serif";x.fillText("$"+balShow.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}),16*s,106*s);x.shadowBlur=0;
+    x.fillStyle="rgba(255,255,255,.8)";x.font="700 "+Math.round(11*s)+"px Sora,Inter,sans-serif";x.fillText((balShow>=10000?"\u25B2 +":"\u25BC ")+(((balShow-10000)/100).toFixed(1))+"%  \u00B7  "+wins+" wins  "+losses+" losses",16*s,124*s);x.restore();
     /* floating money */
     pops.forEach(function(p,i){p.t+=dt;var a=Math.max(0,1-p.t/1.8);if(a<=0){pops.splice(i,1);return}x.save();x.globalAlpha=a;x.fillStyle=p.col;x.font="900 "+Math.round(28*s)+"px Sora,Inter,sans-serif";x.textAlign="center";x.shadowColor=p.col;x.shadowBlur=14;x.fillText(p.txt,W*.55,H*.45-p.t*50*s);x.restore()});
     coins.forEach(function(c,i){c.vy+=160*dt;c.x+=c.vx*dt;c.y+=c.vy*dt;c.a-=dt*.7;if(c.a<=0){coins.splice(i,1);return}x.save();x.globalAlpha=c.a;var gr=x.createRadialGradient(c.x-3,c.y-3,2,c.x,c.y,c.r);gr.addColorStop(0,"#fff6c8");gr.addColorStop(1,GOLD);x.fillStyle=gr;x.beginPath();x.arc(c.x,c.y,c.r,0,7);x.fill();x.fillStyle="#7a5a00";x.font="900 "+c.r+"px Sora,sans-serif";x.textAlign="center";x.textBaseline="middle";x.fillText("$",c.x,c.y+1);x.restore()});

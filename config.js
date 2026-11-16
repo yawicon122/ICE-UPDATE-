@@ -7,7 +7,7 @@ window.SITE = {
   brand: "Ice Update",
   tagline: "Trading • Online income • Tech updates",
   hero: {
-    badge: "Free trading classes for everyone",
+    badge: "Free classes and forex signals for everyone",
     title: "Learn to read the market.",
     subtitle: "Simple video lessons, PDFs and charts that teach you candlesticks, support & resistance and smart risk — step by step."
   },
@@ -137,5 +137,5 @@ window.SITE = {
      of the SAME chart (one plain, one with your marks). Upload them to the repo and write the file names. */
   // compare: { before: "chart-before.jpg", after: "chart-after.jpg", note: "Historical example, XAUUSD M15. Not financial advice." },
 
-  footerNote: "Empowering your trading journey. We provide free educational content and market updates to help you understand the markets. To ensure the highest quality, we focus on sound risk management, disciplined execution, and practical market education. Educational content only, not financial advice. Trading involves risk of loss."
+  footerNote: "Empowering your trading journey. We provide high-probability trading signals and comprehensive educational content designed to help you navigate the markets with confidence. To ensure the highest quality, we focus on sound risk management, disciplined execution, and practical market education."
 };

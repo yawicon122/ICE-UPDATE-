@@ -28,7 +28,7 @@
   function close(win){var t=trade;t.done=true;t.win=win;t.endId=base;t.fadeT=0;var amt=win?t.risk*2:-t.risk;bal+=amt;if(win){wins++;flash=1;if(0)coins.push({x:W*.5+(R()-.5)*160,y:H*.5,vx:(R()-.5)*60,vy:-90-R()*90,a:1,r:(8+R()*5)*1.6})}else losses++;
     fade.push(t);trade=null;cool=2+Math.floor(R()*3);
     if(win)reg=newReg("range");else reg=newReg("range")}
-  function maybeEnter(){
+  function maybeEnter(){return;
     if(trade||cool>0||cs.length<12||tk!==Math.floor(TPC/2))return;
     if(reg.k==="trend"&&reg.left>=6){var d=reg.d,r=2.3,will=(wins+losses<1)||R()<.7;
       trade={d:d,e:price,sl:price-d*r,tp:price+d*r*2,id:base,risk:[100,150,200,250][Math.floor(R()*4)],willWin:will,t:0,age:0};

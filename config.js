@@ -5,7 +5,7 @@
     ===================================================================== */
 window.SITE = {
   brand: "Ice Update",
-  tagline: "Trading • Online income • Tech updates",
+  tagline: "Trading lessons • Market updates • Tech updates",
   hero: {
     badge: "Free trading classes for everyone",
     title: "Learn to read the market.",

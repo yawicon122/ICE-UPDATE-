@@ -2,7 +2,7 @@
    Replay any time by adding  ?intro  to the web address.
    Change the words in config.js → intro: { line1, line2, welcome, brand, enabled, once } */
 (() => {
-const D = Object.assign({ enabled: true, once: true,
+const D = Object.assign({ enabled: false, once: true,
   line1: "Welcome to the top 1%", line2: "You are on the right path to becoming rich",
   welcome: "Welcome to", brand: "ICE UPDATE" }, (window.SITE && window.SITE.intro) || {});
 const force = /[?&]intro\b/.test(location.search);

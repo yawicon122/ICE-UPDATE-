@@ -48,6 +48,7 @@ if (A.ga4) {
 }
 function track(name) {
   try {
+    if (window.iuStat) window.iuStat(name);           // CEO dashboard: which buttons people tap
     if (window.gtag && A.ga4) gtag("event", "click", { event_label: name });
     if (window.goatcounter && window.goatcounter.count) window.goatcounter.count({ path: "event/" + name, title: name, event: true });
   } catch (e) {}

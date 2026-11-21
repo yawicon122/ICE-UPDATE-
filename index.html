@@ -3,7 +3,10 @@
 <head>
 <meta charset="utf-8">
 <!-- iceupdate.com/join or iceupdate.com/?join → straight to the WhatsApp channel (for ads) -->
-<script>(function(){var p=location.pathname.replace(/\/+$/,"").toLowerCase();if(p==="/join"||p==="/join.html"||/[?&]join(=|&|$)/i.test(location.search)){location.replace("https://whatsapp.com/channel/0029VbE7s6hDuMRfollXDG0P")}})();</script>
+<!-- Visitor counter for the Ice Update CEO dashboard: no cookies, no personal data (random id in this browser only) -->
+<script>(function(){var U="https://ice-autopost.nanayawasmahannan.workers.dev/t",v="",n=0;try{v=localStorage.getItem("iu_vid");if(!v){v=Math.random().toString(36).slice(2)+Date.now().toString(36);localStorage.setItem("iu_vid",v);n=1}}catch(e){v=v||Math.random().toString(36).slice(2)}
+window.iuStat=function(e){try{var b=JSON.stringify({e:e||"view",p:location.pathname,r:document.referrer,q:location.search,v:v,n:n,h:location.hostname});if(navigator.sendBeacon&&navigator.sendBeacon(U,b))return;fetch(U,{method:"POST",body:b,keepalive:true,mode:"no-cors"})}catch(e){}};
+var p=location.pathname.replace(/\/+$/,"").toLowerCase();if(p==="/join"||p==="/join.html"||/[?&]join(=|&|$)/i.test(location.search)){iuStat("join-page");location.replace("https://whatsapp.com/channel/0029VbE7s6hDuMRfollXDG0P")}else iuStat("view")})();</script>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Ice Update | Free Forex &amp; Gold Trading Lessons for Beginners</title>
 <meta name="description" content="Ice Update is a free trading school: video lessons, PDF guides, chart examples and games on forex, gold, candlesticks, support &amp; resistance and risk. Join the Ice Update WhatsApp and Telegram channels.">
@@ -322,7 +325,7 @@ html.iu-lite .glass,html.iu-lite .stats,html.iu-lite .lcard,html.iu-lite .resour
 </a>
 
 <script src="social-icons.js?v=20261106a"></script>
-<script src="app.js?v=20261118a"></script>
+<script src="app.js?v=20261121a"></script>
 <script src="gold-chart.js?v=20261105a" defer></script>
 <script src="loader3d.js?v=20261105a" defer></script>
 <script src="polish.js?v=20261105c" defer></script>
